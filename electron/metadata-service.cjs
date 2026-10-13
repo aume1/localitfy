@@ -182,6 +182,7 @@ function getPrimaryPicture(common) {
 async function readLocalAudioMetadata(filePath, options = {}) {
   const target = String(filePath || "").trim();
   const readCover = options.readCover !== false;
+  const readDuration = options.readDuration !== false;
   const fallback = readFileNameFallback(target);
 
   const output = {
@@ -190,6 +191,7 @@ async function readLocalAudioMetadata(filePath, options = {}) {
     title: fallback.title,
     artist: fallback.artist,
     album: fallback.album,
+    genre: "",
     duration: 0,
     durationMs: 0,
     track: 0,
@@ -213,7 +215,7 @@ async function readLocalAudioMetadata(filePath, options = {}) {
   if (metadataModule?.parseFile) {
     try {
       const parsed = await metadataModule.parseFile(target, {
-        duration: true,
+        duration: readDuration,
         skipCovers: !readCover,
         skipPostHeaders: false
       });
@@ -227,12 +229,18 @@ async function readLocalAudioMetadata(filePath, options = {}) {
         output.artist
       );
       output.album = cleanText(common.album, output.album);
+      output.genre = [...new Map(
+        (Array.isArray(common.genre) ? common.genre : [common.genre])
+          .map((value) => cleanText(value, ""))
+          .filter(Boolean)
+          .map((value) => [value.toLocaleLowerCase(), value])
+      ).values()].join("; ");
       output.year = common.year ? String(common.year).slice(0, 12) : "";
       output.track = Number(common.track?.no || 0) || 0;
       output.disc = Number(common.disk?.no || 0) || 0;
 
       const durationSeconds = Number(format.duration || 0);
-      if (Number.isFinite(durationSeconds) && durationSeconds > 0) {
+      if (readDuration && Number.isFinite(durationSeconds) && durationSeconds > 0) {
         output.duration = Math.round(durationSeconds);
         output.durationMs = Math.round(durationSeconds * 1000);
         output.durationSource = "music-metadata";
@@ -253,7 +261,7 @@ async function readLocalAudioMetadata(filePath, options = {}) {
       output.ok = true;
       output.source = "music-metadata";
 
-      if ((!output.durationMs || output.durationMs <= 0) && format.bitrate) {
+      if (readDuration && (!output.durationMs || output.durationMs <= 0) && format.bitrate) {
         const estimated = estimateDurationFromBitrate(target, format.bitrate);
         if (estimated.durationMs > 0) {
           output.duration = estimated.duration;
@@ -268,7 +276,7 @@ async function readLocalAudioMetadata(filePath, options = {}) {
     output.error = "music-metadata dependency missing";
   }
 
-  if (!output.durationMs || output.durationMs <= 0) {
+  if (readDuration && (!output.durationMs || output.durationMs <= 0)) {
     const fallbackDuration = await getDurationWithFfmpeg(target);
     if (fallbackDuration.durationMs > 0) {
       output.duration = fallbackDuration.duration;
