@@ -1635,7 +1635,9 @@ async function buildAlbumFolderPreview(folderPath, index = 0) {
   }
   const albumArtist = [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "various artists";
   const tagAlbumTitle = [...albumCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
-  const albumTitle = cleanAlbumFolderText(folderTitle || tagAlbumTitle, tagAlbumTitle || folderTitle);
+  // Embedded album tags are authoritative; folder names are only a fallback
+  // for files that do not contain usable album metadata.
+  const albumTitle = cleanAlbumFolderText(tagAlbumTitle, folderTitle);
   const duplicateCount = parsedTracks.filter((track) => track.duplicate).length;
   const coverPath = folderCoverPath || albumEmbeddedCoverPath || "";
   const coverSource = folderCoverPath ? "folder" : albumEmbeddedCoverPath ? "embedded" : "none";

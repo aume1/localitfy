@@ -28,3 +28,16 @@ test("nested album scans prefer each album folder's own cover", () => {
   assert.match(main, /preferFolderCover:\s*Boolean\(folderCoverPath\)/, "folder-cover preference is not carried into metadata repair");
   assert.match(main, /sourcePath:\s*folderPath/, "album preview must retain the exact child folder source path");
 });
+
+test("folder imports prefer album metadata and fall back to the folder name", () => {
+  assert.match(
+    main,
+    /const\s+albumTitle\s*=\s*cleanAlbumFolderText\(tagAlbumTitle,\s*folderTitle\)/,
+    "the dominant embedded album tag must win when metadata is available"
+  );
+  assert.doesNotMatch(
+    main,
+    /cleanAlbumFolderText\(folderTitle\s*\|\|\s*tagAlbumTitle/,
+    "a present folder name must not mask embedded album metadata"
+  );
+});
