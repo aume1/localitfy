@@ -4,4 +4,5 @@ These screenshots document the Artists library view introduced by the feature br
 
 - `artists-search.png`: exact-match artist search
 - `artist-songs.png`: artist detail songs view
-- `artist-albums.png`: artist detail albums view
+
+The album view is intentionally omitted here because album naming is owned by the existing import metadata pipeline, outside this UI-focused change.
