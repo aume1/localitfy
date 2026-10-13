@@ -1,7 +1,7 @@
 <div align="center">
 
 # localtify
-
+⚠️ (PLEASE LOCALTIFY WILL HAVE A MASSIVE REWORK SINCE THE CODEBASE IS FRIED RIGHT NOW) starting soon
 ### your local music, but prettier.
 
 A cute desktop music player for people who still keep songs on their PC.
