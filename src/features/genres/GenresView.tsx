@@ -133,7 +133,7 @@ export default function GenresView({
     void window.localitfy.bootstrap({ includeGenres: true })
       .then((payload) => {
         if (!active || !Array.isArray(payload?.songs)) return;
-        setTaggedGenres(new Map(payload.songs.map((song) => [song.id, String(song.genre || "")])));
+        setTaggedGenres(new Map<string, string>(payload.songs.map((song) => [song.id, String(song.genre || "")])));
       })
       .catch((error) => console.error("[localitfy genres load error]", error))
       .finally(() => { if (active) setLoadingTags(false); });
