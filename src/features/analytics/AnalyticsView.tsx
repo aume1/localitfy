@@ -13,6 +13,7 @@ export type AnalyticsViewProps = {
   averageSongSeconds: number;
   importSongs: () => unknown;
   libraryHealthLabel: string;
+  libraryHealthPercent: number;
   libraryLengthLabel: string;
   likedPercent: number;
   longestSong: Song | null;
@@ -30,6 +31,7 @@ export default function AnalyticsView(props: AnalyticsViewProps) {
     averageSongSeconds,
     importSongs,
     libraryHealthLabel,
+    libraryHealthPercent,
     libraryLengthLabel,
     likedPercent,
     longestSong,
@@ -62,8 +64,8 @@ export default function AnalyticsView(props: AnalyticsViewProps) {
             <strong>{likedPercent}%</strong>
             <small>liked</small>
           </span>
-          <span style={{ "--meter": `${libraryHealthLabel === "healthy" ? 100 : Math.max(0, 100 - missingFileCount * 8)}%` } as CSSProperties}>
-            <strong>{libraryHealthLabel}</strong>
+          <span title={libraryHealthLabel} style={{ "--meter": `${libraryHealthPercent}%` } as CSSProperties}>
+            <strong>{songs.length ? `${libraryHealthPercent}%` : "empty"}</strong>
             <small>health</small>
           </span>
         </div>

@@ -8675,6 +8675,7 @@ function MainModeApp() {
       averageSongSeconds,
       importSongs,
       libraryHealthLabel,
+      libraryHealthPercent,
       libraryLengthLabel,
       likedPercent,
       longestSong,
