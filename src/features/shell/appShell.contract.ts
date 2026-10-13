@@ -1,6 +1,7 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode, RefObject } from "react";
 import type { HomeViewProps } from "../home/HomeView";
 import type { LibraryViewProps } from "../library/LibraryView";
+import type { ArtistsViewProps } from "../artists/ArtistsView";
 import type { AlbumsViewProps } from "../albums/AlbumsView";
 import type { PlaylistsViewProps } from "../playlists/PlaylistsView";
 import type { CoversViewProps } from "../covers/CoversView";
@@ -69,7 +70,7 @@ export type ShellModalContract = {
 export type AppShellProps = {
   frame: ShellFrameContract; updates: ShellUpdateContract; screensaver: ShellScreensaverContract;
   effects: ShellEffectsContract; onboarding: ShellOnboardingContract; navigation: ShellNavigationContract;
-  home: HomeViewProps; library: LibraryViewProps; albums: AlbumsViewProps; playlists: PlaylistsViewProps;
+  home: HomeViewProps; library: LibraryViewProps; artists: ArtistsViewProps; albums: AlbumsViewProps; playlists: PlaylistsViewProps;
   covers: CoversViewProps; analytics: AnalyticsViewProps; settingsView: SettingsViewProps;
   downloads: DownloadsViewProps; playerBar: PlayerBarProps; modals: ShellModalContract;
   playbackAudio: PlaybackAudioElementProps;
