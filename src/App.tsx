@@ -69,6 +69,7 @@ import { Cover } from "./features/covers/Cover";
 import { useCoversController } from "./features/covers";
 import { VirtualHomeSongCards, VirtualSongRows } from "./features/library/components/SongRows";
 import { useLibraryController } from "./features/library";
+import { splitArtistCredits } from "./features/artists/artistCredits";
 import Onboarding from "./Onboarding";
 import CatBuddy from "./CatBuddy";
 import { PlayerPlayPauseMorphIcon } from "./features/player/PlayerPlayPauseMorphIcon";
@@ -1811,10 +1812,7 @@ function MainModeApp() {
   const artistsViewArtistCount = useMemo(() => {
     const artistNames = new Set<string>();
     for (const song of songs) {
-      for (const credit of String(song.artist || "unknown artist").split(";")) {
-        const name = credit.trim().replace(/\s+/g, " ") || "unknown artist";
-        artistNames.add(name.toLocaleLowerCase());
-      }
+      for (const credit of splitArtistCredits(song.artist)) artistNames.add(credit.toLocaleLowerCase());
     }
     return artistNames.size;
   }, [songs]);

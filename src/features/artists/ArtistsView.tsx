@@ -6,6 +6,7 @@ import type { Song } from "../library/song.types";
 import { LocaltifyStateCard } from "../../shared/ui/LocaltifyViewUi";
 import { formatTime } from "../../shared/utils/format";
 import { prettyMeta, prettyTitle } from "../search/search.utils";
+import { splitArtistCredits } from "./artistCredits";
 import "./artists.css";
 
 type ArtistEntry = {
@@ -35,17 +36,6 @@ export type ArtistsViewProps = {
   songs: Song[];
   toggleLike: (songId: string) => unknown;
 };
-
-function cleanArtist(value: unknown) {
-  return String(value || "unknown artist").trim().replace(/\s+/g, " ") || "unknown artist";
-}
-
-function splitArtistCredits(value: unknown) {
-  const names = cleanArtist(value).split(";").map(cleanArtist);
-  const uniqueNames = new Map<string, string>();
-  for (const name of names) uniqueNames.set(name.toLocaleLowerCase(), name);
-  return [...uniqueNames.values()];
-}
 
 function buildArtistAlbums(songs: Song[]): ArtistAlbumEntry[] {
   const groups = new Map<string, { title: string; songs: Song[]; totalDuration: number }>();
@@ -161,7 +151,7 @@ export default function ArtistsView({
         <div>
           <p className="eyebrow">local artists</p>
           <h3>browse by artist</h3>
-          <p>Every artist found in your local song metadata. Semicolon-separated credits are listed individually.</p>
+          <p>Every artist found in your local song metadata. Semicolon and “feat.” credits are listed individually.</p>
         </div>
         <div className="artistsHeroTools">
           <input
@@ -306,4 +296,3 @@ export default function ArtistsView({
     </section>
   );
 }
-

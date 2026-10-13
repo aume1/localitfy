@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 const source = fs.readFileSync("src/features/artists/ArtistsView.tsx", "utf8");
+const creditsSource = fs.readFileSync("src/features/artists/artistCredits.ts", "utf8");
 const navigation = fs.readFileSync("src/features/shell/navigation.constants.ts", "utf8");
 const shell = fs.readFileSync("src/features/shell/AppShell.tsx", "utf8");
 
@@ -13,9 +14,10 @@ test("Artists is a lazy, feature-owned library destination", () => {
   assert.match(source, /import "\.\/artists\.css"/);
 });
 
-test("artist credits split on semicolons and deduplicate case-insensitively", () => {
-  assert.match(source, /\.split\(";"\)/);
-  assert.match(source, /uniqueNames\.set\(name\.toLocaleLowerCase\(\), name\)/);
+test("artist credits split on semicolons and feat variants, then deduplicate case-insensitively", () => {
+  assert.match(creditsSource, /ARTIST_CREDIT_SEPARATOR\s*=\s*\/;\|\\s\+feat\\\.\?\\s\+\/gi/);
+  assert.match(creditsSource, /\.split\(ARTIST_CREDIT_SEPARATOR\)/);
+  assert.match(creditsSource, /uniqueNames\.set\(name\.toLocaleLowerCase\(\), name\)/);
   assert.match(source, /for \(const name of splitArtistCredits\(song\.artist\)\)/);
 });
 
