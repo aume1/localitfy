@@ -2,7 +2,15 @@ import type { ReactNode } from "react";
 import { localtifyLogo } from "../../core/app.constants";
 import { WindowCloseIcon, WindowMinimizeIcon } from "../../shared/ui/LocaltifyViewUi";
 
-export default function TitleBar({ mini = false, children }: { mini?: boolean; children?: ReactNode }) {
+export default function TitleBar({
+  mini = false,
+  showWindowButtons = true,
+  children
+}: {
+  mini?: boolean;
+  showWindowButtons?: boolean;
+  children?: ReactNode;
+}) {
   function handleTitleDoubleClick() {
     if (!mini) window.localitfy.toggleMaximizeWindow();
   }
@@ -20,7 +28,7 @@ export default function TitleBar({ mini = false, children }: { mini?: boolean; c
         </div>
       ) : null}
 
-      <div className="windowButtons">
+      {showWindowButtons ? <div className="windowButtons">
         <button type="button" onClick={() => window.localitfy.minimizeWindow()} aria-label="Minimize window"><WindowMinimizeIcon /></button>
         {!mini ? (
           <button type="button" className="maxWin" onClick={() => window.localitfy.toggleMaximizeWindow()} aria-label="Maximize or restore window">
@@ -30,7 +38,7 @@ export default function TitleBar({ mini = false, children }: { mini?: boolean; c
           </button>
         ) : null}
         <button type="button" className="closeWin" onClick={() => window.localitfy.closeWindow()} aria-label="Close window"><WindowCloseIcon /></button>
-      </div>
+      </div> : null}
     </header>
   );
 }

@@ -143,7 +143,7 @@ export default function AppShell(props: AppShellProps) {
         </div>
       ) : null}
 
-      <TitleBar>
+      <TitleBar showWindowButtons={platformId !== "mac"}>
         <UpdateIsland
           show={showTopUpdateRibbon}
           updatePrompt={updatePrompt}

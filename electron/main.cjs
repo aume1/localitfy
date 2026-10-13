@@ -312,6 +312,9 @@ function updateTaskbarButtons() {
 function registerNativeMediaKeys() {
   if (nativeShortcutsRegistered) return;
   nativeShortcutsRegistered = true;
+  // Chromium's Media Session integration owns macOS media keys. Registering
+  // them again as global shortcuts fails because the OS reserves them.
+  if (process.platform === "darwin") return;
   const shortcuts = [
     ["MediaPlayPause", { type: "toggle" }],
     ["MediaNextTrack", { type: "next" }],
@@ -2120,17 +2123,19 @@ function createWindow() {
   const size = getSafeMainWindowSize();
   const windowTranslucency = getSavedWindowTranslucencySettings();
   const nativeWindowOptions = process.platform === "win32" ? { backgroundMaterial: "none" } : {};
+  const windowChromeOptions = process.platform === "darwin"
+    ? { titleBarStyle: "hiddenInset" }
+    : { frame: false, titleBarStyle: "hidden" };
   mainWindow = new BrowserWindow({
     width: size.width,
     height: size.height,
     minWidth: MAIN_WINDOW_MIN_WIDTH,
     minHeight: MAIN_WINDOW_MIN_HEIGHT,
     show: false,
-    frame: false,
     transparent: false,
-    titleBarStyle: "hidden",
     backgroundColor: "#090012",
     paintWhenInitiallyHidden: true,
+    ...windowChromeOptions,
     ...nativeWindowOptions,
     webPreferences: {
       nodeIntegration: false,
