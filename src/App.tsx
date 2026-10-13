@@ -529,7 +529,7 @@ function MainModeApp() {
       liked_count: likedSongs.length
     });
 
-    if (nextView === "library" || nextView === "liked" || view === "library" || view === "liked") {
+    if (nextView === "library" || nextView === "artists" || nextView === "liked" || view === "library" || view === "artists" || view === "liked") {
       trackLibraryViewChanged({
         previous_view: view,
         library_view: nextView,
@@ -1808,6 +1808,16 @@ function MainModeApp() {
   const totalPlays = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "total_plays");
   const libraryAlbumCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "album_count");
   const libraryArtistCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "artist_count");
+  const artistsViewArtistCount = useMemo(() => {
+    const artistNames = new Set<string>();
+    for (const song of songs) {
+      for (const credit of String(song.artist || "unknown artist").split(";")) {
+        const name = credit.trim().replace(/\s+/g, " ") || "unknown artist";
+        artistNames.add(name.toLocaleLowerCase());
+      }
+    }
+    return artistNames.size;
+  }, [songs]);
   const totalListenedSeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "total_listened_seconds");
   const totalMinutes = Math.floor(totalListenedSeconds / 60);
   const totalLibrarySeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "total_library_seconds");
@@ -2143,6 +2153,7 @@ function MainModeApp() {
     }
 
     if (view === "library") return "";
+    if (view === "artists") return `${artistsViewArtistCount} artist${artistsViewArtistCount === 1 ? "" : "s"} in your local library`;
     if (view === "albums") return "local albums from metadata and your custom collections";
     if (view === "playlists") return `${playlists.length} playlist${playlists.length === 1 ? "" : "s"}`;
     if (view === "liked") return `${likedSongs.length} liked track${likedSongs.length === 1 ? "" : "s"}`;
@@ -2150,7 +2161,7 @@ function MainModeApp() {
     if (view === "downloads") return "download direct audio links and import them automatically";
     if (view === "settings") return "theme, playback, discord, library, and advanced controls";
     return "your listening numbers and favorite tracks";
-  }, [view, isPlaying, currentSong, songs.length, filteredSongs.length, likedSongs.length, playlists.length, libraryAlbumCount, isThreeAm, coverStats.usable, coverStats.favorites]);
+  }, [view, isPlaying, currentSong, songs.length, filteredSongs.length, likedSongs.length, playlists.length, libraryAlbumCount, artistsViewArtistCount, isThreeAm, coverStats.usable, coverStats.favorites]);
 
   const discordPreview = useMemo(() => buildDiscordPreview({
     settings,
@@ -8701,6 +8712,16 @@ function MainModeApp() {
       songs,
       view,
       visibleSongs
+    },
+    artists: {
+      currentId,
+      openPlaylistPicker,
+      playArtistSongs: playAlbumSongs,
+      queueArtistSongs: queueAlbumSongs,
+      selectSong,
+      shuffleArtistSongs: shuffleAlbumSongs,
+      songs,
+      toggleLike
     },
     albums: {
       ...albumsController,
