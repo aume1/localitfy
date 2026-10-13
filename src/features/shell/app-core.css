@@ -125,6 +125,25 @@ button:disabled{
   background: #e54868;
 }
 
+/* macOS keeps its native traffic lights. Leave room for them instead of
+   drawing a second set of Windows-style controls in the renderer. */
+.app[data-platform="mac"] .titleBar{
+  height: 38px;
+  min-height: 38px;
+}
+
+.app[data-platform="mac"] .titleDrag{
+  padding-left: 78px;
+}
+
+.app[data-platform="mac"] .titleBarUpdateSlot{
+  margin-right: 12px;
+}
+
+.app[data-platform="mac"] .appShell{
+  height: calc(100vh - 38px);
+}
+
 
 .sidebar{
   grid-row: 1 / 3;
