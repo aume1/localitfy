@@ -30,6 +30,7 @@ test("permanent visual owners remain explicit and co-located", () => {
   const home = read("src/features/home/HomeView.tsx");
   const library = read("src/features/library/LibraryView.tsx");
   const artists = read("src/features/artists/ArtistsView.tsx");
+  const genres = read("src/features/genres/GenresView.tsx");
   const player = read("src/features/player/components/PlayerBar.tsx");
   const settingsView = read("src/features/settings/SettingsView.tsx");
   const albumsView = read("src/features/albums/AlbumsView.tsx");
@@ -45,6 +46,8 @@ test("permanent visual owners remain explicit and co-located", () => {
   assert.equal(home.includes('import "./home.css";'), true, "HomeView must own Home CSS");
   assert.equal(library.includes('import "./library.css";'), true, "LibraryView must own Library CSS");
   assert.equal(artists.includes('import "./artists.css";'), true, "ArtistsView must own Artists CSS");
+  assert.equal(genres.includes('import "./genres.css";'), true, "GenresView must own Genres CSS");
+  assert.ok(fs.existsSync(path.join(root, "src/features/genres/genres.css")));
   assert.equal(player.includes('import "../player.css";'), true, "PlayerBar must own player CSS");
   assert.equal(settingsView.includes('import "./settings.css";'), true, "SettingsView must own settings CSS");
   assert.ok(albumsView.includes('import "./albums.css";'), "Albums must own its stylesheet");

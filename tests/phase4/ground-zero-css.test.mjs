@@ -7,12 +7,13 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const megaFiles = ["src/App.css", "src/features/shell/app-core.css", "src/styles/themes.css", "src/features/shell/effects.css"];
-const forbiddenPageTokens = [".libraryPage", ".libraryPanel", ".libraryQuick", ".libraryMissing", ".albumsPage", ".albumsHero", ".albumCard", ".playlistsPage", ".playlistHero", ".coverStudio", ".downloadsLayout", ".downloadPanel", ".spotifyTrack", ".analytics", ".settingsPage", ".settingsHero"];
+const forbiddenPageTokens = [".libraryPage", ".libraryPanel", ".libraryQuick", ".libraryMissing", ".artistsPage", ".artistCard", ".genresPage", ".genreCard", ".albumsPage", ".albumsHero", ".albumCard", ".playlistsPage", ".playlistHero", ".coverStudio", ".downloadsLayout", ".downloadPanel", ".spotifyTrack", ".analytics", ".settingsPage", ".settingsHero"];
 
 test("all finished pages are outside temporary reset mode", () => {
   const finished = [
     ["src/features/library/LibraryView.tsx", "library"],
     ["src/features/artists/ArtistsView.tsx", "artists"],
+    ["src/features/genres/GenresView.tsx", "genres"],
     ["src/features/albums/AlbumsView.tsx", "albums"],
     ["src/features/playlists/PlaylistsView.tsx", "playlists"],
     ["src/features/covers/CoverStudio.tsx", "covers"],
