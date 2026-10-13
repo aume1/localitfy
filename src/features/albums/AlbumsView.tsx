@@ -1,3 +1,4 @@
+import "./albums.css";
 import type { CSSProperties } from "react";
 import { Cover } from "../covers/Cover";
 import { CheckMiniIcon, EmptyCoverIcon, LocaltifyStateCard, PlusMiniIcon } from "../../shared/ui/LocaltifyViewUi";
@@ -57,7 +58,6 @@ export type AlbumsViewProps = {
   openPlaylistPicker: any;
   playAlbumSongs: any;
   queueAlbumSongs: any;
-  ready: any;
   saveManualAlbumFromDraft: any;
   scanAlbumFolderImport: any;
   selectSong: any;
@@ -140,7 +140,7 @@ export default function AlbumsView(props: AlbumsViewProps) {
 
   return (
 
-              <section data-page-section="albums" data-page-state="reset" className="albumsPageV318">
+              <section data-page-section="albums" className="albumsPageV318">
                 <section className="albumsHeroPanelV318">
                   <div className="albumsHeroArtClusterV318" aria-hidden="true">
                     {(selectedAlbum?.songs || localAlbums[0]?.songs || songs).slice(0, 4).map((song, index) => (

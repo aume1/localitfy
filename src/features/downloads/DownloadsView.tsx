@@ -1,3 +1,4 @@
+import "./downloads.css";
 import { CheckMiniIcon, LocaltifyStateCard, MascotHelperBubble, MascotStateArt, ResultStatusIcon } from "../../shared/ui/LocaltifyViewUi";
 import { clamp } from "../../shared/utils/format";
 
@@ -18,7 +19,6 @@ export type DownloadsViewProps = {
   downloadHasFailure: any;
   downloadMascotMessage: any;
   downloadMascotTitle: any;
-  downloadResults: any;
   downloadSpotifyTracks: any;
   downloadStatusLabel: any;
   downloadText: any;
@@ -30,9 +30,6 @@ export type DownloadsViewProps = {
   handleSpotifyLogin: any;
   handleSpotifyLogout: any;
   openDownloadedSongInLibrary: any;
-  playlists: any;
-  progress: any;
-  ready: any;
   retryDownload: any;
   retryFailedDownloads: any;
   retrySpotifyTrack: any;
@@ -112,7 +109,7 @@ export default function DownloadsView(props: DownloadsViewProps) {
 
   return (
 
-              <section data-page-section="downloads" data-page-state="reset" className="downloadsLayout downloadsLayoutV031">
+              <section data-page-section="downloads" className="downloadsLayout downloadsLayoutV031">
                 <section className="panel downloadPanel downloadPanelV031">
                   <div className="panelHead downloadHeroHead">
                     <div>
@@ -163,15 +160,15 @@ export default function DownloadsView(props: DownloadsViewProps) {
                   />
 
                   {/* -- Source tabs -------------------------------- */}
-                  <div className="downloadTabStrip">
+                  <div className="downloadTabStrip" role="group" aria-label="Download source">
                     <button
-                      className={downloadsTab === "youtube" ? "downloadTab active" : "downloadTab"}
+                      className={downloadsTab === "youtube" ? "downloadTab active" : "downloadTab"} type="button" aria-pressed={downloadsTab === "youtube"}
                       onClick={() => setDownloadsTab("youtube")}
                     >
                       YouTube
                     </button>
                     <button
-                      className={downloadsTab === "spotify" ? "downloadTab active spotifyTab" : "downloadTab"}
+                      className={downloadsTab === "spotify" ? "downloadTab active spotifyTab" : "downloadTab"} type="button" aria-pressed={downloadsTab === "spotify"}
                       onClick={() => setDownloadsTab("spotify")}
                     >
                       <span className="spotifyTabDot" aria-hidden="true" />
@@ -184,7 +181,8 @@ export default function DownloadsView(props: DownloadsViewProps) {
                     <>
                        <textarea
                         className="downloadTextarea downloadTextareaV031"
-                        value={downloadText}
+                        aria-label="YouTube URLs"
+                         value={downloadText}
                         onChange={(event) => setDownloadText(event.currentTarget.value)}
                         placeholder={`paste YouTube links here, one per line...\nhttps://youtube.com/watch?v=...\nhttps://youtu.be/...`}
                       />

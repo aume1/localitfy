@@ -68,7 +68,7 @@ export function useCoversController({
   const [pixelArtAssets, setPixelArtAssets] = useState<RuntimePixelArtAsset[]>(() => getCachedRuntimePixelArtAssets());
   const [coverGalleryMood, setCoverGalleryMood] = useState<CoverMood>("all");
   const [coverSelectedSongIds, setCoverSelectedSongIds] = useState<string[]>([]);
-  const [favoritePixelCoverKeys, setFavoritePixelCoverKeys] = useState<string[]>(() =>
+  const [favoritePixelCoverKeys] = useState<string[]>(() =>
     cleanStringList(readLocalJson<string[]>(PIXEL_COVER_FAVORITES_STORAGE_KEY, []))
   );
   const [excludedPixelCoverKeys, setExcludedPixelCoverKeys] = useState<string[]>(() =>
@@ -466,7 +466,6 @@ export function useCoversController({
     }
   }
 
-  const togglePixelCoverFavorite = (key: string) => key && setFavoritePixelCoverKeys((oldKeys) => oldKeys.includes(key) ? oldKeys.filter((item) => item !== key) : [...oldKeys, key]);
   const togglePixelCoverExcluded = (key: string) => key && setExcludedPixelCoverKeys((oldKeys) => oldKeys.includes(key) ? oldKeys.filter((item) => item !== key) : [...oldKeys, key]);
   const toggleCoverSongSelection = (songId: string) => setCoverSelectedSongIds((oldIds) => oldIds.includes(songId) ? oldIds.filter((id) => id !== songId) : [...oldIds, songId]);
 
@@ -579,7 +578,6 @@ export function useCoversController({
     cleanupCoverCacheAction,
     chooseCoverFromPc,
     randomizeAllCovers,
-    togglePixelCoverFavorite,
     togglePixelCoverExcluded,
     toggleCoverSongSelection,
     selectCurrentSongForCovers,
