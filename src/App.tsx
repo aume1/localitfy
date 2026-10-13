@@ -522,7 +522,7 @@ function MainModeApp() {
       liked_count: likedSongs.length
     });
 
-    if (nextView === "library" || nextView === "artists" || nextView === "liked" || view === "library" || view === "artists" || view === "liked") {
+    if (nextView === "library" || nextView === "artists" || nextView === "genres" || nextView === "liked" || view === "library" || view === "artists" || view === "genres" || view === "liked") {
       trackLibraryViewChanged({
         previous_view: view,
         library_view: nextView,
@@ -2121,6 +2121,7 @@ function MainModeApp() {
 
     if (view === "library") return "";
     if (view === "artists") return `${libraryArtistCount} artist${libraryArtistCount === 1 ? "" : "s"} in your local library`;
+    if (view === "genres") return "genres from your local file tags";
     if (view === "albums") return "local albums from metadata and your custom collections";
     if (view === "playlists") return `${playlists.length} playlist${playlists.length === 1 ? "" : "s"}`;
     if (view === "liked") return `${likedSongs.length} liked track${likedSongs.length === 1 ? "" : "s"}`;
@@ -8580,6 +8581,16 @@ function MainModeApp() {
       queueArtistSongs: queueAlbumSongs,
       selectSong,
       shuffleArtistSongs: shuffleAlbumSongs,
+      songs,
+      toggleLike
+    },
+    genres: {
+      currentId,
+      openPlaylistPicker,
+      playGenreSongs: playAlbumSongs,
+      queueGenreSongs: queueAlbumSongs,
+      selectSong,
+      shuffleGenreSongs: shuffleAlbumSongs,
       songs,
       toggleLike
     },

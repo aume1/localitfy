@@ -47,6 +47,9 @@ try {
     if (status.schemaVersion !== status.expectedSchemaVersion) throw new Error("schema migration did not reach current version");
     const song = db.getSongs().find((item) => item.id === "legacy-song");
     if (!song || song.title !== "legacy title") throw new Error("legacy song was not preserved");
+    if (song.genre !== "") throw new Error("legacy song genre default is invalid");
+    db.patchSong("legacy-song", { genre: "Synthpop" });
+    if (db.getSongs().find((item) => item.id === "legacy-song")?.genre !== "Synthpop") throw new Error("genre metadata was not persisted");
     db.saveSettings({ phase3Recovery: "before-backup" });
     const backupPath = db.backupDatabase("phase3-restore-test");
     console.log(JSON.stringify({ backupPath, schemaVersion: status.schemaVersion }));
@@ -75,6 +78,7 @@ try {
     db.initDatabase(process.argv[1]);
     const song = db.getSongs().find((item) => item.id === "legacy-song");
     if (!song || song.title !== "legacy title") throw new Error("backup restore did not restore song data");
+    if (song.genre !== "Synthpop") throw new Error("backup restore did not restore genre metadata");
     const settings = db.getSettings();
     if (settings.phase3Recovery !== "before-backup") throw new Error("backup restore did not restore settings");
     const status = db.getDatabaseStatus();

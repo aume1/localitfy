@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("localitfy", {
-  bootstrap: () => ipcRenderer.invoke("app:bootstrap"),
+  bootstrap: (options) => ipcRenderer.invoke("app:bootstrap", options),
   resolvePlaybackUrl: (payload) => ipcRenderer.invoke("playback:resolve-url", payload),
 
   importSongs: () => ipcRenderer.invoke("library:import"),

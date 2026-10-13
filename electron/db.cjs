@@ -5,7 +5,7 @@ const path = require("node:path");
 const packageMetadata = require("../package.json");
 
 const APP_VERSION = String(packageMetadata?.version || "0.0.0");
-const SCHEMA_VERSION = 13;
+const SCHEMA_VERSION = 14;
 const BACKUP_KEEP_LIMIT = 8;
 
 let db = null;
@@ -26,6 +26,7 @@ const SONG_COLUMNS = {
   title: "TEXT NOT NULL DEFAULT 'untitled'",
   artist: "TEXT NOT NULL DEFAULT 'unknown artist'",
   album: "TEXT NOT NULL DEFAULT 'local files'",
+  genre: "TEXT NOT NULL DEFAULT ''",
   filePath: "TEXT UNIQUE NOT NULL",
   coverPath: "TEXT",
   coverSource: "TEXT NOT NULL DEFAULT 'none'",
@@ -171,6 +172,7 @@ function createSongsIndexes(database) {
     CREATE INDEX IF NOT EXISTS idx_songs_sourceType ON songs(sourceType);
     CREATE INDEX IF NOT EXISTS idx_songs_sourceTrackId ON songs(sourceTrackId);
     CREATE INDEX IF NOT EXISTS idx_songs_coverSource ON songs(coverSource);
+    CREATE INDEX IF NOT EXISTS idx_songs_genre ON songs(genre);
   `);
 }
 
@@ -325,6 +327,7 @@ function normalizeOldSong(row) {
     title: asText(row?.title ?? row?.name, path.parse(filePath).name || "untitled"),
     artist: asText(row?.artist, "unknown artist"),
     album: asText(row?.album, "local files"),
+    genre: asText(row?.genre ?? row?.genres, ""),
     filePath,
     coverPath: normalizedCoverPath,
     coverSource: asText(row?.coverSource ?? row?.cover_source, normalizedCoverPath ? "unknown" : "none"),
@@ -426,11 +429,11 @@ function rebuildSongsTable(database) {
   const rows = database.prepare(`SELECT * FROM ${oldTable}`).all();
   const insert = database.prepare(`
     INSERT OR IGNORE INTO songs (
-      id, title, artist, album, filePath, coverPath, coverSource, coverUpdatedAt, liked, playCount,
+      id, title, artist, album, genre, filePath, coverPath, coverSource, coverUpdatedAt, liked, playCount,
       duration, durationMs, dateAdded, lastPlayed, volumeGain, playbackPosition, customVolume,
       sourceType, sourceTrackId, sourceUrl, sourceProvider, sourceProviderUrl, sourceMatchScore
     ) VALUES (
-      @id, @title, @artist, @album, @filePath, @coverPath, @coverSource, @coverUpdatedAt, @liked, @playCount,
+      @id, @title, @artist, @album, @genre, @filePath, @coverPath, @coverSource, @coverUpdatedAt, @liked, @playCount,
       @duration, @durationMs, @dateAdded, @lastPlayed, @volumeGain, @playbackPosition, @customVolume,
       @sourceType, @sourceTrackId, @sourceUrl, @sourceProvider, @sourceProviderUrl, @sourceMatchScore
     )
@@ -483,6 +486,7 @@ function repairBrokenRows(database) {
       title = @title,
       artist = @artist,
       album = @album,
+      genre = @genre,
       coverPath = @coverPath,
       coverSource = @coverSource,
       coverUpdatedAt = @coverUpdatedAt,
@@ -514,6 +518,7 @@ function repairBrokenRows(database) {
       row.title !== normalized.title ||
       row.artist !== normalized.artist ||
       row.album !== normalized.album ||
+      String(row.genre || "") !== normalized.genre ||
       String(row.coverPath || "") !== String(normalized.coverPath || "") ||
       String(row.coverSource || "") !== String(normalized.coverSource || "") ||
       String(row.coverUpdatedAt || "") !== String(normalized.coverUpdatedAt || "") ||
@@ -575,6 +580,7 @@ function migrateSongsTable(database) {
     CREATE INDEX IF NOT EXISTS idx_songs_sourceType ON songs(sourceType);
     CREATE INDEX IF NOT EXISTS idx_songs_sourceTrackId ON songs(sourceTrackId);
     CREATE INDEX IF NOT EXISTS idx_songs_coverSource ON songs(coverSource);
+    CREATE INDEX IF NOT EXISTS idx_songs_genre ON songs(genre);
   `);
 
   return { rebuilt: false, addedColumns };
@@ -720,11 +726,11 @@ function insertSongs(songs) {
 
   const stmt = database.prepare(`
     INSERT INTO songs (
-      id, title, artist, album, filePath, coverPath, coverSource, coverUpdatedAt, liked, playCount,
+      id, title, artist, album, genre, filePath, coverPath, coverSource, coverUpdatedAt, liked, playCount,
       duration, durationMs, dateAdded, lastPlayed, volumeGain, playbackPosition, customVolume,
       sourceType, sourceTrackId, sourceUrl, sourceProvider, sourceProviderUrl, sourceMatchScore
     ) VALUES (
-      @id, @title, @artist, @album, @filePath, @coverPath, @coverSource, @coverUpdatedAt, @liked, @playCount,
+      @id, @title, @artist, @album, @genre, @filePath, @coverPath, @coverSource, @coverUpdatedAt, @liked, @playCount,
       @duration, @durationMs, @dateAdded, @lastPlayed, @volumeGain, @playbackPosition, @customVolume,
       @sourceType, @sourceTrackId, @sourceUrl, @sourceProvider, @sourceProviderUrl, @sourceMatchScore
     )
@@ -740,6 +746,10 @@ function insertSongs(songs) {
       album = CASE
         WHEN songs.album IS NULL OR TRIM(songs.album) = '' OR songs.album = 'local files' THEN excluded.album
         ELSE songs.album
+      END,
+      genre = CASE
+        WHEN excluded.genre IS NOT NULL AND TRIM(excluded.genre) <> '' THEN excluded.genre
+        ELSE songs.genre
       END,
       coverPath = CASE
         WHEN songs.coverSource = 'custom' AND songs.coverPath IS NOT NULL AND TRIM(songs.coverPath) <> '' THEN songs.coverPath
@@ -816,6 +826,7 @@ function patchSong(id, patch) {
     "title",
     "artist",
     "album",
+    "genre",
     "coverPath",
     "coverSource",
     "coverUpdatedAt",
@@ -1047,4 +1058,3 @@ module.exports = {
   repairDatabaseNow,
   getDatabaseStatus
 };
-
