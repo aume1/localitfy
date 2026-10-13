@@ -69,7 +69,6 @@ import { useCoversController } from "./features/covers";
 import { VirtualHomeSongCards, VirtualSongRows } from "./features/library/components/SongRows";
 import { useLibraryController } from "./features/library";
 import { splitArtistCredits } from "./features/artists/artistCredits";
-import { splitGenreCredits } from "./features/genres/genreCredits";
 import Onboarding from "./Onboarding";
 import CatBuddy from "./CatBuddy";
 import { PlayerPlayPauseMorphIcon } from "./features/player/PlayerPlayPauseMorphIcon";
@@ -1784,13 +1783,6 @@ function MainModeApp() {
     }
     return artistNames.size;
   }, [songs]);
-  const libraryGenreCount = useMemo(() => {
-    const genreNames = new Set<string>();
-    for (const song of songs) {
-      for (const genre of splitGenreCredits(song.genre)) genreNames.add(genre.toLocaleLowerCase());
-    }
-    return genreNames.size;
-  }, [songs]);
   const totalListenedSeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "total_listened_seconds");
   const totalMinutes = Math.floor(totalListenedSeconds / 60);
   const totalLibrarySeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "total_library_seconds");
@@ -2129,7 +2121,7 @@ function MainModeApp() {
 
     if (view === "library") return "";
     if (view === "artists") return `${libraryArtistCount} artist${libraryArtistCount === 1 ? "" : "s"} in your local library`;
-    if (view === "genres") return `${libraryGenreCount} genre${libraryGenreCount === 1 ? "" : "s"} from your local file tags`;
+    if (view === "genres") return "genres from your local file tags";
     if (view === "albums") return "local albums from metadata and your custom collections";
     if (view === "playlists") return `${playlists.length} playlist${playlists.length === 1 ? "" : "s"}`;
     if (view === "liked") return `${likedSongs.length} liked track${likedSongs.length === 1 ? "" : "s"}`;
@@ -2137,7 +2129,7 @@ function MainModeApp() {
     if (view === "downloads") return "download direct audio links and import them automatically";
     if (view === "settings") return "theme, playback, discord, library, and advanced controls";
     return "your listening numbers and favorite tracks";
-  }, [view, isPlaying, currentSong, songs.length, filteredSongs.length, likedSongs.length, playlists.length, libraryAlbumCount, libraryArtistCount, libraryGenreCount, isThreeAm, coverStats.usable, coverStats.favorites]);
+  }, [view, isPlaying, currentSong, songs.length, filteredSongs.length, likedSongs.length, playlists.length, libraryAlbumCount, libraryArtistCount, isThreeAm, coverStats.usable, coverStats.favorites]);
 
   const discordPreview = useMemo(() => buildDiscordPreview({
     settings,

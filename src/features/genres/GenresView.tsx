@@ -105,10 +105,15 @@ export default function GenresView({
   const [detailView, setDetailView] = useState<"songs" | "albums">("songs");
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [genreLimit, setGenreLimit] = useState(150);
+  const [taggedGenres, setTaggedGenres] = useState<Map<string, string> | null>(null);
+  const [loadingTags, setLoadingTags] = useState(true);
   const [trackLimit, setTrackLimit] = useState(200);
   const drawerRef = useRef<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const genres = useMemo(() => buildGenres(songs), [songs]);
+  const genres = useMemo(
+    () => buildGenres(taggedGenres ? songs.map((song) => ({ ...song, genre: taggedGenres.get(song.id) ?? song.genre })) : songs),
+    [songs, taggedGenres]
+  );
   const visibleGenres = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     if (!needle) return genres;
@@ -122,6 +127,18 @@ export default function GenresView({
   const songIds = selectedGenre?.songs.map((song) => song.id) || [];
 
   useEffect(() => setGenreLimit(150), [query]);
+
+  useEffect(() => {
+    let active = true;
+    void window.localitfy.bootstrap({ includeGenres: true })
+      .then((payload) => {
+        if (!active || !Array.isArray(payload?.songs)) return;
+        setTaggedGenres(new Map(payload.songs.map((song) => [song.id, String(song.genre || "")])));
+      })
+      .catch((error) => console.error("[localitfy genres load error]", error))
+      .finally(() => { if (active) setLoadingTags(false); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (!selectedGenreId) return;
@@ -223,8 +240,8 @@ export default function GenresView({
           centered
           tone="info"
           eyebrow="genres"
-          title={songs.length ? "No genres found" : "No genres yet"}
-          message={songs.length ? "Try a different genre, or add genre tags to your music files." : "Import songs and Localtify will build this shelf from their genre tags."}
+          title={loadingTags && !query ? "Reading genre tags" : songs.length ? "No genres found" : "No genres yet"}
+          message={loadingTags && !query ? "Checking the genre tags in your local library." : songs.length ? "Try a different genre, or add genre tags to your music files." : "Import songs and Localtify will build this shelf from their genre tags."}
           actions={query ? <button type="button" className="softButton" onClick={() => setQuery("")}>clear search</button> : undefined}
         />
       )}

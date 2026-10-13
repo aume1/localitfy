@@ -580,6 +580,7 @@ function migrateSongsTable(database) {
     CREATE INDEX IF NOT EXISTS idx_songs_sourceType ON songs(sourceType);
     CREATE INDEX IF NOT EXISTS idx_songs_sourceTrackId ON songs(sourceTrackId);
     CREATE INDEX IF NOT EXISTS idx_songs_coverSource ON songs(coverSource);
+    CREATE INDEX IF NOT EXISTS idx_songs_genre ON songs(genre);
   `);
 
   return { rebuilt: false, addedColumns };
