@@ -43,6 +43,7 @@ const requiredOwners = [
   ["src/features/home/HomeView.tsx", './home.css'],
   ["src/features/library/LibraryView.tsx", './library.css'],
   ["src/features/artists/ArtistsView.tsx", './artists.css'],
+  ["src/features/genres/GenresView.tsx", './genres.css'],
   ["src/Onboarding.tsx", './features/onboarding/onboarding.css'],
   ["src/features/player/components/PlayerBar.tsx", '../player.css'],
   ["src/features/settings/SettingsView.tsx", './settings.css'],
@@ -56,7 +57,7 @@ if (library.includes('data-page-state="reset"')) fail("LibraryView returned to t
 
 const shell = read("src/features/shell/AppShell.tsx");
 for (const specifier of ["./app-core.css", "./motion.css", "./effects.css", "../../styles/view-shell.css"]) if (!shell.includes('import "' + specifier + '";')) fail("AppShell missing shell CSS owner " + specifier);
-for (const modulePath of ["library/LibraryView", "artists/ArtistsView", "albums/AlbumsView", "playlists/PlaylistsView", "covers/CoversView", "analytics/AnalyticsView", "settings/SettingsView", "downloads/DownloadsView"]) {
+for (const modulePath of ["library/LibraryView", "artists/ArtistsView", "genres/GenresView", "albums/AlbumsView", "playlists/PlaylistsView", "covers/CoversView", "analytics/AnalyticsView", "settings/SettingsView", "downloads/DownloadsView"]) {
   if (!shell.includes('lazy(() => import("../' + modulePath + '"))')) fail("AppShell must lazy-load " + modulePath);
 }
 
@@ -93,7 +94,8 @@ const cssBudgets = [
   ["src/features/player/player.css", 75 * 1024, 819], ["src/features/shell/effects.css", 65 * 1024, 662],
   ["src/styles/themes.css", 83 * 1024, 2], ["src/styles/view-shell.css", 20 * 1024, 198],
   ["src/styles/page-foundation.css", 8 * 1024, 12], ["src/features/home/home.css", 20 * 1024, 11],
-  ["src/features/library/library.css", 24 * 1024, 95], ["src/features/artists/artists.css", 12 * 1024, 0]
+  ["src/features/library/library.css", 24 * 1024, 95], ["src/features/artists/artists.css", 12 * 1024, 0],
+  ["src/features/genres/genres.css", 4 * 1024, 0]
 ];
 for (const [file, maxBytes, maxImportant] of cssBudgets) {
   if (!exists(file)) { fail(file + ": required CSS owner missing"); continue; }
@@ -108,7 +110,7 @@ for (const [file, maxBytes, maxImportant] of cssBudgets) {
 const anyBudgets = [
   ["src/App.tsx", 38], ["src/features/albums/AlbumsView.tsx", 69], ["src/features/downloads/DownloadsView.tsx", 54],
   ["src/features/playlists/PlaylistsView.tsx", 37], ["src/features/player/components/PlayerBar.tsx", 0],
-  ["src/features/library/LibraryView.tsx", 0], ["src/features/artists/ArtistsView.tsx", 0], ["src/features/covers/CoversView.tsx", 0],
+  ["src/features/library/LibraryView.tsx", 0], ["src/features/artists/ArtistsView.tsx", 0], ["src/features/genres/GenresView.tsx", 0], ["src/features/covers/CoversView.tsx", 0],
   ["src/features/analytics/AnalyticsView.tsx", 0], ["src/features/analytics/analyticsSnapshot.ts", 0]
 ];
 for (const [file, maxAny] of anyBudgets) {

@@ -12,6 +12,7 @@ const { createWindowTranslucencyRuntime } = require("./runtime/translucency.cjs"
 const { createIconRuntime } = require("./runtime/icons.cjs");
 const { createUpdaterRuntime } = require("./runtime/updater.cjs");
 const { createMediaServerRuntime } = require("./runtime/media-server.cjs");
+const { createGenreMetadataBackfill } = require("./runtime/genre-backfill.cjs");
 const { installRendererSecurityGuards, installSessionPermissionGuards, isTrustedMainFrameIpcEvent } = require("./runtime/security.cjs");
 const { createDatabaseRepositories } = require("./db/repositories.cjs");
 const http = require("node:http");
@@ -127,6 +128,11 @@ function yieldToMainLoop() {
     else setTimeout(resolve, MAIN_TASK_YIELD_MS);
   });
 }
+
+const genreMetadataBackfill = createGenreMetadataBackfill({
+  getSettings, saveSettings, getSongs, patchSong, fileExists, isAudioFile,
+  readLocalAudioMetadata, yieldToMainLoop
+});
 
 function clearFileInfoCache() {
   fileInfoCache.clear();
@@ -1392,6 +1398,7 @@ async function makeSongFromFile(filePath, pixelArtFiles = [], usedCovers = new S
   title = String(metadata?.title || title || parsed.name || "untitled").trim();
   artist = String(metadata?.artist || artist || "unknown artist").trim();
   const album = String(metadata?.album || options.album || "").trim();
+  const genre = String(metadata?.genre || options.genre || "").trim();
   let fallbackCover = "";
   if (pixelArtFiles.length) {
     const available = pixelArtFiles.filter((p) => !usedCovers.has(p));
@@ -1409,7 +1416,7 @@ async function makeSongFromFile(filePath, pixelArtFiles = [], usedCovers = new S
   if (coverResult.coverSource === "fallback" && coverResult.coverPath) usedCovers.add(coverResult.coverPath);
   const durationMs = Math.max(0, Number(metadata?.durationMs || options.durationMs || 0));
   const duration = Math.max(0, Number(metadata?.duration || Math.round(durationMs / 1000) || options.duration || 0));
-  return { id, title, artist, album, filePath, coverPath: coverResult.coverPath || "", coverSource: coverResult.coverSource || "none", coverUpdatedAt: coverResult.coverUpdatedAt || new Date().toISOString(), duration, durationMs: durationMs || (duration > 0 ? duration * 1000 : 0), track: Number(metadata?.track || 0) || 0, disc: Number(metadata?.disc || 0) || 0, year: metadata?.year || "", bitrate: 0, addedAt: Date.now() };
+  return { id, title, artist, album, genre, filePath, coverPath: coverResult.coverPath || "", coverSource: coverResult.coverSource || "none", coverUpdatedAt: coverResult.coverUpdatedAt || new Date().toISOString(), duration, durationMs: durationMs || (duration > 0 ? duration * 1000 : 0), track: Number(metadata?.track || 0) || 0, disc: Number(metadata?.disc || 0) || 0, year: metadata?.year || "", bitrate: 0, addedAt: Date.now() };
 }
 
 function normalizeForLooseMatch(value = "") {
@@ -1603,6 +1610,7 @@ async function buildAlbumFolderPreview(folderPath, index = 0) {
       title: cleanAlbumFolderText(tagMetadata?.title, filenameMetadata.title),
       artist: cleanAlbumFolderText(tagMetadata?.artist, filenameMetadata.artist),
       album: cleanAlbumFolderText(tagMetadata?.album, filenameMetadata.album),
+      genre: String(tagMetadata?.genre || "").trim(),
       duration: durationMs > 0 ? Math.round(durationMs / 1000) : Number(tagMetadata?.duration || 0) || 0,
       durationMs,
       disc: Number(tagMetadata?.disc || 1) || 1,
@@ -1727,6 +1735,7 @@ async function handleAlbumFolderImport(event, payload = {}) {
         title: cleanAlbumFolderText(track.title || metadata?.title, existingSong.title || "track"),
         artist: cleanAlbumFolderText(track.artist || metadata?.artist, existingSong.artist || album.artist || "unknown artist"),
         album: cleanAlbumFolderText(album.title || track.album || metadata?.album, existingSong.album || "local album"),
+        genre: String(track.genre || metadata?.genre || existingSong.genre || "").trim(),
         sourceType: "local",
         sourceProvider: "album-folder",
         sourceUrl: album.sourcePath || "",
@@ -1748,7 +1757,7 @@ async function handleAlbumFolderImport(event, payload = {}) {
     const baseSong = await makeSongFromFile(filePath, pixelArtFiles, usedCovers, { album: album.title || track.album || "", folderCoverPath, albumEmbeddedCoverPath, preferFolderCover: Boolean(folderCoverPath) });
     const durationMs = Math.max(0, Number(track.durationMs || 0), Number(baseSong.durationMs || 0), Number(track.duration || 0) > 0 ? Number(track.duration) * 1000 : 0, Number(baseSong.duration || 0) > 0 ? Number(baseSong.duration) * 1000 : 0);
     const duration = durationMs > 0 ? Math.round(durationMs / 1000) : Math.max(0, Number(track.duration || 0), Number(baseSong.duration || 0));
-    importedSongs.push({ ...baseSong, title: cleanAlbumFolderText(track.title, baseSong.title || "track"), artist: cleanAlbumFolderText(track.artist, baseSong.artist || album.artist || "unknown artist"), album: cleanAlbumFolderText(album.title || track.album, baseSong.album || "local album"), coverPath: baseSong.coverPath || "", coverSource: baseSong.coverSource || "none", coverUpdatedAt: baseSong.coverUpdatedAt || new Date().toISOString(), duration, durationMs: durationMs || (duration > 0 ? duration * 1000 : 0), sourceType: "local", sourceProvider: "album-folder", sourceUrl: album.sourcePath || "", sourceProviderUrl: album.sourcePath || "" });
+    importedSongs.push({ ...baseSong, title: cleanAlbumFolderText(track.title, baseSong.title || "track"), artist: cleanAlbumFolderText(track.artist, baseSong.artist || album.artist || "unknown artist"), album: cleanAlbumFolderText(album.title || track.album, baseSong.album || "local album"), genre: String(track.genre || baseSong.genre || "").trim(), coverPath: baseSong.coverPath || "", coverSource: baseSong.coverSource || "none", coverUpdatedAt: baseSong.coverUpdatedAt || new Date().toISOString(), duration, durationMs: durationMs || (duration > 0 ? duration * 1000 : 0), sourceType: "local", sourceProvider: "album-folder", sourceUrl: album.sourcePath || "", sourceProviderUrl: album.sourcePath || "" });
     existingPaths.add(fileKey);
   }
 
@@ -1885,10 +1894,12 @@ async function repairMissingSongMetadata(payload = {}) {
     const title = String(metadata?.title || "").trim();
     const artist = String(metadata?.artist || "").trim();
     const album = String(metadata?.album || "").trim();
+    const genre = String(metadata?.genre || "").trim();
     if (!durationOnly) {
       if (title && (!song.title || song.title === path.parse(song.filePath).name)) patch.title = title;
       if (artist && (!song.artist || song.artist === "unknown artist")) patch.artist = artist;
       if (album && (!song.album || song.album === "local files")) patch.album = album;
+      if (genre && (force || !song.genre)) patch.genre = genre;
     }
     const metadataDurationMs = Math.max(0, Number(metadata?.durationMs || 0), Number(metadata?.duration || 0) > 0 ? Number(metadata.duration) * 1000 : 0);
     if (!coverOnly && metadataDurationMs > 0 && (force || Number(song.duration || 0) <= 0 || Number(song.durationMs || 0) <= 0)) {
@@ -2369,6 +2380,7 @@ app.whenReady().then(async () => {
 
   ipcRouter.handle("app:bootstrap", async () => {
     await yieldToMainLoop();
+    await genreMetadataBackfill.run();
     scheduleCoverThumbnailWarmup();
     return {
       songs: listSongsShaped(),

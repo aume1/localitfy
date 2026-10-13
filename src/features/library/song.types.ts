@@ -3,6 +3,7 @@ export type Song = {
   title: string;
   artist: string;
   album: string;
+  genre?: string;
   filePath: string;
   /** Runtime-only playback URL. Persisted URLs must not be trusted across runs. */
   url: string;

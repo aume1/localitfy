@@ -33,6 +33,7 @@ import "../../styles/view-shell.css";
 
 const LibraryView = lazy(() => import("../library/LibraryView"));
 const ArtistsView = lazy(() => import("../artists/ArtistsView"));
+const GenresView = lazy(() => import("../genres/GenresView"));
 const AlbumsView = lazy(() => import("../albums/AlbumsView"));
 const PlaylistsView = lazy(() => import("../playlists/PlaylistsView"));
 const CoversView = lazy(() => import("../covers/CoversView"));
@@ -45,7 +46,7 @@ export type { AppShellProps } from "./appShell.contract";
 export default function AppShell(props: AppShellProps) {
   const {
     frame, updates, screensaver, effects, onboarding, navigation,
-    home, library, artists, albums, playlists, covers, analytics, settingsView, downloads,
+    home, library, artists, genres, albums, playlists, covers, analytics, settingsView, downloads,
     playerBar, modals, playbackAudio
   } = props;
 
@@ -362,6 +363,7 @@ export default function AppShell(props: AppShellProps) {
                   {view === "home" && greeting}
                   {view === "library" && "your library"}
                   {view === "artists" && "artists"}
+                  {view === "genres" && "genres"}
                   {view === "albums" && "albums"}
                   {view === "playlists" && "playlists"}
                   {view === "liked" && "liked songs"}
@@ -435,6 +437,7 @@ export default function AppShell(props: AppShellProps) {
               <Suspense fallback={null}>
                 {(view === "library" || view === "liked") ? <LibraryView {...library} /> : null}
                 {view === "artists" ? <ArtistsView {...artists} /> : null}
+                {view === "genres" ? <GenresView {...genres} /> : null}
                 {view === "albums" ? <AlbumsView {...albums} /> : null}
                 {view === "playlists" ? <PlaylistsView {...playlists} /> : null}
                 {view === "covers" ? <CoversView {...covers} /> : null}
