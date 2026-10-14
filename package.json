@@ -42,7 +42,8 @@
     "hardening:check": "npm run check && npm run performance:check",
     "release:check": "npm run hardening:check && npm run assets:compress:dry && npm run chunks:audit",
     "css:hygiene": "node scripts/css-hygiene.mjs",
-    "bridge:typecheck": "tsc -p tsconfig.bridge.json --pretty false"
+    "bridge:typecheck": "tsc -p tsconfig.bridge.json --pretty false",
+    "audit:dead": "node scripts/audit-unused.mjs --full"
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",
