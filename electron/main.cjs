@@ -2627,6 +2627,7 @@ app.whenReady().then(async () => {
     try {
       repairDatabaseNow();
       mediaServerRuntime.clearTokens();
+      coverThumbnailUrlCache.clear();
       return { ok: true, status: getDatabaseStatus(), songs: listSongsShaped() };
     } catch (e) { return { ok: false, error: e?.message }; }
   });

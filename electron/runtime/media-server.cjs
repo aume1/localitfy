@@ -8,7 +8,10 @@ const { MEDIA_PROTOCOL } = require("./protocols.cjs");
 const MEDIA_PROTOCOL_HOST = "file";
 const MEDIA_SERVER_HOST = "127.0.0.1";
 const MEDIA_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
-const MEDIA_TOKEN_MAX_ENTRIES = 2500;
+// A large local library can need a full-size and thumbnail token per track.
+// Keep enough live tokens for sizeable collections so early covers are not
+// evicted while the initial library payload is still being shaped.
+const MEDIA_TOKEN_MAX_ENTRIES = 20000;
 
 function createMediaServerRuntime({ protocol, net, getFileInfoCached, fileExists }) {
   if (!protocol || !net) throw new Error("media server runtime requires Electron protocol and net");
@@ -318,6 +321,7 @@ function createMediaServerRuntime({ protocol, net, getFileInfoCached, fileExists
 }
 
 module.exports = {
+  MEDIA_TOKEN_MAX_ENTRIES,
   MEDIA_TOKEN_TTL_MS,
   createMediaServerRuntime
 };

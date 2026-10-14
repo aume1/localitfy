@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const mainSource = fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8");
-const { createMediaServerRuntime, MEDIA_TOKEN_TTL_MS } = require(path.join(root, "electron", "runtime", "media-server.cjs"));
+const { createMediaServerRuntime, MEDIA_TOKEN_MAX_ENTRIES, MEDIA_TOKEN_TTL_MS } = require(path.join(root, "electron", "runtime", "media-server.cjs"));
 
 test("media serving is owned outside Electron main", () => {
   assert.match(mainSource, /createMediaServerRuntime/);
@@ -46,4 +46,16 @@ test("media runtime keeps protocol fallback and token ownership", () => {
   assert.equal(runtime.getMediaFileVersion(fakePath).version, "1234-4");
   assert.doesNotThrow(() => runtime.clearTokens());
   assert.doesNotThrow(() => runtime.stop());
+});
+
+test("media token capacity supports large local libraries", () => {
+  assert.ok(MEDIA_TOKEN_MAX_ENTRIES >= 10000, "cover tokens must not churn during a multi-thousand-track library load");
+});
+
+test("database repair clears thumbnail URLs backed by discarded media tokens", () => {
+  assert.match(
+    mainSource,
+    /mediaServerRuntime\.clearTokens\(\);\s*coverThumbnailUrlCache\.clear\(\);/,
+    "cached thumbnail URLs must be invalidated whenever their media tokens are cleared"
+  );
 });
