@@ -1796,7 +1796,11 @@ function MainModeApp() {
   const missingFileCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "missing_file_count");
   const missingSongs = missingSongsForLibrary;
   const effectiveMissingFileCount = Math.max(missingFileCount, missingSongs.length);
-  const libraryHealthPercent = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "library_health_percent");
+  // Derive from live songs: the worker snapshot lags a round trip behind setSongs.
+  // Floor so any missing file keeps the tile below 100%.
+  const libraryHealthPercent = songs.length
+    ? Math.max(0, Math.floor(((songs.length - effectiveMissingFileCount) / songs.length) * 100))
+    : 0;
   const monthImportCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "month_import_count");
   const monthImportSeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "month_import_seconds");
   const monthArtistCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "month_artist_count");
