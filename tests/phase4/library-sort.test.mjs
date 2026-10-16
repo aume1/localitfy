@@ -41,7 +41,7 @@ test("library view exposes the sort and blocks reordering while sorted", () => {
   assert.match(app, /sortLibrarySongs\(unsortedVisibleSongs, librarySortMode\)/);
   assert.match(app, /const libraryOrderLocked = librarySortMode !== "library" && \(view === "library" \|\| view === "liked"\)/);
   for (const handler of ["handleLibraryDragOver", "handleLibraryDrop", "handleLibraryAreaDragOver", "handleLibraryAreaDrop"]) {
-    assert.match(app, new RegExp(`function ${handler}\\([^)]*\\) \\{\\n    if \\(libraryOrderLocked\\) return;`));
+    assert.match(app, new RegExp(`function ${handler}\\([^)]*\\) \\{\\s+if \\(libraryOrderLocked\\) return;`));
   }
   assert.match(app, /if \(event\.button !== 0 \|\| !songId \|\| libraryOrderLocked\) return;/);
 });
