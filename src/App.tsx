@@ -144,6 +144,7 @@ import {
   maybeApplyCoderpixelArtist,
   reorderSongList,
   saveLibraryOrder,
+  sortLibrarySongs,
   stableSongSourceKey
 } from "./features/library";
 import {
@@ -313,6 +314,7 @@ function MainModeApp() {
     editAlbum, setEditAlbum,
     query, setQuery, deferredQuery,
     libraryFilterMode, setLibraryFilterMode,
+    librarySortMode, setLibrarySortMode,
     libraryRenderLimit, setLibraryRenderLimit,
     libraryRenderLimitRef, libraryListLengthRef,
     songContextMenu, setSongContextMenu,
@@ -1691,12 +1693,17 @@ function MainModeApp() {
 
   const mostPlayed = topSongs[0] ?? null;
   const missingSongsForLibrary = useMemo(() => songs.filter((song) => song.fileExists === false), [songs]);
-  const visibleSongs =
+  const unsortedVisibleSongs =
     view === "liked"
       ? likedSongs
       : view === "library" && libraryFilterMode === "missing"
         ? missingSongsForLibrary
         : filteredSongs;
+  const visibleSongs = useMemo(
+    () => sortLibrarySongs(unsortedVisibleSongs, librarySortMode),
+    [unsortedVisibleSongs, librarySortMode]
+  );
+  const libraryOrderLocked = librarySortMode !== "library" && (view === "library" || view === "liked");
 
   useEffect(() => {
     libraryListLengthRef.current = visibleSongs.length;
@@ -6454,7 +6461,7 @@ function MainModeApp() {
   }, [moveSongInLibraryByPointer]);
 
   function startPointerSongDrag(event: PointerEvent<HTMLElement>, songId: string) {
-    if (event.button !== 0 || !songId) return;
+    if (event.button !== 0 || !songId || libraryOrderLocked) return;
 
     const blockedDragOrigin =
       event.target instanceof HTMLElement
@@ -6593,6 +6600,7 @@ function MainModeApp() {
   }
 
   function handleLibraryDragOver(event: DragEvent<HTMLElement>, targetSongId: string) {
+    if (libraryOrderLocked) return;
     const songId = readDraggedSongId(event);
     if (!songId || songId === targetSongId || !songsById.has(songId)) return;
 
@@ -6611,6 +6619,7 @@ function MainModeApp() {
   }
 
   function handleLibraryDrop(event: DragEvent<HTMLElement>, targetSongId: string) {
+    if (libraryOrderLocked) return;
     const songId = readDraggedSongId(event);
     if (!songId || songId === targetSongId || !songsById.has(songId)) return;
 
@@ -6632,6 +6641,7 @@ function MainModeApp() {
   }
 
   function handleLibraryAreaDragOver(event: DragEvent<HTMLElement>) {
+    if (libraryOrderLocked) return;
     const songId = readDraggedSongId(event);
     if (!songId || !songsById.has(songId)) return;
 
@@ -6651,6 +6661,7 @@ function MainModeApp() {
   }
 
   function handleLibraryAreaDrop(event: DragEvent<HTMLElement>) {
+    if (libraryOrderLocked) return;
     const songId = readDraggedSongId(event);
     if (!songId || !songsById.has(songId)) return;
 
@@ -8559,6 +8570,7 @@ function MainModeApp() {
       libraryAlbumCount,
       libraryArtistCount,
       libraryMissingLabel: `${effectiveMissingFileCount || missingSongs.length} missing file${(effectiveMissingFileCount || missingSongs.length) === 1 ? "" : "s"}`,
+      librarySortMode,
       missingFileCount: effectiveMissingFileCount,
       now,
       playlists,
@@ -8567,6 +8579,7 @@ function MainModeApp() {
       renderHomeSongCards,
       renderSongRows,
       setLibraryFilterMode,
+      setLibrarySortMode,
       settings,
       showingMissingFiles: view === "library" && libraryFilterMode === "missing",
       shuffleLibrarySongsAction,
