@@ -2,6 +2,8 @@ import "./albums.css";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { Check, FolderInput, FolderTree, ListPlus, Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
+import { ActionLabel } from "../../shared/ui/ActionLabel";
 import { Cover } from "../covers/Cover";
 import { CheckMiniIcon, EmptyCoverIcon, LocaltifyStateCard, PlusMiniIcon } from "../../shared/ui/LocaltifyViewUi";
 import { LikeHeartAnimationV443 } from "../library/components/SongRows";
@@ -72,6 +74,9 @@ export type AlbumsViewProps = {
   toggleAlbumDraftSong: any;
   toggleLike: any;
   visibleAlbums: any;
+  /** Opens an album's drawer from outside the page, e.g. the player bar. */
+  focusAlbumRequest?: { albumId: string; nonce: number } | null;
+  onFocusAlbumHandled?: () => void;
 };
 
 export default function AlbumsView(props: AlbumsViewProps) {
@@ -79,6 +84,8 @@ export default function AlbumsView(props: AlbumsViewProps) {
   const albumDetailRef = useRef<HTMLElement | null>(null);
   const albumTriggerRef = useRef<HTMLButtonElement | null>(null);
   const {
+    focusAlbumRequest,
+    onFocusAlbumHandled,
     albumBuilderOpen,
     albumBuilderMode,
     albumDeleteConfirmArmed,
@@ -192,6 +199,14 @@ export default function AlbumsView(props: AlbumsViewProps) {
     if (albumDetailOpen && !selectedAlbum) setAlbumDetailOpen(false);
   }, [albumDetailOpen, selectedAlbum]);
 
+  useEffect(() => {
+    if (!focusAlbumRequest) return;
+    albumTriggerRef.current = null;
+    setSelectedAlbumId(focusAlbumRequest.albumId);
+    setAlbumDetailOpen(true);
+    onFocusAlbumHandled?.();
+  }, [focusAlbumRequest?.nonce]);
+
   function closeAlbumDetail(restoreFocus = true) {
     setAlbumDetailOpen(false);
     if (!restoreFocus) return;
@@ -223,10 +238,10 @@ export default function AlbumsView(props: AlbumsViewProps) {
                       group albums from file tags, build your own, or import real album folders from disk.
                     </p>
                     <div className="albumsHeroActionsV318">
-                      <button className="mainAction" type="button" onClick={() => openCreateAlbumBuilder(currentSong || songs[0] || null)}>add album</button>
-                      <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("single")} disabled={albumFolderImportBusy}>import album folder</button>
-                      <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("library")} disabled={albumFolderImportBusy}>import album library</button>
-                      <button className={`heroGhost danger ${albumDeleteConfirmArmed ? "confirmArmed" : ""}`} type="button" onClick={() => void deleteAllAlbums()} disabled={!manualAlbums.length && !metadataAlbums.length}>{albumDeleteConfirmArmed ? "sure? delete" : "delete all albums"}</button>
+                      <button className="mainAction" type="button" onClick={() => openCreateAlbumBuilder(currentSong || songs[0] || null)}><ActionLabel icon={Plus}>add album</ActionLabel></button>
+                      <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("single")} disabled={albumFolderImportBusy}><ActionLabel icon={FolderInput}>import album folder</ActionLabel></button>
+                      <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("library")} disabled={albumFolderImportBusy}><ActionLabel icon={FolderTree}>import album library</ActionLabel></button>
+                      <button className={`heroGhost danger ${albumDeleteConfirmArmed ? "confirmArmed" : ""}`} type="button" onClick={() => void deleteAllAlbums()} disabled={!manualAlbums.length && !metadataAlbums.length}><ActionLabel icon={Trash2}>{albumDeleteConfirmArmed ? "sure? delete" : "delete all albums"}</ActionLabel></button>
                     </div>
                   </div>
                   <div className="albumsHeroStatsV318" aria-label="album summary">
@@ -246,10 +261,10 @@ export default function AlbumsView(props: AlbumsViewProps) {
                       </div>
 
                       <div className="albumFolderImportActionsV309">
-                        <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("single")} disabled={albumFolderImportBusy}>import one album</button>
-                        <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("library")} disabled={albumFolderImportBusy}>import album library</button>
+                        <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("single")} disabled={albumFolderImportBusy}><ActionLabel icon={FolderInput}>import one album</ActionLabel></button>
+                        <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("library")} disabled={albumFolderImportBusy}><ActionLabel icon={FolderTree}>import album library</ActionLabel></button>
                         {(albumFolderImportPreview || albumFolderImportMessage) && !albumFolderImportBusy ? (
-                          <button className="heroGhost" type="button" onClick={cancelAlbumFolderImportPreview}>clear</button>
+                          <button className="heroGhost" type="button" onClick={cancelAlbumFolderImportPreview}><ActionLabel icon={X}>clear</ActionLabel></button>
                         ) : null}
                       </div>
                     </div>
@@ -402,15 +417,15 @@ export default function AlbumsView(props: AlbumsViewProps) {
                           {selectedAlbumIsFolder && (selectedAlbum as any).sourcePath ? <span title={(selectedAlbum as any).sourcePath}>folder import</span> : null}
                         </div>
                         <div className="albumActionRowV318">
-                          <button className="mainAction" type="button" onClick={() => playAlbumSongs?.(selectedAlbumIds, selectedAlbum.title)} disabled={!selectedAlbumIds.length || !playAlbumSongs}>play</button>
-                          <button className="heroGhost" type="button" onClick={() => shuffleAlbumSongs?.(selectedAlbumIds, selectedAlbum.title)} disabled={selectedAlbumIds.length < 2 || !shuffleAlbumSongs}>shuffle</button>
-                          <button className="heroGhost" type="button" onClick={() => queueAlbumSongs?.(selectedAlbumIds, selectedAlbum.title)} disabled={!selectedAlbumIds.length || !queueAlbumSongs}>queue</button>
+                          <button className="mainAction" type="button" onClick={() => playAlbumSongs?.(selectedAlbumIds, selectedAlbum.title)} disabled={!selectedAlbumIds.length || !playAlbumSongs}><ActionLabel icon={Play}>play</ActionLabel></button>
+                          <button className="heroGhost" type="button" onClick={() => shuffleAlbumSongs?.(selectedAlbumIds, selectedAlbum.title)} disabled={selectedAlbumIds.length < 2 || !shuffleAlbumSongs}><ActionLabel icon={Shuffle}>shuffle</ActionLabel></button>
+                          <button className="heroGhost" type="button" onClick={() => queueAlbumSongs?.(selectedAlbumIds, selectedAlbum.title)} disabled={!selectedAlbumIds.length || !queueAlbumSongs}><ActionLabel icon={ListPlus}>queue</ActionLabel></button>
                           {selectedAlbumIsManual ? <button className="heroGhost" type="button" onClick={() => {
                             closeAlbumDetail(false);
                             openEditAlbumBuilder(selectedAlbum);
-                          }}>edit</button> : null}
+                          }}><ActionLabel icon={Pencil}>edit</ActionLabel></button> : null}
                           <button className="heroGhost danger" type="button" onClick={() => void deleteSelectedAlbum()} disabled={!selectedAlbumIds.length && !selectedAlbumIsManual}>
-                            {selectedAlbumIsManual ? "delete album" : "remove tag album"}
+                            <ActionLabel icon={Trash2}>{selectedAlbumIsManual ? "delete album" : "remove tag album"}</ActionLabel>
                           </button>
                         </div>
                       </div>
@@ -530,8 +545,8 @@ export default function AlbumsView(props: AlbumsViewProps) {
                           <span>{albumDraftSongIds.length ? `${albumDraftSongIds.length} selected cover fits square` : "choose songs for this album"}</span>
                         </div>
                         <div className="albumBuilderActionsV318">
-                          {albumBuilderMode === "edit" && selectedAlbumIsManual ? <button className="heroGhost danger" type="button" onClick={() => deleteManualAlbum(selectedAlbum)}>delete</button> : null}
-                          <button className="mainAction" type="button" onClick={saveManualAlbumFromDraft} disabled={!albumDraftSongIds.length}>{albumBuilderMode === "edit" ? "save album" : "create album"}</button>
+                          {albumBuilderMode === "edit" && selectedAlbumIsManual ? <button className="heroGhost danger" type="button" onClick={() => deleteManualAlbum(selectedAlbum)}><ActionLabel icon={Trash2}>delete</ActionLabel></button> : null}
+                          <button className="mainAction" type="button" onClick={saveManualAlbumFromDraft} disabled={!albumDraftSongIds.length}><ActionLabel icon={Check}>{albumBuilderMode === "edit" ? "save album" : "create album"}</ActionLabel></button>
                         </div>
                       </div>
                     </div>

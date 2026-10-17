@@ -1,10 +1,13 @@
-import type { CSSProperties, Dispatch, DragEventHandler, MutableRefObject, PointerEventHandler, SetStateAction } from "react";
-import { Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { Fragment } from "react";
+import type { CSSProperties, Dispatch, DragEventHandler, MouseEvent as ReactMouseEvent, MutableRefObject, PointerEventHandler, SetStateAction } from "react";
+import { ListMusic, Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
 import "../player.css";
 import { Cover } from "../../covers/Cover";
 import { PlayerPlayPauseMorphIcon } from "../PlayerPlayPauseMorphIcon";
 import { formatTime } from "../../../shared/utils/format";
 import { prettyMeta, prettyTitle } from "../../search/search.utils";
+import { splitArtistCredits } from "../../artists/artistCredits";
+import { LikeHeartAnimationV443 } from "../../library/components/SongRows";
 import type { Song } from "../../library/song.types";
 import type { Settings } from "../../settings/settings.types";
 import type { CoverColorSyncMode } from "../../settings/theme.types";
@@ -28,7 +31,10 @@ export type PlayerBarProps = {
   isSeeking: boolean;
   isShuffle: boolean;
   isVolumeDragging: boolean;
+  nowPlayingContextLabel: string;
   nowPlayingSongMotionClass: string;
+  openArtistPage: (artistName: string) => unknown;
+  openSongContextMenu: (event: ReactMouseEvent<HTMLElement>, song: Song) => unknown;
   nowPlayingTransitionKey: string | number;
   playButtonBurst: number;
   playNext: (automatic?: boolean, source?: string) => unknown;
@@ -40,16 +46,21 @@ export type PlayerBarProps = {
   progressRangeStyle: CSSProperties;
   progressTimeLabelRefs: MutableRefObject<Array<HTMLSpanElement | null>>;
   queueDropHot: boolean;
+  queueCount: number;
+  queuePanelOpen: boolean;
   repeatButtonAriaLabel: string;
   repeatButtonStateText: string;
   repeatButtonTitle: string;
   repeatMode: RepeatMode;
+  revealNowPlaying: () => unknown;
   setIsShuffle: Dispatch<SetStateAction<boolean>>;
   setIsVolumeDragging: Dispatch<SetStateAction<boolean>>;
   settings: Pick<Settings, "volume">;
   startPlayerResize: PointerEventHandler<HTMLButtonElement>;
   startSeekPreview: (value: string, input: HTMLInputElement) => unknown;
+  toggleLike: (songId: string) => unknown;
   togglePlay: () => unknown;
+  toggleQueuePanel: () => unknown;
   toggleRepeat: () => unknown;
   updateSetting: (key: "volume", value: number, persist?: boolean) => unknown;
   volumeDraft: number;
@@ -76,8 +87,11 @@ export default function PlayerBar(props: PlayerBarProps) {
     isSeeking,
     isShuffle,
     isVolumeDragging,
+    nowPlayingContextLabel,
     nowPlayingSongMotionClass,
     nowPlayingTransitionKey,
+    openArtistPage,
+    openSongContextMenu,
     playButtonBurst,
     playNext,
     playPrevious,
@@ -87,17 +101,22 @@ export default function PlayerBar(props: PlayerBarProps) {
     progressInputRefs,
     progressRangeStyle,
     progressTimeLabelRefs,
+    queueCount,
     queueDropHot,
+    queuePanelOpen,
     repeatButtonAriaLabel,
     repeatButtonStateText,
     repeatButtonTitle,
     repeatMode,
+    revealNowPlaying,
     setIsShuffle,
     setIsVolumeDragging,
     settings,
     startPlayerResize,
     startSeekPreview,
+    toggleLike,
     togglePlay,
+    toggleQueuePanel,
     toggleRepeat,
     updateSetting,
     volumeDraft,
@@ -126,17 +145,55 @@ export default function PlayerBar(props: PlayerBarProps) {
               drop to play next
             </div>
 
-            <div className="playerLeft">
+            <div
+              className="playerLeft"
+              onContextMenu={(event) => {
+                if (currentSong) openSongContextMenu(event, currentSong);
+              }}
+            >
               <div className={`playerArtSwap nowPlayingPlayerArtSwap ${nowPlayingSongMotionClass}`} data-song-motion-key={nowPlayingTransitionKey}>
                 <Cover song={currentSong} className="smallArt" priority="high" />
               </div>
 
               <div className={`playerMeta nowPlayingMiniCopySwap ${nowPlayingSongMotionClass}`} data-song-motion-key={nowPlayingTransitionKey}>
-                <strong className={`nowPlayingMiniTitleSwap ${nowPlayingSongMotionClass}`} title={currentSong ? currentSong.title : ""}>
-                  {currentSong ? prettyTitle(currentSong.title, 7) : "nothing playing"}
-                </strong>
-                <p className={`nowPlayingMiniArtistSwap ${nowPlayingSongMotionClass}`}>{currentSong ? prettyMeta(currentSong.artist) : "import a song to begin"}</p>
+                {currentSong ? (
+                  <>
+                    <strong className={`nowPlayingMiniTitleSwap ${nowPlayingSongMotionClass}`}>
+                      <button type="button" className="playerMetaLink" onClick={revealNowPlaying} title={`${currentSong.title} · ${nowPlayingContextLabel}`}>
+                        {prettyTitle(currentSong.title, 7)}
+                      </button>
+                    </strong>
+                    <p className={`nowPlayingMiniArtistSwap ${nowPlayingSongMotionClass}`}>
+                      {splitArtistCredits(currentSong.artist).map((artistName, index) => (
+                        <Fragment key={artistName}>
+                          {index ? ", " : null}
+                          <button type="button" className="playerMetaLink" onClick={() => openArtistPage(artistName)} title={`go to ${artistName}`}>
+                            {prettyMeta(artistName)}
+                          </button>
+                        </Fragment>
+                      ))}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <strong className={`nowPlayingMiniTitleSwap ${nowPlayingSongMotionClass}`}>nothing playing</strong>
+                    <p className={`nowPlayingMiniArtistSwap ${nowPlayingSongMotionClass}`}>import a song to begin</p>
+                  </>
+                )}
               </div>
+
+              {currentSong ? (
+                <button
+                  className={`iconAction likeActionV443 noActionHoverV444 playerLikeButton ${currentSong.liked ? "liked likeActionActiveV443" : ""}`}
+                  type="button"
+                  onClick={() => toggleLike(currentSong.id)}
+                  aria-label={currentSong.liked ? "unlike song" : "like song"}
+                  aria-pressed={Boolean(currentSong.liked)}
+                  title={currentSong.liked ? "remove from liked songs" : "save to liked songs"}
+                >
+                  <LikeHeartAnimationV443 liked={Boolean(currentSong.liked)} />
+                </button>
+              ) : null}
             </div>
 
             <div className="playerCenter">
@@ -201,49 +258,63 @@ export default function PlayerBar(props: PlayerBarProps) {
             </div>
 
             <div className="playerRight">
-              <div className="volumeWrap" aria-label="Volume">
+              <div className="playerRightTools">
                 <button
                   type="button"
-                  className="volumeIconButton"
-                  onClick={() => updateSetting("volume", settings.volume > 0 ? 0 : 0.72, true)}
-                  aria-label={settings.volume > 0 ? "mute volume" : "restore volume"}
-                  title={settings.volume > 0 ? "Mute volume" : "Restore volume"}
+                  className={`playerQueueButton ${queuePanelOpen ? "active" : ""}`}
+                  onClick={toggleQueuePanel}
+                  aria-label={queuePanelOpen ? "hide queue" : "show queue"}
+                  aria-pressed={queuePanelOpen}
+                  aria-haspopup="dialog"
+                  title={queueCount ? `queue · ${queueCount} up next` : "queue"}
                 >
-                  {settings.volume > 0 ? (
-                    <Volume2 className="playerControlIcon" size={17} strokeWidth={2.2} aria-hidden="true" />
-                  ) : (
-                    <VolumeX className="playerControlIcon" size={17} strokeWidth={2.2} aria-hidden="true" />
-                  )}
+                  <ListMusic className="playerControlIcon" size={17} strokeWidth={2.2} aria-hidden="true" />
+                  {queueCount ? <span className="playerQueueCount" aria-hidden="true">{queueCount > 99 ? "99+" : queueCount}</span> : null}
                 </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={volumeDraft}
-                  style={volumeRangeStyle}
-                  aria-label="volume level"
-                  onPointerDown={(event) => {
-                    event.currentTarget.setPointerCapture?.(event.pointerId);
-                    volumeDraftRef.current = Number(event.currentTarget.value);
-                    setIsVolumeDragging(true);
-                    previewVolume(event.currentTarget.value, event.currentTarget);
-                  }}
-                  onInput={(event) => previewVolume(event.currentTarget.value, event.currentTarget)}
-                  onChange={(event) => previewVolume(event.currentTarget.value, event.currentTarget)}
-                  onPointerUp={(event) => {
-                    event.currentTarget.releasePointerCapture?.(event.pointerId);
-                    commitVolume(event.currentTarget.value);
-                  }}
-                  onPointerCancel={(event) => {
-                    event.currentTarget.releasePointerCapture?.(event.pointerId);
-                    commitVolume(event.currentTarget.value);
-                  }}
-                  onKeyUp={(event) => commitVolume(event.currentTarget.value)}
-                  onBlur={(event) => {
-                    if (isVolumeDragging) commitVolume(event.currentTarget.value);
-                  }}
-                />
+                <div className="volumeWrap" aria-label="Volume">
+                  <button
+                    type="button"
+                    className="volumeIconButton"
+                    onClick={() => updateSetting("volume", settings.volume > 0 ? 0 : 0.72, true)}
+                    aria-label={settings.volume > 0 ? "mute volume" : "restore volume"}
+                    title={settings.volume > 0 ? "Mute volume" : "Restore volume"}
+                  >
+                    {settings.volume > 0 ? (
+                      <Volume2 className="playerControlIcon" size={17} strokeWidth={2.2} aria-hidden="true" />
+                    ) : (
+                      <VolumeX className="playerControlIcon" size={17} strokeWidth={2.2} aria-hidden="true" />
+                    )}
+                  </button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={volumeDraft}
+                    style={volumeRangeStyle}
+                    aria-label="volume level"
+                    onPointerDown={(event) => {
+                      event.currentTarget.setPointerCapture?.(event.pointerId);
+                      volumeDraftRef.current = Number(event.currentTarget.value);
+                      setIsVolumeDragging(true);
+                      previewVolume(event.currentTarget.value, event.currentTarget);
+                    }}
+                    onInput={(event) => previewVolume(event.currentTarget.value, event.currentTarget)}
+                    onChange={(event) => previewVolume(event.currentTarget.value, event.currentTarget)}
+                    onPointerUp={(event) => {
+                      event.currentTarget.releasePointerCapture?.(event.pointerId);
+                      commitVolume(event.currentTarget.value);
+                    }}
+                    onPointerCancel={(event) => {
+                      event.currentTarget.releasePointerCapture?.(event.pointerId);
+                      commitVolume(event.currentTarget.value);
+                    }}
+                    onKeyUp={(event) => commitVolume(event.currentTarget.value)}
+                    onBlur={(event) => {
+                      if (isVolumeDragging) commitVolume(event.currentTarget.value);
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </footer>

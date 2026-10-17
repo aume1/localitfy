@@ -10,6 +10,7 @@ import type { AnalyticsViewProps } from "../analytics/AnalyticsView";
 import type { SettingsViewProps } from "../settings/SettingsView";
 import type { DownloadsViewProps } from "../downloads/DownloadsView";
 import type { PlayerBarProps } from "../player/components/PlayerBar";
+import type { QueuePanelProps } from "../player/components/QueuePanel";
 import type { PlaybackAudioElementProps } from "../player/components/PlaybackAudioElement";
 import type { OnboardingProps } from "../../Onboarding";
 import type { SongContextMenuProps } from "../library/components/SongContextMenu";
@@ -20,6 +21,7 @@ import type { WhatsNewModalProps } from "../updates/WhatsNewModal";
 import type { Settings } from "../settings/settings.types";
 import type { CoverColorSyncMode, SecretMode } from "../settings/theme.types";
 import type { View } from "./view.types";
+import type { SidebarLayoutPatch } from "./SidebarNav";
 import type { ImportAnimationState } from "../library/song.types";
 import type { AppToastState } from "./useAppToast";
 import type { UpdatePromptState } from "../updates/update.types";
@@ -60,10 +62,11 @@ export type ShellNavigationContract = {
   startSidebarResize: (event: ReactPointerEvent<HTMLButtonElement>) => unknown;
   contentRef: RefObject<HTMLElement | null>; headerHint: string; greeting: string; query: string;
   handleSearchInput: (value: string) => unknown;
+  updateSidebarLayout: (patch: SidebarLayoutPatch) => unknown; openSidebarSettings: () => unknown;
 };
 
 export type ShellModalContract = {
-  songContextMenu: SongContextMenuProps; whatsNew: WhatsNewModalProps;
+  songContextMenu: SongContextMenuProps; queuePanel: QueuePanelProps; whatsNew: WhatsNewModalProps;
   songEditor: SongEditorModalProps; playlistPicker: PlaylistPickerModalProps; deleteSong: DeleteSongModalProps;
 };
 
