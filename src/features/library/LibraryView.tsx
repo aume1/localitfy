@@ -1,6 +1,7 @@
 import "./library.css";
 import type { DragEventHandler, ReactNode } from "react";
 import { LocaltifyStateCard, MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
+import type { LibrarySortMode } from "./librarySort";
 import type { Song } from "./song.types";
 import type { Playlist } from "../playlists/playlist.types";
 import type { Settings } from "../settings/settings.types";
@@ -17,6 +18,7 @@ export type LibraryViewProps = {
   libraryAlbumCount: number;
   libraryArtistCount: number;
   libraryMissingLabel: string;
+  librarySortMode: LibrarySortMode;
   missingFileCount: number;
   now: unknown;
   playlists: Playlist[];
@@ -25,6 +27,7 @@ export type LibraryViewProps = {
   renderHomeSongCards: (songs: Song[], className?: string) => ReactNode;
   renderSongRows: (songs: Song[], className?: string) => ReactNode;
   setLibraryFilterMode?: (mode: "all" | "missing") => unknown;
+  setLibrarySortMode: (mode: LibrarySortMode) => unknown;
   settings: Pick<Settings, "libraryRowStyle">;
   showingMissingFiles: boolean;
   shuffleLibrarySongsAction: () => unknown;
@@ -45,12 +48,14 @@ export default function LibraryView(props: LibraryViewProps) {
     libraryAlbumCount,
     libraryArtistCount,
     libraryMissingLabel,
+    librarySortMode,
     missingFileCount,
     query,
     removeMissingSongs,
     renderHomeSongCards,
     renderSongRows,
     setLibraryFilterMode,
+    setLibrarySortMode,
     settings,
     showingMissingFiles,
     shuffleLibrarySongsAction,
@@ -61,6 +66,7 @@ export default function LibraryView(props: LibraryViewProps) {
 
   const isLiked = view === "liked";
   const shownLabel = showingMissingFiles ? "missing files" : isLiked ? "liked songs" : "all tracks";
+  const sortedByArtist = librarySortMode === "artist";
 
   return (
     <section data-page-section="library" className={`libraryPage ${isLiked ? "libraryPageLiked" : ""}`}>
@@ -79,6 +85,15 @@ export default function LibraryView(props: LibraryViewProps) {
             placeholder={isLiked ? "search liked songs" : "search your library"}
             aria-label={isLiked ? "search liked songs" : "search library"}
           />
+          <select
+            className="librarySort"
+            value={librarySortMode}
+            onChange={(event) => setLibrarySortMode(event.currentTarget.value as LibrarySortMode)}
+            aria-label="sort songs"
+          >
+            <option value="library">library order</option>
+            <option value="artist">artist A–Z</option>
+          </select>
           {!isLiked ? (
             <button className="libraryAction" type="button" onClick={shuffleLibrarySongsAction} disabled={songs.length < 2}>
               shuffle
@@ -124,7 +139,7 @@ export default function LibraryView(props: LibraryViewProps) {
         <div className="libraryTracksHead">
           <div>
             <h2 id="library-tracks-title">{shownLabel}</h2>
-            <p>{showingMissingFiles ? "repair or remove entries that no longer resolve" : isLiked ? "your local favourites" : "drag to reorder · right-click for more"}</p>
+            <p>{showingMissingFiles ? "repair or remove entries that no longer resolve" : sortedByArtist ? "sorted by artist · switch to library order to reorder" : isLiked ? "your local favourites" : "drag to reorder · right-click for more"}</p>
           </div>
           <span className="libraryCount">{visibleSongs.length} {visibleSongs.length === 1 ? "track" : "tracks"}</span>
         </div>

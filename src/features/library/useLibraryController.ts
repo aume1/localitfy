@@ -1,6 +1,7 @@
 import { useDeferredValue, useRef, useState } from "react";
 import { INITIAL_LIBRARY_RENDER_LIMIT } from "../../core/app.constants";
 import { createImportAnimationState } from "./importState";
+import type { LibrarySortMode } from "./librarySort";
 import type { ImportAnimationState, LibraryDropSide, MetadataCleanPreview, MetadataUndoItem, Song, SongContextMenuState } from "./song.types";
 
 export function useLibraryController() {
@@ -13,6 +14,7 @@ export function useLibraryController() {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const [libraryFilterMode, setLibraryFilterMode] = useState<"all" | "missing">("all");
+  const [librarySortMode, setLibrarySortMode] = useState<LibrarySortMode>("library");
   const [libraryRenderLimit, setLibraryRenderLimit] = useState(INITIAL_LIBRARY_RENDER_LIMIT);
   const libraryRenderLimitRef = useRef(INITIAL_LIBRARY_RENDER_LIMIT);
   const libraryListLengthRef = useRef(0);
@@ -55,6 +57,7 @@ export function useLibraryController() {
     editAlbum, setEditAlbum,
     query, setQuery, deferredQuery,
     libraryFilterMode, setLibraryFilterMode,
+    librarySortMode, setLibrarySortMode,
     libraryRenderLimit, setLibraryRenderLimit,
     libraryRenderLimitRef, libraryListLengthRef,
     songContextMenu, setSongContextMenu,
