@@ -551,6 +551,12 @@ function MainModeApp() {
     analyticsViewRef.current = view;
   }, [view]);
 
+  // Every page shares the .content scroller, so a new page would otherwise
+  // open at the previous page's scroll position. Reset before paint.
+  useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [view]);
+
   useEffect(() => {
     return () => {
       if (rememberCurrentSongTimerRef.current !== null) {
