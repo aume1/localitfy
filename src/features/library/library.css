@@ -3,7 +3,7 @@
 .app:has(.libraryPage) .content {
   padding: 0 !important;
   overflow-x: hidden !important;
-  background: #06131a !important;
+  background: var(--lt-bg) !important;
 }
 
 .app:has(.libraryPage) .headerBar {
@@ -19,25 +19,24 @@
 }
 
 .libraryPage {
-  --library-surface: #0d1d26;
-  --library-surface-hover: #11232d;
-  --library-surface-active: #122630;
-  --library-border: rgba(125, 164, 187, .09);
-  --library-border-strong: rgba(125, 164, 187, .17);
-  --library-text: #aebdc5;
-  --library-muted: #607987;
-  --library-faint: #425c6b;
+  --library-surface: var(--lt-surface);
+  --library-surface-hover: var(--lt-surface-raised);
+  --library-surface-active: color-mix(in oklab, var(--lt-accent) 13%, var(--lt-surface));
+  --library-border: rgba(var(--lt-accent-rgb), .09);
+  --library-border-strong: rgba(var(--lt-accent-rgb), .17);
+  --library-text: var(--lt-text);
+  --library-muted: var(--lt-muted);
+  --library-faint: var(--lt-faint);
   width: 100%;
   min-width: 0;
   min-height: 100%;
-  padding: clamp(30px, 3vw, 52px) clamp(24px, 3vw, 58px) clamp(78px, 7vh, 108px);
+  padding: clamp(24px, 2.5vw, 40px) clamp(20px, 2.7vw, 48px) 105px;
   display: grid;
   align-content: start;
-  gap: clamp(24px, 2.2vw, 36px);
+  gap: clamp(18px, 1.8vw, 28px);
   color: var(--library-text);
   background:
-    radial-gradient(circle at 82% -12%, rgba(var(--cover-rgb, 57, 100, 119), .075), transparent 34%),
-    #06131a;
+    var(--lt-bg);
 }
 
 .libraryTopBar {
@@ -47,7 +46,7 @@
   justify-content: space-between;
   gap: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(135, 177, 202, .08);
+  border-bottom: 1px solid rgba(var(--lt-accent-rgb), .08);
 }
 
 .libraryHeading {
@@ -58,16 +57,16 @@
 
 .libraryEyebrow {
   margin: 0;
-  color: #79a7c4;
-  font-size: 8px;
-  font-weight: 800;
+  color: var(--lt-accent);
+  font-size: 11px;
+  font-weight: 750;
   letter-spacing: .11em;
   text-transform: uppercase;
 }
 
 .libraryHeading h1 {
   margin: 0;
-  color: #c9d5dc;
+  color: var(--lt-text);
   font-size: clamp(25px, 1.7vw, 34px);
   font-weight: 680;
   line-height: .95;
@@ -77,8 +76,8 @@
 .libraryHeading p:last-child {
   max-width: 620px;
   margin: 0;
-  color: #526d7b;
-  font-size: clamp(9px, .62vw, 11px);
+  color: var(--lt-muted);
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.45;
 }
@@ -95,15 +94,15 @@
 .librarySort {
   width: min(390px, 36vw);
   min-width: 190px;
-  height: 38px;
+  height: 42px;
   padding: 0 14px;
   border: 1px solid var(--library-border);
   border-radius: 999px;
   outline: none;
-  color: #c8d5dc;
-  background: #0b1921;
+  color: var(--lt-text);
+  background: var(--lt-surface);
   font: inherit;
-  font-size: 9px;
+  font-size: 12px;
   transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
 }
 
@@ -113,36 +112,36 @@
   cursor: pointer;
 }
 
-.librarySearch::placeholder { color: #4d6572; }
+.librarySearch::placeholder { color: var(--lt-muted); }
 .librarySearch:hover,
-.librarySort:hover { border-color: rgba(125, 164, 187, .14); }
+.librarySort:hover { border-color: rgba(var(--lt-accent-rgb), .14); }
 .librarySearch:focus,
 .librarySort:focus {
-  border-color: rgba(121, 167, 196, .34);
-  background: #0d1d26;
-  box-shadow: 0 0 0 3px rgba(121, 167, 196, .05);
+  border-color: rgba(var(--lt-accent-rgb), .34);
+  background: var(--lt-surface);
+  box-shadow: 0 0 0 3px rgba(var(--lt-accent-rgb), .05);
 }
 
 .libraryAction,
 .libraryMissingActions button {
-  min-height: 38px;
+  min-height: 42px;
   padding: 0 14px;
   border: 1px solid var(--library-border);
   border-radius: 999px;
-  color: #879da9;
-  background: rgba(111, 155, 180, .045);
+  color: var(--lt-muted);
+  background: rgba(var(--lt-accent-rgb), .045);
   font: inherit;
-  font-size: 9px;
-  font-weight: 760;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   transition: color 130ms ease, border-color 130ms ease, background-color 130ms ease;
 }
 
 .libraryAction:hover:not(:disabled),
 .libraryMissingActions button:hover:not(:disabled) {
-  color: #d0dde3;
-  border-color: rgba(125, 164, 187, .19);
-  background: rgba(111, 155, 180, .085);
+  color: var(--lt-text);
+  border-color: rgba(var(--lt-accent-rgb), .19);
+  background: rgba(var(--lt-accent-rgb), .085);
 }
 
 .libraryAction:disabled,
@@ -151,20 +150,20 @@
 .libraryMissingActions button:focus-visible,
 .librarySearch:focus-visible,
 .librarySort:focus-visible {
-  outline: 2px solid rgba(119, 166, 194, .58);
+  outline: 2px solid rgba(var(--lt-accent-rgb), .58);
   outline-offset: 2px;
 }
 
 .libraryStats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .libraryStat {
   min-width: 0;
-  min-height: 82px;
-  padding: 15px 17px;
+  min-height: 74px;
+  padding: 14px 16px;
   display: grid;
   align-content: center;
   gap: 5px;
@@ -175,7 +174,7 @@
 
 .libraryStat strong {
   overflow: hidden;
-  color: #b2c0c8;
+  color: var(--lt-text);
   font-size: clamp(19px, 1.35vw, 26px);
   font-weight: 650;
   line-height: 1;
@@ -184,9 +183,9 @@
 }
 
 .libraryStat span {
-  color: #506b79;
-  font-size: 8px;
-  font-weight: 750;
+  color: var(--lt-muted);
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -249,9 +248,9 @@
 }
 
 .libraryMissingActions button.active {
-  color: #cbd9df;
-  border-color: rgba(121, 167, 196, .24);
-  background: rgba(121, 167, 196, .11);
+  color: var(--lt-text);
+  border-color: rgba(var(--lt-accent-rgb), .24);
+  background: rgba(var(--lt-accent-rgb), .11);
 }
 
 .libraryMissingActions .danger {
@@ -281,7 +280,7 @@
 
 .libraryTracksHead h2 {
   margin: 0;
-  color: #aebdc5;
+  color: var(--lt-text);
   font-size: clamp(18px, 1.15vw, 23px);
   font-weight: 650;
   line-height: 1;
@@ -290,16 +289,16 @@
 
 .libraryTracksHead p {
   margin: 0;
-  color: #4e6877;
-  font-size: 8px;
-  font-weight: 620;
+  color: var(--lt-muted);
+  font-size: 11px;
+  font-weight: 550;
 }
 
 .libraryCount {
   flex: 0 0 auto;
-  color: #506b79;
-  font-size: 8px;
-  font-weight: 760;
+  color: var(--lt-muted);
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -307,11 +306,11 @@
 .libraryTrackSurface {
   min-width: 0;
   min-height: 0;
-  padding: 6px;
+  padding: 0;
   overflow: hidden;
-  border: 1px solid rgba(125, 164, 187, .075);
-  border-radius: 11px;
-  background: rgba(13, 29, 38, .64);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .libraryTrackSurface .virtualSongViewport,
@@ -325,7 +324,7 @@
   overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(115, 151, 171, .18) transparent;
+  scrollbar-color: rgba(var(--lt-accent-rgb), .18) transparent;
 }
 
 .libraryPage .virtualSongCanvas { position: relative; width: 100%; }
@@ -333,7 +332,7 @@
 
 .libraryPage .songRow {
   min-width: 0 !important;
-  min-height: 66px !important;
+  min-height: 64px !important;
   margin: 2px 0 !important;
   padding: 5px 8px !important;
   display: grid !important;
@@ -341,8 +340,8 @@
   align-items: center !important;
   gap: 8px !important;
   border: 1px solid transparent !important;
-  border-radius: 8px !important;
-  color: #8ea3ae !important;
+  border-radius: 9px !important;
+  color: var(--lt-text) !important;
   background: transparent !important;
   box-shadow: none !important;
   transform: none !important;
@@ -350,13 +349,13 @@
 }
 
 .libraryPage .songRow:hover {
-  border-color: rgba(125, 164, 187, .08) !important;
-  background: rgba(17, 35, 45, .76) !important;
+  border-color: color-mix(in oklab, var(--lt-accent) 17%, transparent) !important;
+  background: var(--lt-surface) !important;
 }
 
 .libraryPage .songRow.active {
-  border-color: rgba(121, 167, 196, .18) !important;
-  background: rgba(18, 38, 48, .88) !important;
+  border-color: color-mix(in oklab, var(--lt-accent) 30%, transparent) !important;
+  background: var(--lt-surface-raised) !important;
 }
 
 .libraryPage .songButton {
@@ -373,9 +372,9 @@
 }
 
 .libraryPage .songIndex {
-  color: #486473 !important;
-  font-size: 8px !important;
-  font-weight: 720 !important;
+  color: var(--lt-faint) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
   text-align: center !important;
 }
 
@@ -384,6 +383,9 @@
   width: 48px !important;
   height: 48px !important;
   border-radius: 7px !important;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   object-fit: cover !important;
 }
 
@@ -401,21 +403,21 @@
 }
 
 .libraryPage .songMeta strong {
-  color: #9fb2bc !important;
-  font-size: 10px !important;
+  color: var(--lt-text) !important;
+  font-size: 13px !important;
   font-weight: 700 !important;
 }
 
 .libraryPage .songMeta small {
-  color: #506c7b !important;
-  font-size: 8px !important;
-  font-weight: 600 !important;
+  color: var(--lt-text) !important;
+  font-size: 11px !important;
+  font-weight: 550 !important;
 }
 
 .libraryPage .songInfo {
-  color: #536e7d !important;
-  font-size: 8px !important;
-  font-weight: 650 !important;
+  color: var(--lt-text) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
 }
 
 .libraryPage .iconAction {
@@ -427,15 +429,15 @@
   place-items: center !important;
   border: 1px solid transparent !important;
   border-radius: 50% !important;
-  color: #617c8a !important;
+  color: var(--lt-muted) !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
 .libraryPage .iconAction:hover {
-  color: #bdccd3 !important;
-  border-color: rgba(125, 164, 187, .09) !important;
-  background: rgba(111, 155, 180, .07) !important;
+  color: var(--lt-text) !important;
+  border-color: rgba(var(--lt-accent-rgb), .09) !important;
+  background: rgba(var(--lt-accent-rgb), .07) !important;
 }
 
 .libraryCoverCards {
@@ -457,17 +459,17 @@
 
 .libraryPage .homeAlbumArt,
 .libraryPage .homeAlbumArt .coverImage { border-radius: 8px !important; }
-.libraryPage .homeAlbumMeta strong { color: #93a8b2 !important; }
+.libraryPage .homeAlbumMeta strong { color: var(--lt-text) !important; }
 .libraryPage .homeAlbumMeta small,
-.libraryPage .homeAlbumStats { color: #4f6876 !important; }
+.libraryPage .homeAlbumStats { color: var(--lt-muted) !important; }
 
 .libraryEmpty {
   min-height: 300px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(125, 164, 187, .07);
+  border: 1px solid rgba(var(--lt-accent-rgb), .07);
   border-radius: 11px;
-  background: rgba(13, 29, 38, .45);
+  background: transparent;
 }
 
 .libraryEmpty .localtifyStateCardV373 {
@@ -475,6 +477,23 @@
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+
+
+/* Cohesive Library and Liked controls; never tint the full list with an accent alpha. */
+.libraryPage .libraryTopBar { border-bottom-color: var(--lt-border); }
+.libraryPage .libraryStat { background: var(--lt-surface); border-color: var(--lt-border); }
+.libraryPage .libraryStat strong { color: var(--lt-text); }
+.libraryPage .libraryTrackSurface.libraryFullListV025 { scrollbar-color: color-mix(in oklab,var(--lt-accent) 28%,transparent) transparent; }
+.libraryPage .songRow :is(.iconAction,.songButton):focus-visible {
+  outline: 1px solid var(--lt-accent);
+  outline-offset: 1px;
+}
+.libraryPage .librarySearch:focus-visible,
+.libraryPage .librarySort:focus-visible,
+.libraryPage .libraryAction:focus-visible {
+  outline: 1px solid var(--lt-accent);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1180px) {

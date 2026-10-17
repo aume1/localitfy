@@ -92,9 +92,6 @@ import {
   FEEDBACK_CATEGORY_OPTIONS,
   FEEDBACK_MESSAGE_MAX_LENGTH,
   FEEDBACK_PROMPT_COPY,
-  FEEDBACK_PROMPT_DELAY_MS,
-  FEEDBACK_PROMPT_RETRY_DELAY_MS,
-  FEEDBACK_PROMPT_SEEN_KEY,
   shouldOpenFeedbackPromptFromGlobalSearch,
   shouldOpenFeedbackPromptFromSettingsSearch
 } from "./features/feedback/feedbackPrompt";
@@ -302,9 +299,7 @@ function MainModeApp() {
   const {
     diagnosticsCopied, setDiagnosticsCopied,
     performanceStatus, setPerformanceStatus,
-    feedbackPromptBlockersRef,
     feedbackPromptOpen, setFeedbackPromptOpen,
-    feedbackPromptManualOpen, setFeedbackPromptManualOpen,
     feedbackCategory, setFeedbackCategory,
     feedbackMessage, setFeedbackMessage,
     feedbackSendBusy, setFeedbackSendBusy,
@@ -498,7 +493,7 @@ function MainModeApp() {
       setQuery("");
       setSettingsCategory("advanced");
       setFeedbackCategory("bug");
-      openFeedbackPrompt(true);
+      openFeedbackPrompt();
       setStatusText("feedback box opened");
       showAppToast("feedback box opened", "success");
       return;
@@ -2623,7 +2618,7 @@ function MainModeApp() {
       setQuery("");
       setSettingsSearch("");
       setFeedbackCategory("bug");
-      openFeedbackPrompt(true);
+      openFeedbackPrompt();
       setStatusText("feedback box opened");
       showAppToast("feedback box opened", "success");
       return;
@@ -7734,73 +7729,13 @@ function MainModeApp() {
     }
   };
 
-  useEffect(() => {
-    feedbackPromptBlockersRef.current = {
-      onboardingOpen,
-      whatsNewOpen,
-      editorOpen: Boolean(editorSong),
-      playlistPickerOpen: Boolean(playlistPickerSong),
-      deleteOpen: Boolean(deleteTarget),
-      importBusy: Boolean(importAnimation?.active) || libraryScanBusy,
-      downloadBusy,
-      spotifyDownloadBusy,
-      libraryScanBusy
-    };
-  }, [
-    deleteTarget,
-    downloadBusy,
-    editorSong,
-    importAnimation?.active,
-    libraryScanBusy,
-    onboardingOpen,
-    playlistPickerSong,
-    spotifyDownloadBusy,
-    whatsNewOpen
-  ]);
-
-  function feedbackPromptWasSeen() {
-    try {
-      return window.localStorage.getItem(FEEDBACK_PROMPT_SEEN_KEY) === "done";
-    } catch {
-      return true;
-    }
-  }
-
-  function markFeedbackPromptSeen() {
-    try {
-      window.localStorage.setItem(FEEDBACK_PROMPT_SEEN_KEY, "done");
-    } catch {
-      // Ignore storage failures. The popup must never break the player.
-    }
-  }
-
-
-  function feedbackPromptIsBlocked() {
-    const blockers = feedbackPromptBlockersRef.current;
-
-    return (
-      blockers.onboardingOpen ||
-      blockers.whatsNewOpen ||
-      blockers.editorOpen ||
-      blockers.playlistPickerOpen ||
-      blockers.deleteOpen ||
-      blockers.importBusy ||
-      blockers.downloadBusy ||
-      blockers.spotifyDownloadBusy ||
-      blockers.libraryScanBusy
-    );
-  }
-
-  const openFeedbackPrompt = useCallback((manual = false) => {
-    setFeedbackPromptManualOpen(manual);
+  const openFeedbackPrompt = useCallback(() => {
     setFeedbackStatus({ kind: "idle", message: "" });
     setFeedbackPromptOpen(true);
   }, []);
 
-  const closeFeedbackPrompt = useCallback((markSeen = true) => {
-    if (markSeen) markFeedbackPromptSeen();
+  const closeFeedbackPrompt = useCallback(() => {
     setFeedbackPromptOpen(false);
-    setFeedbackPromptManualOpen(false);
     setFeedbackSendBusy(false);
     setFeedbackStatus({ kind: "idle", message: "" });
   }, []);
@@ -7812,7 +7747,7 @@ function MainModeApp() {
       setQuery("");
       setSettingsSearch("");
       setFeedbackCategory("bug");
-      openFeedbackPrompt(true);
+      openFeedbackPrompt();
       setStatusText("feedback box opened");
       showAppToast("feedback box opened", "success");
     };
@@ -7873,38 +7808,6 @@ function MainModeApp() {
       window.removeEventListener("localtify:open-feedback", handleExternalFeedback as EventListener);
       document.removeEventListener("input", handleSearchInputCommand, true);
       document.removeEventListener("click", handleFeedbackButtonClick, true);
-    };
-  }, [openFeedbackPrompt, ready]);
-
-  useEffect(() => {
-    if (!ready || feedbackPromptWasSeen()) return;
-
-    let cancelled = false;
-    let timer: number | null = null;
-
-    const clearTimer = () => {
-      if (timer !== null) {
-        window.clearTimeout(timer);
-        timer = null;
-      }
-    };
-
-    const attemptOpen = () => {
-      if (cancelled || feedbackPromptWasSeen()) return;
-
-      if (feedbackPromptIsBlocked()) {
-        timer = window.setTimeout(attemptOpen, FEEDBACK_PROMPT_RETRY_DELAY_MS);
-        return;
-      }
-
-      openFeedbackPrompt(false);
-    };
-
-    timer = window.setTimeout(attemptOpen, FEEDBACK_PROMPT_DELAY_MS);
-
-    return () => {
-      cancelled = true;
-      clearTimer();
     };
   }, [openFeedbackPrompt, ready]);
 
@@ -7975,13 +7878,11 @@ function MainModeApp() {
       }
 
       feedbackLastSentAtRef.current = Date.now();
-      markFeedbackPromptSeen();
       setFeedbackStatus({ kind: "success", message: "Sent successfully. Thanks, I will review this." });
       setFeedbackMessage("");
 
       window.setTimeout(() => {
         setFeedbackPromptOpen(false);
-        setFeedbackPromptManualOpen(false);
         setFeedbackStatus({ kind: "idle", message: "" });
       }, 1500);
     } catch (error) {
@@ -8175,7 +8076,7 @@ function MainModeApp() {
           type="button"
           className="feedbackSettingsButtonV331 localtifyProximityTarget"
           data-localtify-feedback-open="true"
-          onClick={() => openFeedbackPrompt(true)}
+          onClick={() => openFeedbackPrompt()}
         >
           <span>
             <strong>Open feedback box</strong>
@@ -8227,7 +8128,7 @@ function MainModeApp() {
               <button
                 type="button"
                 className="feedbackPromptCloseV331"
-                onClick={() => closeFeedbackPrompt(!feedbackPromptManualOpen)}
+                onClick={() => closeFeedbackPrompt()}
                 aria-label="Close feedback popup"
               >
                 <X size={18} strokeWidth={2.4} />
@@ -8288,7 +8189,7 @@ function MainModeApp() {
               <button
                 type="button"
                 className="feedbackMaybeButtonV331"
-                onClick={() => closeFeedbackPrompt(!feedbackPromptManualOpen)}
+                onClick={() => closeFeedbackPrompt()}
                 disabled={feedbackSendBusy}
               >
                 Maybe later
@@ -8431,11 +8332,6 @@ function MainModeApp() {
     spotifyFetchError
   });
   const {
-    mascotState: downloadMascotState,
-    tone: downloadMascotTone,
-    title: downloadMascotTitle,
-    message: downloadMascotMessage,
-    hasFailed: downloadHasFailure,
     failedQueueItems: failedDownloadQueueItems,
     finishedQueueItems: finishedDownloadQueueItems,
     failedResults: failedDownloadResults,
@@ -8671,7 +8567,6 @@ function MainModeApp() {
       startRenamePlaylist
     },
     covers: {
-      ambientStyle,
       applyCoverAssetToSelection,
       coverGalleryMood,
       coverMoodCounts,
@@ -8722,12 +8617,9 @@ function MainModeApp() {
         onSearchChange: handleSettingsSearchInput,
         onCategoryChange: setSettingsCategory
       },
-      settings,
       settingsCategory
     },
     downloads: {
-      downloadMascotState,
-      downloadMascotTone,
       cancelCurrentDownload,
       changeView,
       clearFailedDownloads,
@@ -8739,15 +8631,11 @@ function MainModeApp() {
       copyDownloadError,
       downloadAudioLinks,
       downloadBusy,
-      downloadHasFailure,
-      downloadMascotMessage,
-      downloadMascotTitle,
       downloadSpotifyTracks,
       downloadStatusLabel,
       downloadText,
       downloadsTab,
       failedDownloadQueueItems,
-      failedDownloadResults,
       fetchSpotifyTracks,
       finishedDownloadQueueItems,
       handleSpotifyLogin,

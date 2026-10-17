@@ -13,6 +13,7 @@ export function useAppToast() {
   const toastTimerRef = useRef<number | null>(null);
 
   const showAppToast = useCallback((message: string, kind: AppToastKind = "info") => {
+    if (kind !== "error") return;
     if (toastTimerRef.current !== null) {
       window.clearTimeout(toastTimerRef.current);
     }
@@ -22,7 +23,7 @@ export function useAppToast() {
     toastTimerRef.current = window.setTimeout(() => {
       setAppToast(null);
       toastTimerRef.current = null;
-    }, kind === "work" ? 1900 : 2600);
+    }, 2600);
   }, []);
 
   useEffect(() => {
