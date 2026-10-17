@@ -25,7 +25,9 @@ export function getCardCoverCssUrl(song?: Song | null) {
 
 export function Cover({ song, className, priority = "auto" }: { song: Song | null; className: string; priority?: CoverImagePriority }) {
   const [failedSources, setFailedSources] = useState<Record<string, boolean>>({});
-  const [imageReady, setImageReady] = useState(false);
+  // Readiness is tied to the URL that actually loaded. A song update that keeps the same URL must not
+  // hide the image again: the mounted <img> would never fire another load event.
+  const [loadedSrc, setLoadedSrc] = useState("");
   const isImmediateCover = priority === "high" || (priority === "auto" && /\b(heroArt|smallArt|importCoverArt|editorCover)\b/.test(className));
   const coverLoadingMode = isImmediateCover ? "eager" : "lazy";
   const coverFetchPriority = isImmediateCover ? "high" : "low";
@@ -44,17 +46,13 @@ export function Cover({ song, className, priority = "auto" }: { song: Song | nul
     .filter(Boolean);
   const coverSrc = sourceCandidates.find((source) => !failedSources[source]) || "";
   const hasCover = Boolean(coverSrc);
+  const imageReady = hasCover && loadedSrc === coverSrc;
   const fallback = song ? prettyTitle(song.title, 1).slice(0, 1) || "?" : "?";
   const style = hasCover ? ({ "--cover-art-url": toCssUrl(coverSrc), "--cover-url": toCssUrl(coverSrc) } as CSSProperties) : undefined;
 
   useEffect(() => {
     setFailedSources({});
-    setImageReady(false);
   }, [song?.id, song?.coverUrl, song?.coverThumbUrl, song?.coverThumbnailUrl, song?.thumbnailUrl, song?.coverPath]);
-
-  useEffect(() => {
-    setImageReady(false);
-  }, [coverSrc]);
 
   return (
     <div
@@ -79,11 +77,8 @@ export function Cover({ song, className, priority = "auto" }: { song: Song | nul
           decoding="async"
           fetchPriority={coverFetchPriority}
           referrerPolicy="no-referrer"
-          onLoad={() => setImageReady(true)}
-          onError={() => {
-            setImageReady(false);
-            setFailedSources((old) => ({ ...old, [coverSrc]: true }));
-          }}
+          onLoad={() => setLoadedSrc(coverSrc)}
+          onError={() => setFailedSources((old) => ({ ...old, [coverSrc]: true }))}
         />
       ) : null}
     </div>
