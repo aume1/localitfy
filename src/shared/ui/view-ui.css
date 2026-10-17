@@ -236,3 +236,18 @@
     justify-content: flex-start;
   }
 }
+
+/* Buttons rendered with <ActionLabel>: icon to the left of the text. */
+.app button:has(> .actionLabelIcon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.actionLabelIcon {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+}

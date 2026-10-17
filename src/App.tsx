@@ -69,6 +69,13 @@ import { useCoversController } from "./features/covers";
 import { VirtualHomeSongCards, VirtualSongRows } from "./features/library/components/SongRows";
 import { useLibraryController } from "./features/library";
 import { splitArtistCredits } from "./features/artists/artistCredits";
+import {
+  buildAlbumIdBySongId, getRepeatPreview, getSourceLoopRestart, getSourcePreviousStep, playbackSourceRef,
+  repeatButtonTitleFor, resolveNowPlayingContext
+} from "./features/player/playbackSource";
+import type { PlaybackSource, PlaybackSourceRef } from "./features/player/playbackSource";
+import { usePageFocusRequests } from "./features/shell/usePageFocusRequests";
+import { revealSidebarSettingsPanel } from "./features/shell/sidebarLayout";
 import Onboarding from "./Onboarding";
 import CatBuddy from "./CatBuddy";
 import { PlayerPlayPauseMorphIcon } from "./features/player/PlayerPlayPauseMorphIcon";
@@ -394,6 +401,10 @@ function MainModeApp() {
   const [secretToast, setSecretToast] = useState("");
   const [secretBurst, setSecretBurst] = useState(0);
   const [playButtonBurst, setPlayButtonBurst] = useState(0);
+  // Where the current queue was started from, so the player bar can link back to it.
+  const [playbackSource, setPlaybackSource] = useState<PlaybackSource | null>(null);
+  const pageFocus = usePageFocusRequests(changeView);
+  const [queuePanelOpen, setQueuePanelOpen] = useState(false);
   const arcadeGhostUnlocked = false;
 
   const isThreeAm = now.getHours() === 3;
@@ -500,6 +511,11 @@ function MainModeApp() {
     setEditorSong(null);
     setDeleteTarget(null);
     changeView("settings", "settings");
+  }
+
+  function openSidebarSettings() {
+    openSettingsPanel("appearance");
+    revealSidebarSettingsPanel(settings.reducedMotion);
   }
 
   function changeView(nextView: View, source: "nav" | "onboarding" | "settings" | "unknown" = "nav") {
@@ -3804,6 +3820,9 @@ function MainModeApp() {
     const queuedSong = playQueue.map((songId) => songsById.get(songId)).find(isPlayableSong) ?? null;
     if (queuedSong) return queuedSong;
 
+    const sourceLoop = sourceLoopRestart();
+    if (sourceLoop) return sourceLoop.song;
+
     if (activePlaylist && activePlaylistSongs.length) {
       const playlistIndex = activePlaylistSongs.findIndex((song) => song.id === currentSong.id);
       if (playlistIndex !== -1) {
@@ -3917,6 +3936,14 @@ function MainModeApp() {
       }
     }
 
+    const sourceLoop = sourceLoopRestart();
+    if (sourceLoop) {
+      // A one-song loop restarts through the ended handler instead of crossfading into itself.
+      return sourceLoop.song.id === currentSong.id
+        ? null
+        : { song: sourceLoop.song, playlistId: null, kind: "source-loop" as const, rest: sourceLoop.rest };
+    }
+
     if (activePlaylist && currentSong) {
       const playlistIndex = activePlaylistSongs.findIndex((song) => song.id === currentSong.id);
 
@@ -3983,6 +4010,8 @@ function MainModeApp() {
 
     if (target.kind === "queue" && typeof target.queuedIndex === "number") {
       setPlayQueue((queue) => queue.slice(target.queuedIndex + 1));
+    } else if (target.kind === "source-loop") {
+      setPlayQueue(target.rest);
     } else if (playQueue.length) {
       const hasPlayableQueuedSong = playQueue.some((songId) => isPlayableSong(songsById.get(songId)));
       if (!hasPlayableQueuedSong) setPlayQueue([]);
@@ -6095,7 +6124,7 @@ function MainModeApp() {
     event.stopPropagation();
 
     const menuWidth = 236;
-    const menuHeight = 282;
+    const menuHeight = 430;
     const margin = 12;
     const x = Math.min(event.clientX, Math.max(margin, window.innerWidth - menuWidth - margin));
     const y = Math.min(event.clientY, Math.max(margin, window.innerHeight - menuHeight - margin));
@@ -6139,6 +6168,32 @@ function MainModeApp() {
     setStatusText(next ? "queued next" : "added to queue");
   }
 
+  function playQueueItem(index: number) {
+    const songId = playQueue[index];
+    if (!songId) return;
+    setPlayQueue((queue) => queue.slice(index + 1));
+    void selectSong(songId, true, { keepPlaylistContext: true, keepSource: true });
+  }
+
+  const closeQueuePanel = useCallback(() => setQueuePanelOpen(false), []);
+
+  function goToSongAlbum(song: Song) {
+    const albumId = albumIdBySongId.get(song.id);
+    if (albumId) pageFocus.openAlbumPage(albumId);
+    else setStatusText("no album found for this song");
+  }
+
+  function revealNowPlaying() {
+    const context = nowPlayingContext;
+    if (context.kind === "playlist") {
+      setSelectedPlaylistId(context.id);
+      changeView("playlists", "unknown");
+    } else if (context.kind === "album") pageFocus.openAlbumPage(context.id);
+    else if (context.kind === "artist") pageFocus.openArtistPage(context.id);
+    else if (context.kind === "genre") pageFocus.openGenrePage(context.id);
+    else changeView("library", "unknown");
+  }
+
   function normalizeAlbumQueueSongIds(songIds: string[]) {
     const seen = new Set<string>();
     return songIds
@@ -6152,31 +6207,18 @@ function MainModeApp() {
       .map((song) => song.id);
   }
 
-  function playAlbumSongs(songIds: string[], albumTitle = "album") {
+  function playAlbumSongs(songIds: string[], albumTitle = "album", source: PlaybackSourceRef | null = null, shuffled = false) {
     const ids = normalizeAlbumQueueSongIds(songIds);
     if (!ids.length) {
       setStatusText("album has no playable songs");
       return;
     }
 
+    const order = shuffled ? makeShuffledPlayableSongs(ids.map((id) => songsById.get(id)).filter(isPlayableSong)).map((song) => song.id) : ids;
     setActivePlaylistId(null);
-    setPlayQueue(ids.slice(1));
-    void selectSong(ids[0], true, { playlistId: null });
-    setStatusText(`playing ${albumTitle}`);
-  }
-
-  function shuffleAlbumSongs(songIds: string[], albumTitle = "album") {
-    const ids = normalizeAlbumQueueSongIds(songIds);
-    if (!ids.length) {
-      setStatusText("album has no playable songs");
-      return;
-    }
-
-    const shuffled = makeShuffledPlayableSongs(ids.map((id) => songsById.get(id)).filter(isPlayableSong)).map((song) => song.id);
-    setActivePlaylistId(null);
-    setPlayQueue(shuffled.slice(1));
-    void selectSong(shuffled[0], true, { playlistId: null });
-    setStatusText(`shuffling ${albumTitle}`);
+    setPlayQueue(order.slice(1));
+    void selectSong(order[0], true, { playlistId: null, source: source ? { ...source, songIds: order } : null });
+    setStatusText(`${shuffled ? "shuffling" : "playing"} ${albumTitle}`);
   }
 
   function queueAlbumSongs(songIds: string[], albumTitle = "album") {
@@ -6744,6 +6786,7 @@ function MainModeApp() {
       return;
     }
     const ordered = shuffled ? makeShuffledPlayableSongs(playable) : playable;
+    setPlaybackSource(null);
     setActivePlaylistId(playlist.id);
     setSelectedPlaylistId(playlist.id);
     setPlayQueue(ordered.slice(1).map((song) => song.id));
@@ -6768,6 +6811,7 @@ function MainModeApp() {
       return;
     }
 
+    setPlaybackSource(null);
     setActivePlaylistId(playlist.id);
     setSelectedPlaylistId(playlist.id);
     setPlayQueue(orderedSongs.slice(startIndex + 1).map((song) => song.id));
@@ -6775,7 +6819,11 @@ function MainModeApp() {
     setStatusText(`playing ${playlist.name}`);
   }
 
-  async function selectSong(songId: string, shouldPlay = settings.autoplayOnSelect, playbackContext?: { playlistId?: string | null; keepPlaylistContext?: boolean }) {
+  async function selectSong(
+    songId: string,
+    shouldPlay = settings.autoplayOnSelect,
+    playbackContext?: { playlistId?: string | null; keepPlaylistContext?: boolean; source?: PlaybackSource | null; keepSource?: boolean }
+  ) {
     const targetSong = songsById.get(songId);
     const sameSong = songId === currentId;
     const audio = audioRef.current;
@@ -6820,6 +6868,13 @@ function MainModeApp() {
     }
 
     const shouldKeepPlaylistContext = Boolean(playbackContext?.keepPlaylistContext && activePlaylist?.songIds.includes(targetSong.id));
+
+    // Picking a song outside the queue leaves the album/artist/genre context, so repeat-all stops looping it.
+    if (playbackContext && "source" in playbackContext) {
+      setPlaybackSource(playbackContext.source ?? null);
+    } else if (!playbackContext?.keepSource && !playbackContext?.keepPlaylistContext) {
+      setPlaybackSource(null);
+    }
 
     if (playbackContext?.playlistId !== undefined) {
       setActivePlaylistId(playbackContext.playlistId);
@@ -6974,6 +7029,8 @@ function MainModeApp() {
     return true;
   }
 
+  const sourceLoopRestart = () => getSourceLoopRestart(repeatMode, playbackSource, Boolean(activePlaylist), songsById);
+
   function playNext(forcePlay = true, trigger: "manual" | "auto" = "manual") {
     if (trigger === "manual") stopCrossfadeAuto();
     if (!playableSongs.length) return;
@@ -6988,11 +7045,18 @@ function MainModeApp() {
       setPlayQueue((queue) => queue.slice(queuedIndex + 1));
       if (queuedSong) {
         const queuedBelongsToPlaylist = Boolean(activePlaylist?.songIds.includes(queuedSong.id));
-        void selectSong(queuedSong.id, forcePlay, queuedBelongsToPlaylist && activePlaylist ? { playlistId: activePlaylist.id } : undefined);
+        void selectSong(queuedSong.id, forcePlay, { playlistId: queuedBelongsToPlaylist ? activePlaylist?.id : undefined, keepSource: true });
         return;
       }
     } else if (playQueue.length) {
       setPlayQueue([]);
+    }
+
+    const sourceLoop = sourceLoopRestart();
+    if (sourceLoop) {
+      setPlayQueue(sourceLoop.rest);
+      void selectSong(sourceLoop.song.id, forcePlay, { playlistId: null, keepSource: true });
+      return;
     }
 
     if (activePlaylist && currentSong) {
@@ -7080,6 +7144,15 @@ function MainModeApp() {
         if (playlistPrevious) void selectSong(playlistPrevious.id, true, { playlistId: activePlaylist.id });
         return;
       }
+    }
+
+    const sourceStep = currentSong ? getSourcePreviousStep(repeatMode, playbackSource, currentSong.id, songsById) : null;
+    if (sourceStep && currentSong) {
+      const currentSongId = currentSong.id;
+      if (sourceStep.queueChange === "requeue-current") setPlayQueue((queue) => [currentSongId, ...queue.filter((songId) => songId !== currentSongId)]);
+      else if (sourceStep.queueChange === "clear") setPlayQueue([]);
+      void selectSong(sourceStep.songId, true, { playlistId: null, keepSource: true });
+      return;
     }
 
     const index = currentIndex();
@@ -8001,7 +8074,7 @@ function MainModeApp() {
   ]);
 
   const repeatButtonStateText = repeatMode === "one" ? "1" : repeatMode === "all" ? "all" : "";
-  const repeatButtonTitle = repeatMode === "one" ? "Loop current song is on" : repeatMode === "all" ? "Loop library is on" : "Loop is off";
+  const repeatButtonTitle = repeatButtonTitleFor(repeatMode, Boolean(activePlaylist), playbackSource);
   const repeatButtonAriaLabel = repeatButtonTitle;
 
   const nowPlayingMotionNonce = Number(nowPlayingTransitionKey.split(":").pop() || "0");
@@ -8408,6 +8481,12 @@ function MainModeApp() {
     patchSongLocal
   });
 
+  const selectedAlbum = albumsController.selectedAlbum;
+  const selectedAlbumSourceRef = selectedAlbum ? playbackSourceRef("album", selectedAlbum.title, selectedAlbum.id) : null;
+  const albumIdBySongId = useMemo(() => buildAlbumIdBySongId(albumsController.localAlbums), [albumsController.localAlbums]);
+  const nowPlayingContext = resolveNowPlayingContext(currentSong, activePlaylist, playbackSource, albumsController.localAlbums, albumIdBySongId);
+  const queuePanelAutoNextSong = queuePanelOpen && !playQueue.length && !isShuffle ? getNextPlayableSongForCache() : null;
+
   const downloadPageState = getDownloadPageState({
     downloadBusy,
     spotifyDownloadBusy,
@@ -8523,7 +8602,9 @@ function MainModeApp() {
       headerHint,
       greeting,
       query,
-      handleSearchInput
+      handleSearchInput,
+      updateSidebarLayout: (patch) => void updateSettingsPatch(patch),
+      openSidebarSettings
     },
     home: {
       ambientStyle,
@@ -8577,34 +8658,40 @@ function MainModeApp() {
     artists: {
       currentId,
       openPlaylistPicker,
-      playArtistSongs: playAlbumSongs,
+      playArtistSongs: (songIds, name) => playAlbumSongs(songIds, name, playbackSourceRef("artist", name)),
       queueArtistSongs: queueAlbumSongs,
       selectSong,
-      shuffleArtistSongs: shuffleAlbumSongs,
+      shuffleArtistSongs: (songIds, name) => playAlbumSongs(songIds, name, playbackSourceRef("artist", name), true),
       songs,
-      toggleLike
+      toggleLike,
+      focusArtistRequest: pageFocus.artistFocusRequest,
+      onFocusArtistHandled: pageFocus.clearArtistFocusRequest
     },
     genres: {
       currentId,
       openPlaylistPicker,
-      playGenreSongs: playAlbumSongs,
+      playGenreSongs: (songIds, name) => playAlbumSongs(songIds, name, playbackSourceRef("genre", name)),
       queueGenreSongs: queueAlbumSongs,
       selectSong,
-      shuffleGenreSongs: shuffleAlbumSongs,
+      shuffleGenreSongs: (songIds, name) => playAlbumSongs(songIds, name, playbackSourceRef("genre", name), true),
       songs,
-      toggleLike
+      toggleLike,
+      focusGenreRequest: pageFocus.genreFocusRequest,
+      onFocusGenreHandled: pageFocus.clearGenreFocusRequest
     },
     albums: {
       ...albumsController,
       currentId,
       currentSong: visualCurrentSong,
       openPlaylistPicker,
-      playAlbumSongs,
+      playAlbumSongs: (songIds: string[], albumTitle?: string) => playAlbumSongs(songIds, albumTitle, selectedAlbumSourceRef),
       queueAlbumSongs,
       selectSong,
-      shuffleAlbumSongs,
+      shuffleAlbumSongs: (songIds: string[], albumTitle?: string) => playAlbumSongs(songIds, albumTitle, selectedAlbumSourceRef, true),
       songs,
-      toggleLike
+      toggleLike,
+      focusAlbumRequest: pageFocus.albumFocusRequest,
+      onFocusAlbumHandled: pageFocus.clearAlbumFocusRequest
     },
     playlists: {
       activePlaylistId,
@@ -8767,8 +8854,11 @@ function MainModeApp() {
       isSeeking,
       isShuffle,
       isVolumeDragging,
+      nowPlayingContextLabel: nowPlayingContext.label,
       nowPlayingSongMotionClass,
       nowPlayingTransitionKey,
+      openArtistPage: pageFocus.openArtistPage,
+      openSongContextMenu,
       playButtonBurst,
       playNext,
       playPrevious,
@@ -8778,17 +8868,22 @@ function MainModeApp() {
       progressInputRefs,
       progressRangeStyle,
       progressTimeLabelRefs,
+      queueCount: playQueue.length,
       queueDropHot,
+      queuePanelOpen,
       repeatButtonAriaLabel,
       repeatButtonStateText,
       repeatButtonTitle,
       repeatMode,
+      revealNowPlaying,
       setIsShuffle,
       setIsVolumeDragging,
       settings,
       startPlayerResize,
       startSeekPreview,
+      toggleLike,
       togglePlay,
+      toggleQueuePanel: () => setQueuePanelOpen((open) => !open),
       toggleRepeat,
       updateSetting,
       volumeDraft,
@@ -8805,7 +8900,26 @@ function MainModeApp() {
         openEditor,
         openPlaylistPicker,
         toggleLike,
-        askRemoveSong
+        askRemoveSong,
+        goToArtist: pageFocus.openArtistPage,
+        goToAlbum: goToSongAlbum
+      },
+      queuePanel: {
+        open: queuePanelOpen,
+        onClose: closeQueuePanel,
+        currentSong: visualCurrentSong,
+        contextLabel: nowPlayingContext.label,
+        queue: playQueue,
+        setQueue: setPlayQueue,
+        songsById,
+        autoNextSong: queuePanelAutoNextSong,
+        repeatMode,
+        repeatPreview: queuePanelOpen
+          ? getRepeatPreview({ repeatMode, currentSong, activePlaylist, activePlaylistSongs, isShuffle, source: playbackSource, songsById })
+          : null,
+        playQueueItem,
+        selectSong,
+        openSongContextMenu
       },
       whatsNew: {
         open: Boolean(whatsNewOpen),

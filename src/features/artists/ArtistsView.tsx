@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ListPlus, Play, Shuffle } from "lucide-react";
+import { ActionLabel } from "../../shared/ui/ActionLabel";
 import { Cover } from "../covers/Cover";
 import { LikeHeartAnimationV443 } from "../library/components/SongRows";
 import type { Song } from "../library/song.types";
@@ -35,6 +37,9 @@ export type ArtistsViewProps = {
   shuffleArtistSongs?: (songIds: string[], label: string) => unknown;
   songs: Song[];
   toggleLike: (songId: string) => unknown;
+  /** Opens an artist's drawer from outside the page, e.g. the player bar. */
+  focusArtistRequest?: { artistId: string; nonce: number } | null;
+  onFocusArtistHandled?: () => void;
 };
 
 function buildArtistAlbums(songs: Song[]): ArtistAlbumEntry[] {
@@ -94,7 +99,9 @@ export default function ArtistsView({
   selectSong,
   shuffleArtistSongs,
   songs,
-  toggleLike
+  toggleLike,
+  focusArtistRequest,
+  onFocusArtistHandled
 }: ArtistsViewProps) {
   const [query, setQuery] = useState("");
   const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
@@ -180,7 +187,13 @@ export default function ArtistsView({
     }
   }
 
-  function openArtist(artistId: string, trigger: HTMLButtonElement) {
+  useEffect(() => {
+    if (!focusArtistRequest) return;
+    if (artists.some((artist) => artist.id === focusArtistRequest.artistId)) openArtist(focusArtistRequest.artistId, null);
+    onFocusArtistHandled?.();
+  }, [focusArtistRequest?.nonce]);
+
+  function openArtist(artistId: string, trigger: HTMLButtonElement | null) {
     artistTriggerRef.current = trigger;
     setSelectedArtistId(artistId);
     setArtistDetailView("songs");
@@ -254,9 +267,9 @@ export default function ArtistsView({
                 <h3>{selectedArtist.name}</h3>
                 <p>{selectedArtist.songs.length} track{selectedArtist.songs.length === 1 ? "" : "s"} · {selectedArtist.albums.length} album{selectedArtist.albums.length === 1 ? "" : "s"} · {formatTime(selectedArtist.totalDuration)}</p>
                 <div className="artistDrawerActions">
-                  <button className="mainAction" type="button" onClick={() => playArtistSongs?.(artistSongIds, selectedArtist.name)}>play</button>
-                  <button className="heroGhost" type="button" onClick={() => shuffleArtistSongs?.(artistSongIds, selectedArtist.name)} disabled={artistSongIds.length < 2}>shuffle</button>
-                  <button className="heroGhost" type="button" onClick={() => queueArtistSongs?.(artistSongIds, selectedArtist.name)}>queue</button>
+                  <button className="mainAction" type="button" onClick={() => playArtistSongs?.(artistSongIds, selectedArtist.name)}><ActionLabel icon={Play}>play</ActionLabel></button>
+                  <button className="heroGhost" type="button" onClick={() => shuffleArtistSongs?.(artistSongIds, selectedArtist.name)} disabled={artistSongIds.length < 2}><ActionLabel icon={Shuffle}>shuffle</ActionLabel></button>
+                  <button className="heroGhost" type="button" onClick={() => queueArtistSongs?.(artistSongIds, selectedArtist.name)}><ActionLabel icon={ListPlus}>queue</ActionLabel></button>
                 </div>
               </div>
             </div>

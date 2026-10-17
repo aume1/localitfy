@@ -1,5 +1,7 @@
 import "./library.css";
 import type { DragEventHandler, ReactNode } from "react";
+import { FileWarning, FolderInput, ListMusic, Shuffle, Trash2 } from "lucide-react";
+import { ActionLabel } from "../../shared/ui/ActionLabel";
 import { LocaltifyStateCard, MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
 import type { Song } from "./song.types";
 import type { Playlist } from "../playlists/playlist.types";
@@ -81,7 +83,7 @@ export default function LibraryView(props: LibraryViewProps) {
           />
           {!isLiked ? (
             <button className="libraryAction" type="button" onClick={shuffleLibrarySongsAction} disabled={songs.length < 2}>
-              shuffle
+              <ActionLabel icon={Shuffle}>shuffle</ActionLabel>
             </button>
           ) : null}
         </div>
@@ -104,9 +106,9 @@ export default function LibraryView(props: LibraryViewProps) {
             <span>These entries are still saved in Localtify, but their audio files are not on this PC.</span>
           </div>
           <div className="libraryMissingActions">
-            <button type="button" className={showingMissingFiles ? "active" : ""} onClick={() => setLibraryFilterMode?.("missing")}>show missing</button>
-            <button type="button" onClick={() => setLibraryFilterMode?.("all")}>show all</button>
-            <button type="button" onClick={importSongs}>reimport</button>
+            <button type="button" className={showingMissingFiles ? "active" : ""} onClick={() => setLibraryFilterMode?.("missing")}><ActionLabel icon={FileWarning}>show missing</ActionLabel></button>
+            <button type="button" onClick={() => setLibraryFilterMode?.("all")}><ActionLabel icon={ListMusic}>show all</ActionLabel></button>
+            <button type="button" onClick={importSongs}><ActionLabel icon={FolderInput}>reimport</ActionLabel></button>
             <button
               type="button"
               className="danger"
@@ -114,7 +116,7 @@ export default function LibraryView(props: LibraryViewProps) {
               disabled={deleteBusy}
               title="Remove missing song records from Localtify. This does not delete real audio files."
             >
-              remove missing
+              <ActionLabel icon={Trash2}>remove missing</ActionLabel>
             </button>
           </div>
         </div>

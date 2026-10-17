@@ -202,3 +202,16 @@
   .settingsPage .settingsCategoryHeader { align-items: start; }
   .settingsPage .settingsCategoryHeader > span { width: 100%; }
 }
+
+/* Sidebar tab order and visibility (Appearance). */
+.settingsPage .sidebarTabsGroups { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-top: 14px; }
+.settingsPage .sidebarTabsGroup .eyebrow { margin: 0 0 8px; color: var(--settings-muted); font-size: 11px; letter-spacing: .1em; }
+.settingsPage .sidebarTabsList { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.settingsPage .sidebarTabsRow { display: grid; grid-template-columns: 18px minmax(0, 1fr) repeat(3, 30px); align-items: center; gap: 8px; min-height: 40px; padding: 4px 6px 4px 12px; border: 1px solid var(--settings-edge); border-radius: 11px; background: var(--settings-elevated); }
+.settingsPage .sidebarTabsRow.isHidden { opacity: .55; }
+.settingsPage .sidebarTabsIcon { color: var(--settings-accent); }
+.settingsPage .sidebarTabsLabel { overflow: hidden; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.settingsPage .sidebarTabsButton { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px; color: var(--settings-text); background: transparent; cursor: pointer; }
+.settingsPage .sidebarTabsButton:hover:not(:disabled), .settingsPage .sidebarTabsButton:focus-visible { background: rgba(255, 255, 255, .07); }
+.settingsPage .sidebarTabsButton:disabled { opacity: .3; cursor: default; }
+.settingsPage .sidebarTabsVisibility.active { color: var(--settings-accent); }

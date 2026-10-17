@@ -1,5 +1,7 @@
 import "./playlists.css";
 import type { CSSProperties } from "react";
+import { Check, Copy, Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
+import { ActionLabel } from "../../shared/ui/ActionLabel";
 import { EmptyCoverIcon, LocaltifyStateCard, MetaDividerDot, PlusMiniIcon } from "../../shared/ui/LocaltifyViewUi";
 import { VirtualPlaylistTrackList } from "./components/VirtualPlaylistTrackList";
 import PlaylistCoverCollage from "./components/PlaylistCoverCollage";
@@ -116,7 +118,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
               onClick={() => selectedPlaylist && void playPlaylist(selectedPlaylist, false)}
               disabled={!selectedPlaylist || selectedPlaylist.songIds.length === 0}
             >
-              play
+              <ActionLabel icon={Play}>play</ActionLabel>
             </button>
             <button
               className="softButton"
@@ -124,15 +126,15 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
               onClick={() => selectedPlaylist && void playPlaylist(selectedPlaylist, true)}
               disabled={!selectedPlaylist || selectedPlaylist.songIds.length === 0}
             >
-              shuffle
+              <ActionLabel icon={Shuffle}>shuffle</ActionLabel>
             </button>
             {selectedPlaylist ? (
               <>
                 <button className="softButton" type="button" onClick={() => startRenamePlaylist(selectedPlaylist)}>
-                  rename
+                  <ActionLabel icon={Pencil}>rename</ActionLabel>
                 </button>
                 <button className="softButton" type="button" onClick={() => duplicatePlaylist(selectedPlaylist.id)}>
-                  duplicate
+                  <ActionLabel icon={Copy}>duplicate</ActionLabel>
                 </button>
               </>
             ) : null}
@@ -156,7 +158,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
               placeholder="Give your playlist a name"
               aria-label="New playlist name"
             />
-            <button className="mainAction" type="submit">new playlist</button>
+            <button className="mainAction" type="submit"><ActionLabel icon={Plus}>new playlist</ActionLabel></button>
           </form>
         </aside>
       </div>
@@ -235,8 +237,8 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
                     placeholder="playlist name"
                     autoFocus
                   />
-                  <button className="settingsTinyButton" type="submit">save</button>
-                  <button className="settingsTinyButton" type="button" onClick={cancelRenamePlaylist}>cancel</button>
+                  <button className="settingsTinyButton" type="submit"><ActionLabel icon={Check}>save</ActionLabel></button>
+                  <button className="settingsTinyButton" type="button" onClick={cancelRenamePlaylist}><ActionLabel icon={X}>cancel</ActionLabel></button>
                 </form>
               ) : (
                 <h3>{selectedPlaylist ? selectedPlaylist.name : "nothing selected"}</h3>
@@ -245,9 +247,9 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
 
             {selectedPlaylist ? (
               <div className="playlistManageActions">
-                <button className="settingsTinyButton" type="button" onClick={() => startRenamePlaylist(selectedPlaylist)}>rename</button>
-                <button className="settingsTinyButton" type="button" onClick={() => duplicatePlaylist(selectedPlaylist.id)}>duplicate</button>
-                <button className="settingsTinyButton danger" type="button" onClick={() => removePlaylist(selectedPlaylist.id)}>remove</button>
+                <button className="settingsTinyButton" type="button" onClick={() => startRenamePlaylist(selectedPlaylist)}><ActionLabel icon={Pencil}>rename</ActionLabel></button>
+                <button className="settingsTinyButton" type="button" onClick={() => duplicatePlaylist(selectedPlaylist.id)}><ActionLabel icon={Copy}>duplicate</ActionLabel></button>
+                <button className="settingsTinyButton danger" type="button" onClick={() => removePlaylist(selectedPlaylist.id)}><ActionLabel icon={Trash2}>remove</ActionLabel></button>
               </div>
             ) : null}
           </div>
