@@ -1,4 +1,5 @@
 import type { MutableRefObject, SyntheticEvent } from "react";
+import type { ListeningOutcome } from "../listeningHistory";
 import type { Song } from "../../library/song.types";
 import { getSongPlaybackSourceKey } from "../../library";
 
@@ -23,7 +24,8 @@ export type PlaybackAudioElementProps = {
   setPlayerError: (message: string) => void;
   getAudioErrorText: (audio: HTMLAudioElement | null) => string;
   setStatusText: (message: string) => void;
-  resetPlayCountTracker: () => unknown;
+  resetPlayCountTracker: (outcome?: Exclude<ListeningOutcome, "active">) => unknown;
+  handleListeningSeek: () => unknown;
   stopFade: () => unknown;
   stopCrossfadeAuto?: () => unknown;
   stopProgressLoop: () => unknown;
@@ -35,7 +37,7 @@ export default function PlaybackAudioElement(props: PlaybackAudioElementProps) {
     handleCanPlay, handlePlaying, handleAudioPause, handleAudioTimeUpdate, handleAudioEnded,
     setIsPlaying, saveDuration, tickPlayCountTracker, markSongCompletedForPlayCount, patchSongLocal,
     playNext, setPlayerError, getAudioErrorText, setStatusText, resetPlayCountTracker,
-    stopFade, stopCrossfadeAuto, stopProgressLoop
+    handleListeningSeek, stopFade, stopCrossfadeAuto, stopProgressLoop
   } = props;
 
   return (
@@ -43,6 +45,8 @@ export default function PlaybackAudioElement(props: PlaybackAudioElementProps) {
       ref={audioRef}
       preload="auto"
       crossOrigin="anonymous"
+      onSeeking={handleListeningSeek}
+      onSeeked={handleListeningSeek}
       onCanPlay={handleCanPlay}
       onPlaying={handlePlaying}
       onPlay={() => { pendingPlayRef.current = false; setIsPlaying(true); }}
@@ -74,7 +78,7 @@ export default function PlaybackAudioElement(props: PlaybackAudioElementProps) {
         setStatusText("playback error");
         setIsPlaying(false);
         pendingPlayRef.current = false;
-        resetPlayCountTracker();
+        resetPlayCountTracker("error");
         stopFade();
         if (typeof stopCrossfadeAuto === "function") stopCrossfadeAuto();
         stopProgressLoop();

@@ -1,0 +1,11 @@
+# Experimental audio analysis notices
+
+Model: CLAP HTSAT unfused, audio encoder with projection only; no text encoder.
+Base model publisher: LAION; https://huggingface.co/laion/clap-htsat-unfused
+Base model card declares Apache-2.0. A copy is in LICENSE-CLAP.txt.
+ONNX/8-bit conversion: Xenova; https://huggingface.co/Xenova/clap-htsat-unfused
+Pinned revision: c28f2883575e590e04d3146ff0713c2448d691ba
+The converted repository identifies the LAION model as its source and does not declare a separate license. Recheck provenance and notices before an upstream release.
+The original research authors and conversion publisher do not endorse Localtify.
+
+Transformers.js is Apache-2.0; ONNX Runtime is MIT. Their package license files are included with the bundled dependencies. Model files download only after an explicit action in Experimental settings. No model weights are included in this repository or application installer.

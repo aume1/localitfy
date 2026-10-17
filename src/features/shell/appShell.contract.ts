@@ -14,6 +14,7 @@ import type { QueuePanelProps } from "../player/components/QueuePanel";
 import type { PlaybackAudioElementProps } from "../player/components/PlaybackAudioElement";
 import type { OnboardingProps } from "../../Onboarding";
 import type { SongContextMenuProps } from "../library/components/SongContextMenu";
+import type { SimilarSongsDialogProps } from "../analysis/SimilarSongsDialog";
 import type { SongEditorModalProps } from "../library/components/SongEditorModal";
 import type { DeleteSongModalProps } from "../library/components/DeleteSongModal";
 import type { PlaylistPickerModalProps } from "../playlists/components/PlaylistPickerModal";
@@ -66,7 +67,7 @@ export type ShellNavigationContract = {
 };
 
 export type ShellModalContract = {
-  songContextMenu: SongContextMenuProps; queuePanel: QueuePanelProps; whatsNew: WhatsNewModalProps;
+  songContextMenu: SongContextMenuProps; similarSongs: SimilarSongsDialogProps; queuePanel: QueuePanelProps; whatsNew: WhatsNewModalProps;
   songEditor: SongEditorModalProps; playlistPicker: PlaylistPickerModalProps; deleteSong: DeleteSongModalProps;
 };
 

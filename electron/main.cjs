@@ -1,7 +1,8 @@
 /* localtify 0.4.1 V425 cover picker and cache cleanup. */
 /* localtify 0.4.1 V424 — Windows startup white-screen recovery. */
-const { app, BrowserWindow, dialog, ipcMain, shell, session, Menu, Tray, nativeImage, globalShortcut, screen, protocol, net } = require("electron");
+const { app, powerMonitor, BrowserWindow, dialog, ipcMain, shell, session, Menu, Tray, nativeImage, globalShortcut, screen, protocol, net } = require("electron");
 const { createIpcRouter } = require("./ipc/router.cjs");
+const { registerAnalysisIpc, preserveExperimentalSettings } = require("./ipc/analysis.cjs");
 const { registerDiscordIpc } = require("./ipc/discord.cjs");
 const { LOCALTIFY_RENDERER_PROTOCOL, MEDIA_PROTOCOL, registerPrivilegedSchemes } = require("./runtime/protocols.cjs");
 const { DEFAULT_WINDOW_TRANSLUCENCY, normalizeWindowTranslucencySettings, createWindowsStartupRuntime } = require("./runtime/windows.cjs");
@@ -2570,6 +2571,8 @@ app.whenReady().then(async () => {
     return { canceled: false, folder: result.filePaths[0] };
   });
   ipcRouter.handle("download:open-folder", async (_event, folder) => { await shell.openPath(getDownloadDirectory(folder)); return true; });
+  registerAnalysisIpc(ipcRouter, { app, powerMonitor, repositories: databaseRepositories, ffmpegPath: ffmpegStatic?.replace("app.asar", "app.asar.unpacked") });
+  ipcRouter.handle("listening:record", (_event, payload) => databaseRepositories.listening.record(payload));
   ipcRouter.handle("song:patch", async (_event, id, patch) => { const updated = patchSong(id, patch); return updated ? shapeSong(updated) : null; });
   ipcRouter.handle("song:random-cover", async (_event, id) => {
     const covers = getPixelArtFiles();
@@ -2598,7 +2601,7 @@ app.whenReady().then(async () => {
         if (minimizeToTray) ensureTray();
         updateTrayMenu();
       }
-      return saveSettings(settings);
+      return saveSettings(preserveExperimentalSettings(settings, getSettings()));
     } catch (error) { console.log("[localitfy settings save error]", error?.message); return getSettings(); }
   });
 

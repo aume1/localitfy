@@ -7,6 +7,7 @@ import CoversSettings from "./categories/CoversSettings";
 import DownloadSettings from "./categories/DownloadSettings";
 import UpdateSettings from "./categories/UpdateSettings";
 import AboutSettings from "./categories/AboutSettings";
+import ExperimentalSettings from "./categories/ExperimentalSettings";
 import AdvancedSettings from "./categories/AdvancedSettings";
 import { detectSettingsPlatform } from "./settings.shared";
 import type { PlatformInfoLike } from "./settings.shared";
@@ -29,6 +30,7 @@ const SettingsCategoryContent = memo(function SettingsCategoryContent(p: LegacyS
     case "downloads": return <DownloadSettings settings={p.settings} updateSetting={p.updateSetting} downloadFolderLabel={p.downloadFolderLabel} chooseDownloadFolder={p.chooseDownloadFolder} />;
     case "updates": return <UpdateSettings settings={p.settings} updateSetting={p.updateSetting} />;
     case "about": return <AboutSettings appVersion={p.APP_VERSION} platformInfo={platformInfo} songs={p.songs} />;
+    case "experimental": return <ExperimentalSettings />;
     case "advanced": return <AdvancedSettings settings={p.settings} updateSetting={p.updateSetting} appVersion={p.APP_VERSION} diagnosticsInfo={p.diagnosticsInfo} diagnosticsCopied={p.diagnosticsCopied} copyDiagnosticsInfo={p.copyDiagnosticsInfo} updatePrompt={p.updatePrompt} manualUpdateCheck={p.manualUpdateCheck} askUpdaterToInstall={p.askUpdaterToInstall} libraryScanBusy={p.libraryScanBusy} rebuildSearchIndexAction={p.rebuildSearchIndexAction} libraryRenderLimitRef={p.libraryRenderLimitRef} initialLibraryRenderLimit={p.INITIAL_LIBRARY_RENDER_LIMIT} setLibraryRenderLimit={p.setLibraryRenderLimit} pixelArtBusy={p.pixelArtBusy} songs={p.songs} randomizeAllCovers={p.randomizeAllCovers} rescanPixelArtFolder={p.rescanPixelArtFolder} changeView={p.changeView} platformInfo={platformInfo} resetDiscordSettings={p.resetDiscordSettings} resetAppearanceSettings={p.resetAppearanceSettings} resetPlayerLayoutSettings={p.resetPlayerLayoutSettings} resetLibraryLayoutSettings={p.resetLibraryLayoutSettings} resetAllSettingsSafely={p.resetAllSettingsSafely} />;
     default: return null;
   }

@@ -1,4 +1,5 @@
 import "./playlists.css";
+import DailyMixesShelf, { type DailyMixesShelfProps } from "../analysis/DailyMixesShelf";
 import type { CSSProperties } from "react";
 import { Check, Copy, Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
@@ -8,6 +9,7 @@ import PlaylistCoverCollage from "./components/PlaylistCoverCollage";
 import { formatTime } from "../../shared/utils/format";
 
 export type PlaylistsViewProps = {
+  dailyMixes: DailyMixesShelfProps;
   activePlaylistId: any;
   appendPlaylistSongAction: any;
   cancelRenamePlaylist: any;
@@ -163,6 +165,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
         </aside>
       </div>
 
+      <DailyMixesShelf {...props.dailyMixes} />
       <div className="playlistContentGrid">
         <section className="panel playlistShelfPanel">
           <div className="panelHead">

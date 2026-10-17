@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ListeningHistory } from "./listeningHistory";
 import { AudioEffectRuntime } from "./audio/audioEffectRuntime";
 import { HtmlAudioEngine } from "./engine/htmlAudioEngine";
 import type { PlayerController } from "./engine/playerController";
@@ -13,6 +14,22 @@ export type UsePlayerRuntimeOptions = {
 
 export function usePlayerRuntime({ defaultVolume }: UsePlayerRuntimeOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const listeningHistoryRef = useRef<ListeningHistory | null>(null);
+  if (!listeningHistoryRef.current) {
+    listeningHistoryRef.current = new ListeningHistory((event) => {
+      void window.localitfy.recordPlayEvent(event).catch(() => undefined);
+    });
+  }
+
+  useEffect(() => {
+    const finish = () => listeningHistoryRef.current?.finish("interrupted");
+    window.addEventListener("pagehide", finish);
+    return () => {
+      window.removeEventListener("pagehide", finish);
+      finish();
+    };
+  }, []);
+
   const playerEngineRef = useRef<HtmlAudioEngine | null>(null);
   const playerControllerRef = useRef<PlayerController | null>(null);
   const crossfadeIntervalRef = useRef<number | null>(null);
@@ -135,7 +152,7 @@ export function usePlayerRuntime({ defaultVolume }: UsePlayerRuntimeOptions) {
   }, []);
 
   return {
-    audioRef, playerEngineRef, playerControllerRef,
+    listeningHistoryRef, audioRef, playerEngineRef, playerControllerRef,
     crossfadeIntervalRef, crossfadeAutoStartedRef, crossfadeAutoTargetRef, crossfadeMainPauseGuardRef,
     crossfadeLastStartAtRef, crossfadeHandoffClearTimerRef, crossfadeHandoffRef,
     fadeIntervalRef, animationFrameRef, progressLoopTimeoutRef, backgroundAudioRepairTimerRef,

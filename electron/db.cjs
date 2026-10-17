@@ -1,3 +1,6 @@
+const songAnalysis = require("./db/song-analysis.cjs");
+const dailyMixes = require("./db/daily-mixes.cjs");
+const playEvents = require("./db/play-events.cjs");
 const Database = require("better-sqlite3");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
@@ -5,7 +8,7 @@ const path = require("node:path");
 const packageMetadata = require("../package.json");
 
 const APP_VERSION = String(packageMetadata?.version || "0.0.0");
-const SCHEMA_VERSION = 14;
+const SCHEMA_VERSION = 17;
 const BACKUP_KEEP_LIMIT = 8;
 
 let db = null;
@@ -623,7 +626,7 @@ function runMigrations(database) {
   createMetaTables(database);
 
   const previousVersion = getStoredSchemaVersion(database);
-  const shouldBackup = previousVersion !== SCHEMA_VERSION || !tableExists(database, "songs") || !tableExists(database, "settings") || !tableExists(database, "playlists") || !tableExists(database, "playlist_songs");
+  const shouldBackup = previousVersion !== SCHEMA_VERSION || !tableExists(database, "songs") || !tableExists(database, "settings") || !tableExists(database, "playlists") || !tableExists(database, "playlist_songs") || !tableExists(database, "play_events") || !tableExists(database, "song_analysis") || !tableExists(database, "daily_mixes");
 
   lastMigrationReport = {
     ok: true,
@@ -650,6 +653,9 @@ function runMigrations(database) {
     const songMigration = migrateSongsTable(database);
     const settingsAdded = migrateSettingsTable(database);
     const playlistAdded = migratePlaylistsTables(database);
+    playEvents.createPlayEventsTable(database);
+    songAnalysis.createSongAnalysisTable(database);
+    dailyMixes.createDailyMixesTable(database);
     lastMigrationReport.addedColumns = [
       ...songMigration.addedColumns,
       ...settingsAdded.map((name) => `settings.${name}`),
@@ -889,6 +895,7 @@ function deleteSong(id) {
 function clearLibrary() {
   const database = ensureDb();
   database.prepare("DELETE FROM songs").run();
+  database.prepare("DELETE FROM daily_mixes").run();
 }
 
 function getSettings() {
@@ -1043,6 +1050,24 @@ function getDatabaseStatus() {
 }
 
 module.exports = {
+  getSongAnalysis: () => songAnalysis.getSongAnalysis(ensureDb()),
+  saveSongAnalysis: (record) => songAnalysis.saveSongAnalysis(ensureDb(), record),
+  clearSongAnalysis: () => {
+    const database = ensureDb();
+    return database.transaction(() => {
+      database.prepare("DELETE FROM daily_mixes").run();
+      return database.prepare("DELETE FROM song_analysis").run();
+    })();
+  },
+  clearListeningHistory: () => ensureDb().transaction(() => {
+    saveSettings({ listeningHistoryClearedAt: Date.now() });
+    return ensureDb().prepare("DELETE FROM play_events").run().changes;
+  })(),
+  recordPlayEvent: (payload) => {
+    const settings = getSettings();
+    if (settings.listeningHistoryEnabled === false || !(payload?.startedAt > Number(settings.listeningHistoryClearedAt || 0))) return false;
+    return playEvents.recordPlayEvent(ensureDb(), payload);
+  },
   initDatabase,
   getSongs,
   getSong,

@@ -1,10 +1,13 @@
 import type { DiscordActivityStyle, DiscordArtMode, DiscordSecondLine, DiscordTitleCleanup } from "../discord/discord.types";
 import type { CoverColorSyncMode, ThemeId } from "./theme.types";
 
-export type SettingsCategory = "appearance" | "playback" | "discord" | "library" | "downloads" | "covers" | "updates" | "about" | "advanced" | "metadata";
+export type SettingsCategory = "appearance" | "playback" | "discord" | "library" | "downloads" | "covers" | "updates" | "about" | "advanced" | "metadata" | "experimental";
 export type AudioEffectMode = "normal" | "nightcore" | "daycore";
 
 export type Settings = {
+  experimentalMusicAnalysis: boolean;
+  analysisOnBattery: boolean;
+  listeningHistoryEnabled: boolean;
   theme: ThemeId;
   themePanelCollapsed: boolean;
   customThemeEnabled: boolean;
