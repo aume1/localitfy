@@ -2271,3 +2271,100 @@ body.localtifyWindowBackgrounded .app .playerBar:hover::before,
 .app.themeSettling .playerBar *{
   transition-duration: 80ms !important;
 }
+
+/* Now-playing links, like button and queue toggle. */
+.playerBar .playerMetaLink{
+  display: inline;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.playerBar .playerMetaLink:hover,
+.playerBar .playerMetaLink:focus-visible{
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  outline: 0;
+}
+
+.app .playerBar .iconAction.playerLikeButton,
+.app .playerBar .iconAction.playerLikeButton:hover,
+.app .playerBar .iconAction.playerLikeButton:focus-visible,
+.app .playerBar .iconAction.playerLikeButton:active,
+.app .playerBar .iconAction.playerLikeButton.liked{
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app .playerBar .iconAction.playerLikeButton:focus-visible{
+  outline: 2px solid rgba(var(--accent-rgb), 0.5) !important;
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.playerBar .playerRightTools{
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.playerBar .playerRightTools .volumeWrap{
+  flex: 1 1 auto;
+}
+
+.playerBar .playerQueueButton{
+  position: relative;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.72);
+  background: transparent;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.playerBar .playerQueueButton:hover,
+.playerBar .playerQueueButton:focus-visible{
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.playerBar .playerQueueButton.active{
+  color: rgb(var(--accent-rgb));
+}
+
+.playerBar .playerQueueCount{
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  color: #07110b;
+  background: rgb(var(--accent-rgb));
+  font-size: 9.5px;
+  font-weight: 900;
+  line-height: 16px;
+  text-align: center;
+}

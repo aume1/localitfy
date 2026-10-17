@@ -7,6 +7,7 @@ import TitleBar from "./TitleBar";
 import HomeView from "../home/HomeView";
 import { Cover } from "../covers/Cover";
 import PlayerBar from "../player/components/PlayerBar";
+import QueuePanel from "../player/components/QueuePanel";
 import PlaybackAudioElement from "../player/components/PlaybackAudioElement";
 import Onboarding from "../../Onboarding";
 import SongContextMenu from "../library/components/SongContextMenu";
@@ -19,7 +20,7 @@ import WhatsNewModal from "../updates/WhatsNewModal";
 import { clamp } from "../../shared/utils/format";
 import { prettyTitle } from "../search";
 import type { AppShellProps } from "./appShell.contract";
-import { navItems, sidebarNavGroups } from "./navigation.constants";
+import SidebarNav from "./SidebarNav";
 import {
   APP_VERSION, defaultUpdatePrompt, updateRibbonChildSpring, updateRibbonEnterSpring
 } from "../updates/update.constants";
@@ -69,7 +70,7 @@ export default function AppShell(props: AppShellProps) {
   const { open: onboardingOpen, ...onboardingProps } = onboarding;
   const {
     effectiveSimpleMode, simpleModeView, view, changeView, importSongs, startSidebarResize,
-    contentRef, headerHint, greeting, query, handleSearchInput
+    contentRef, headerHint, greeting, query, handleSearchInput, updateSidebarLayout, openSidebarSettings
   } = navigation;
   const { isSeeking, isVolumeDragging, draggedSongId, isPlaying } = playerBar;
   const { isThreeAm } = home;
@@ -288,52 +289,14 @@ export default function AppShell(props: AppShellProps) {
       ) : (
         <div className="appShell">
           <aside className="sidebar">
-            <div className="sidebarNavGroupsV467" aria-label="localtify navigation groups">
-              {sidebarNavGroups.map((group, groupIndex) => {
-                const groupItems = group.itemIds
-                  .map((itemId) => navItems.find((item) => item.id === itemId))
-                  .filter(Boolean);
-
-                return (
-                  <div key={group.id} className={`sidebarNavGroupV467 sidebarNavGroup-${group.id}`}>
-                    <p className="sidebarGroupLabelV467">{group.label}</p>
-
-                    <nav
-                      className={`nav navGroupedV467 ${group.id === "app" ? "navUtility" : "navMain"}`}
-                      aria-label={`${group.label} navigation`}
-                    >
-                      {groupItems.map((item) => {
-                        const Icon = item.icon;
-
-                        return (
-                          <button
-                            key={item.id}
-                            className={`navItem navItemAnimatedV468 nav-${item.id} ${view === item.id ? "active" : ""}`}
-                            data-nav-id={item.id}
-                            data-nav-group={group.id}
-                            onClick={() => changeView(item.id, "nav")}
-                            aria-label={`open ${item.label}`}
-                          >
-                            <span className="navDiscordPillV468" aria-hidden="true" />
-                            <span className={`navIcon navIcon-${item.id}`} aria-hidden="true">
-                              <span className="navIconMotionV468">
-                                <Icon className="navLucideIcon" size={22} strokeWidth={2.75} fill="none" />
-                              </span>
-                            </span>
-                            <span className="navText">
-                              <strong>{item.label}</strong>
-                              <small>{item.hint}</small>
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </nav>
-
-                    {groupIndex < sidebarNavGroups.length - 1 ? <div className="navDivider" aria-hidden="true" /> : null}
-                  </div>
-                );
-              })}
-            </div>
+            <SidebarNav
+              view={view}
+              changeView={changeView}
+              sidebarNavOrder={settings.sidebarNavOrder}
+              sidebarHiddenNav={settings.sidebarHiddenNav}
+              updateSidebarLayout={updateSidebarLayout}
+              openSidebarSettings={openSidebarSettings}
+            />
 
             <div className="sidebarBottom">
               <button className="mainAction importMainAction iconTextButton" onClick={importSongs} aria-label="Import music">
@@ -448,6 +411,7 @@ export default function AppShell(props: AppShellProps) {
           </section>
 
 <PlayerBar {...playerBar} />
+          <QueuePanel {...modals.queuePanel} />
         </div>
       )}
 

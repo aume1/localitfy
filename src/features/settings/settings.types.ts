@@ -42,6 +42,9 @@ export type Settings = {
   homeLayoutMode: "compact" | "balanced" | "bigHero";
   libraryRowStyle: "compactRows" | "comfyRows" | "coverCards" | "listOnly";
   sidebarBehavior: "fixed" | "slim" | "hover";
+  /** Saved tab order per customizable sidebar section; unknown or missing tabs fall back to the default order. */
+  sidebarNavOrder: Partial<Record<"library" | "tools", string[]>>;
+  sidebarHiddenNav: string[];
   playerBackgroundStyle: "flat" | "coverBlur" | "oledBlack";
   /** Present in the persisted runtime defaults even though the old monolith type omitted it. */
   homeHeroCoverBrightness: number;

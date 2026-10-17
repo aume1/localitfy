@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ListPlus, Play, Shuffle } from "lucide-react";
+import { ActionLabel } from "../../shared/ui/ActionLabel";
 import { Cover } from "../covers/Cover";
 import { LikeHeartAnimationV443 } from "../library/components/SongRows";
 import type { Song } from "../library/song.types";
@@ -38,6 +40,9 @@ export type GenresViewProps = {
   shuffleGenreSongs?: (songIds: string[], label: string) => unknown;
   songs: Song[];
   toggleLike: (songId: string) => unknown;
+  /** Opens a genre's drawer from outside the page, e.g. the player bar. */
+  focusGenreRequest?: { genreId: string; nonce: number } | null;
+  onFocusGenreHandled?: () => void;
 };
 
 function cleanName(value: unknown) {
@@ -98,7 +103,9 @@ export default function GenresView({
   selectSong,
   shuffleGenreSongs,
   songs,
-  toggleLike
+  toggleLike,
+  focusGenreRequest,
+  onFocusGenreHandled
 }: GenresViewProps) {
   const [query, setQuery] = useState("");
   const [selectedGenreId, setSelectedGenreId] = useState<string | null>(null);
@@ -196,7 +203,14 @@ export default function GenresView({
     }
   }
 
-  function openGenre(id: string, trigger: HTMLButtonElement) {
+  useEffect(() => {
+    if (!focusGenreRequest) return;
+    // Genre tags may still be loading; the drawer appears once the genre resolves.
+    openGenre(focusGenreRequest.genreId, null);
+    onFocusGenreHandled?.();
+  }, [focusGenreRequest?.nonce]);
+
+  function openGenre(id: string, trigger: HTMLButtonElement | null) {
     triggerRef.current = trigger;
     setSelectedGenreId(id);
     setDetailView("songs");
@@ -257,9 +271,9 @@ export default function GenresView({
                 <h3>{selectedGenre.name}</h3>
                 <p>{selectedGenre.songs.length} track{selectedGenre.songs.length === 1 ? "" : "s"} · {selectedGenre.artistCount} artist{selectedGenre.artistCount === 1 ? "" : "s"} · {formatTime(selectedGenre.totalDuration)}</p>
                 <div className="artistDrawerActions">
-                  <button className="mainAction" type="button" onClick={() => playGenreSongs?.(songIds, selectedGenre.name)}>play</button>
-                  <button className="heroGhost" type="button" onClick={() => shuffleGenreSongs?.(songIds, selectedGenre.name)} disabled={songIds.length < 2}>shuffle</button>
-                  <button className="heroGhost" type="button" onClick={() => queueGenreSongs?.(songIds, selectedGenre.name)}>queue</button>
+                  <button className="mainAction" type="button" onClick={() => playGenreSongs?.(songIds, selectedGenre.name)}><ActionLabel icon={Play}>play</ActionLabel></button>
+                  <button className="heroGhost" type="button" onClick={() => shuffleGenreSongs?.(songIds, selectedGenre.name)} disabled={songIds.length < 2}><ActionLabel icon={Shuffle}>shuffle</ActionLabel></button>
+                  <button className="heroGhost" type="button" onClick={() => queueGenreSongs?.(songIds, selectedGenre.name)}><ActionLabel icon={ListPlus}>queue</ActionLabel></button>
                 </div>
               </div>
             </div>
