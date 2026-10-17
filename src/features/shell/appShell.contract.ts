@@ -12,6 +12,7 @@ import type { DownloadsViewProps } from "../downloads/DownloadsView";
 import type { PlayerBarProps } from "../player/components/PlayerBar";
 import type { PlaybackAudioElementProps } from "../player/components/PlaybackAudioElement";
 import type { OnboardingProps } from "../../Onboarding";
+import type { SimilarSongsDialogProps } from "../analysis/SimilarSongsDialog";
 import type { SongContextMenuProps } from "../library/components/SongContextMenu";
 import type { SongEditorModalProps } from "../library/components/SongEditorModal";
 import type { DeleteSongModalProps } from "../library/components/DeleteSongModal";
@@ -63,6 +64,7 @@ export type ShellNavigationContract = {
 };
 
 export type ShellModalContract = {
+  similarSongs: SimilarSongsDialogProps;
   songContextMenu: SongContextMenuProps; whatsNew: WhatsNewModalProps;
   songEditor: SongEditorModalProps; playlistPicker: PlaylistPickerModalProps; deleteSong: DeleteSongModalProps;
 };

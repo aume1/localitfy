@@ -202,3 +202,10 @@
   .settingsPage .settingsCategoryHeader { align-items: start; }
   .settingsPage .settingsCategoryHeader > span { width: 100%; }
 }
+
+.experimentalControls {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}

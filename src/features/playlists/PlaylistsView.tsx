@@ -1,4 +1,5 @@
 import "./playlists.css";
+import DailyMixesShelf, { type DailyMixesShelfProps } from "../analysis/DailyMixesShelf";
 import type { CSSProperties } from "react";
 import { EmptyCoverIcon, LocaltifyStateCard, MetaDividerDot, PlusMiniIcon } from "../../shared/ui/LocaltifyViewUi";
 import { VirtualPlaylistTrackList } from "./components/VirtualPlaylistTrackList";
@@ -6,6 +7,7 @@ import PlaylistCoverCollage from "./components/PlaylistCoverCollage";
 import { formatTime } from "../../shared/utils/format";
 
 export type PlaylistsViewProps = {
+  dailyMixes: DailyMixesShelfProps;
   activePlaylistId: any;
   appendPlaylistSongAction: any;
   cancelRenamePlaylist: any;
@@ -161,6 +163,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
         </aside>
       </div>
 
+      <DailyMixesShelf {...props.dailyMixes} />
       <div className="playlistContentGrid">
         <section className="panel playlistShelfPanel">
           <div className="panelHead">

@@ -1,4 +1,5 @@
-import { Heart, Pencil, Play, Plus, SkipForward, Trash2 } from "lucide-react";
+import "./song-context-menu.css";
+import { Heart, Pencil, Play, Plus, Radio, SkipForward, Trash2 } from "lucide-react";
 import { Cover } from "../../covers/Cover";
 import { prettyMeta, prettyTitle } from "../../search";
 import type { Song, SongContextMenuState } from "../song.types";
@@ -9,6 +10,7 @@ export type SongContextMenuProps = {
   onClose: () => void;
   selectSong: (songId: string, autoplay?: boolean) => unknown;
   queueSong: (songId: string, playNext?: boolean) => unknown;
+  openSimilarSongs: (song: Song) => unknown;
   openEditor: (song: Song) => unknown;
   openPlaylistPicker: (song: Song) => unknown;
   toggleLike: (songId: string) => unknown;
@@ -22,6 +24,7 @@ export default function SongContextMenu({
   selectSong,
   queueSong,
   openEditor,
+  openSimilarSongs,
   openPlaylistPicker,
   toggleLike,
   askRemoveSong
@@ -51,6 +54,9 @@ export default function SongContextMenu({
         </button>
         <button type="button" role="menuitem" onClick={() => { onClose(); queueSong(song.id, true); }}>
           <span className="songContextMenuIcon"><SkipForward size={13} strokeWidth={3} /></span> play next
+        </button>
+        <button type="button" role="menuitem" onClick={() => { onClose(); openSimilarSongs(song); }}>
+          <span className="songContextMenuIcon"><Radio size={13} strokeWidth={3} /></span> similar songs
         </button>
         <button type="button" role="menuitem" onClick={() => { onClose(); openEditor(song); }}>
           <span className="songContextMenuIcon"><Pencil size={13} strokeWidth={3} /></span> edit song data

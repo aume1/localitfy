@@ -30,6 +30,7 @@ import "./motion.css";
 import "./effects.css";
 import "../../styles/view-shell.css";
 
+const SimilarSongsDialog = lazy(() => import("../analysis/SimilarSongsDialog"));
 const LibraryView = lazy(() => import("../library/LibraryView"));
 const ArtistsView = lazy(() => import("../artists/ArtistsView"));
 const GenresView = lazy(() => import("../genres/GenresView"));
@@ -452,6 +453,7 @@ export default function AppShell(props: AppShellProps) {
       )}
 
       <SongContextMenu {...modals.songContextMenu} />
+      {modals.similarSongs.seed ? <Suspense fallback={null}><SimilarSongsDialog key={modals.similarSongs.seed.id} {...modals.similarSongs} /></Suspense> : null}
 
       <WhatsNewModal {...modals.whatsNew} />
 

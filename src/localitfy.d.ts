@@ -1,3 +1,5 @@
+import type { AnalysisStatus, SimilarSongsResult } from "./features/analysis/analysis.types";
+import type { PlayEvent } from "./features/player/listeningHistory";
 import type { Song } from "./features/library/song.types";
 import type { Settings } from "./features/settings/settings.types";
 
@@ -532,6 +534,20 @@ declare global {
       setPixelArtCover?: (id: string, coverPath: string) => Promise<Song | null>;
       setSongCover?: (id: string, coverPath: string) => Promise<Song | null>;
 
+      getDailyMixes: (payload?: { refresh?: boolean }) => Promise<import("./features/analysis/analysis.types").DailyMixesResult>;
+      findSimilarSongs: (payload: { songId: string; limit?: number }) => Promise<SimilarSongsResult>;
+      getAnalysisStatus: () => Promise<AnalysisStatus>;
+      setAnalysisOnBattery: (allowed: boolean) => Promise<AnalysisStatus>;
+      setAnalysisEnabled: (enabled: boolean) => Promise<AnalysisStatus>;
+      downloadAnalysisModel: () => Promise<AnalysisStatus>;
+      cancelAnalysisDownload: () => Promise<AnalysisStatus>;
+      removeAnalysisModel: () => Promise<AnalysisStatus>;
+      startAnalysis: (options?: { retry?: boolean }) => Promise<AnalysisStatus>;
+      pauseAnalysis: () => Promise<AnalysisStatus>;
+      clearAnalysis: () => Promise<AnalysisStatus>;
+      setListeningHistoryEnabled: (enabled: boolean) => Promise<AnalysisStatus>;
+      clearListeningHistory: () => Promise<AnalysisStatus>;
+      recordPlayEvent: (payload: PlayEvent) => Promise<boolean>;
       patchSong: (id: string, patch: Partial<Song>) => Promise<Song | null>;
       deleteSong: (id: string) => Promise<Song[]>;
 

@@ -19,6 +19,7 @@ import {
 import { useProximityMotion } from "./features/shell/useProximityMotion";
 import { HtmlAudioEngine } from "./features/player/engine/htmlAudioEngine";
 import { createPlayerController } from "./features/player/engine/playerController";
+import type { ListeningOutcome } from "./features/player/listeningHistory";
 import { usePlayerRuntime } from "./features/player";
 import type { PlayerEngineSource } from "./features/player/engine/PlayerEngine";
 import {
@@ -200,9 +201,11 @@ const SettingsCategoryContent = lazy(() => import("./features/settings/SettingsC
 
 
 function MainModeApp() {
+  const [similarSongId, setSimilarSongId] = useState("");
+  const songContextAnchorRef = useRef<HTMLElement | null>(null);
 
   const {
-    audioRef, playerEngineRef, playerControllerRef,
+    listeningHistoryRef, audioRef, playerEngineRef, playerControllerRef,
     crossfadeIntervalRef, crossfadeAutoStartedRef, crossfadeAutoTargetRef, crossfadeMainPauseGuardRef,
     crossfadeLastStartAtRef, crossfadeHandoffClearTimerRef, crossfadeHandoffRef, fadeIntervalRef,
     animationFrameRef, progressLoopTimeoutRef, backgroundAudioRepairTimerRef, playerResizeFrameRef,
@@ -688,6 +691,7 @@ function MainModeApp() {
     setRenamingPlaylistName,
     createPlaylist,
     createPlaylistWithSong,
+    createPlaylistFromSongs,
     removePlaylist,
     startRenamePlaylist,
     cancelRenamePlaylist,
@@ -2459,7 +2463,8 @@ function MainModeApp() {
     return () => window.clearInterval(timer);
   }, []);
 
-  function resetPlayCountTracker() {
+  function resetPlayCountTracker(outcome: Exclude<ListeningOutcome, "active"> = "interrupted") {
+    listeningHistoryRef.current?.finish(outcome);
     countPlayRef.current = false;
     playCountSongIdRef.current = "";
     playCountListenedRef.current = 0;
@@ -2474,6 +2479,7 @@ function MainModeApp() {
   }
 
   function tickPlayCountTracker(nextTime: number) {
+    if (audioRef.current) listeningHistoryRef.current?.sample(audioRef.current);
     const song = songRef.current;
     if (!song || !countPlayRef.current || playCountSongIdRef.current !== song.id) return;
 
@@ -2488,7 +2494,9 @@ function MainModeApp() {
     playCountLastTimeRef.current = safeNextTime;
   }
 
-  function markSongCompletedForPlayCount(song: Song | null) {
+  function markSongCompletedForPlayCount(song: Song | null, outcome: "ended" | "transition" = "ended") {
+    if (audioRef.current) listeningHistoryRef.current?.sample(audioRef.current);
+    listeningHistoryRef.current?.finish(outcome);
     if (!song || !countPlayRef.current || playCountSongIdRef.current !== song.id) return false;
 
     const duration = Math.max(0, Number(durationRef.current || song.duration || 0));
@@ -4033,6 +4041,7 @@ function MainModeApp() {
 
       pendingPlayRef.current = false;
       armPlayCount(target.song.id, Math.max(0, handoffTime));
+      listeningHistoryRef.current?.play(target.song.id, handoffTime, activePlaylistId);
       setCurrentId(target.song.id);
       setCrossfadePreviewSongId("");
       void rememberCurrentSong(target.song.id);
@@ -4188,7 +4197,7 @@ function MainModeApp() {
           setAudioElementVolume(audio, 0);
           setAudioElementVolume(nextAudio, safeVolume);
 
-          markSongCompletedForPlayCount(current);
+          markSongCompletedForPlayCount(current, "transition");
           if (current.id) void patchSongLocal(current.id, { playbackPosition: 0 });
 
           crossfadeAutoStartedRef.current = false;
@@ -4244,6 +4253,7 @@ function MainModeApp() {
   }
 
   function handleAudioPause() {
+    if (audioRef.current) listeningHistoryRef.current?.pause(audioRef.current);
     if (crossfadeAutoStartedRef.current || crossfadeMainPauseGuardRef.current || crossfadeHandoffRef.current) {
       return;
     }
@@ -4359,7 +4369,7 @@ function MainModeApp() {
 
     if (!getSongPlaybackSourceKey(song) || song.fileExists === false) {
       pendingPlayRef.current = false;
-      resetPlayCountTracker();
+      resetPlayCountTracker("error");
       setIsPlaying(false);
       setPlayerError("this audio file is missing. reimport it on this pc.");
       setStatusText("file missing");
@@ -4370,7 +4380,7 @@ function MainModeApp() {
 
     if (!playbackUrl.ok || !playbackUrl.url || playbackUrl.fileExists === false) {
       pendingPlayRef.current = false;
-      resetPlayCountTracker();
+      resetPlayCountTracker("error");
       setIsPlaying(false);
       setPlayerError(playbackUrl.fileExists === false ? "this audio file is missing. reimport it on this pc." : "could not create a playback URL for this song.");
       setStatusText(playbackUrl.fileExists === false ? "file missing" : "playback url failed");
@@ -4433,7 +4443,7 @@ function MainModeApp() {
       return true;
     } catch {
       pendingPlayRef.current = false;
-      resetPlayCountTracker();
+      resetPlayCountTracker("error");
       setIsPlaying(false);
       setPlayerError(getAudioErrorText(audio));
       setStatusText(reason === "manual" ? "playback failed" : "audio not ready");
@@ -4782,11 +4792,16 @@ function MainModeApp() {
     showAppToast("Library layout reset", "success");
   }
 
-  function resetAllSettingsSafely() {
+  async function resetAllSettingsSafely() {
     const confirmed = window.confirm("Reset all localtify settings? Your imported songs will stay in the library.");
     if (!confirmed) return;
 
-    void updateSettingsPatch(defaultSettings);
+    try {
+      await Promise.all([updateSettingsPatch(defaultSettings), window.localitfy.setAnalysisEnabled(false), window.localitfy.setAnalysisOnBattery(false), window.localitfy.setListeningHistoryEnabled(true)]);
+    } catch {
+      showAppToast("Could not reset experimental settings. Please try again.", "error");
+      return;
+    }
     setStatusText("all settings reset");
     showAppToast("All settings reset", "success");
   }
@@ -6091,11 +6106,12 @@ function MainModeApp() {
   }
 
   function openSongContextMenu(event: ReactMouseEvent<HTMLElement>, song: Song) {
+    songContextAnchorRef.current = event.currentTarget;
     event.preventDefault();
     event.stopPropagation();
 
     const menuWidth = 236;
-    const menuHeight = 282;
+    const menuHeight = 326;
     const margin = 12;
     const x = Math.min(event.clientX, Math.max(margin, window.innerWidth - menuWidth - margin));
     const y = Math.min(event.clientY, Math.max(margin, window.innerHeight - menuHeight - margin));
@@ -6827,6 +6843,8 @@ function MainModeApp() {
       setActivePlaylistId(null);
     }
 
+    listeningHistoryRef.current?.finish("replaced");
+
     if (sameSong && audio) {
       stopCrossfadeAuto();
       crossfadeHandoffRef.current = null;
@@ -7126,6 +7144,9 @@ function MainModeApp() {
 
     pendingPlayRef.current = false;
     setIsPlaying(true);
+    if (!crossfadeMainPauseGuardRef.current) {
+      listeningHistoryRef.current?.play(song.id, audioRef.current?.currentTime || 0, activePlaylistId);
+    }
 
     pushQueueHistory(song);
     setPlayerError("");
@@ -8607,6 +8628,9 @@ function MainModeApp() {
       toggleLike
     },
     playlists: {
+      dailyMixes: { songs, currentId, playSongs: playAlbumSongs, queueSongs: queueAlbumSongs,
+        selectSong, queueSong, savePlaylist: createPlaylistFromSongs,
+        openAnalysisSettings: () => { setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); } },
       activePlaylistId,
       appendPlaylistSongAction,
       cancelRenamePlaylist,
@@ -8805,7 +8829,14 @@ function MainModeApp() {
         openEditor,
         openPlaylistPicker,
         toggleLike,
-        askRemoveSong
+        askRemoveSong,
+        openSimilarSongs: (song: Song) => setSimilarSongId(song.id)
+      },
+      similarSongs: {
+        seed: songsById.get(similarSongId) || null, songsById, currentId, returnFocusTo: songContextAnchorRef.current,
+        onClose: () => setSimilarSongId(""),
+        openAnalysisSettings: () => { setSimilarSongId(""); setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); },
+        selectSong, queueSong, playSongs: playAlbumSongs, queueSongs: queueAlbumSongs
       },
       whatsNew: {
         open: Boolean(whatsNewOpen),
@@ -8869,6 +8900,7 @@ function MainModeApp() {
       getAudioErrorText,
       setStatusText,
       resetPlayCountTracker,
+      handleListeningSeek: () => listeningHistoryRef.current?.discontinuity(audioRef.current?.currentTime || 0),
       stopFade,
       stopCrossfadeAuto,
       stopProgressLoop

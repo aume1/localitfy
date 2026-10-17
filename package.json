@@ -46,6 +46,7 @@
     "audit:dead": "node scripts/audit-unused.mjs --full"
   },
   "dependencies": {
+    "@huggingface/transformers": "4.3.1",
     "better-sqlite3": "^12.5.0",
     "discord-rpc": "^4.0.1",
     "dotenv": "^17.4.2",
@@ -118,7 +119,14 @@
       "!**/.DS_Store",
       "!**/Thumbs.db",
       "!**/*.bak",
-      "!**/*.tmp"
+      "!**/*.tmp",
+      "!node_modules/@huggingface/transformers/src/**/*",
+      "!node_modules/@huggingface/transformers/types/**/*",
+      "!node_modules/@huggingface/transformers/dist/ort-*",
+      "!node_modules/@huggingface/transformers/dist/transformers.web*",
+      "!node_modules/@huggingface/transformers/dist/transformers.js*",
+      "!node_modules/@huggingface/transformers/dist/transformers.min*",
+      "!node_modules/onnxruntime-web/**/*"
     ],
     "extraResources": [
       {
@@ -142,7 +150,8 @@
     "asar": true,
     "asarUnpack": [
       "node_modules/better-sqlite3/**/*",
-      "node_modules/ffmpeg-static/**/*"
+      "node_modules/ffmpeg-static/**/*",
+      "node_modules/onnxruntime-node/**/*"
     ],
     "win": {
       "icon": "build/icon.ico",
@@ -198,6 +207,7 @@
         "repo": "localitfy"
       }
     ],
-    "compression": "maximum"
+    "compression": "maximum",
+    "afterPack": "scripts/prune-analysis-runtime.cjs"
   }
 }

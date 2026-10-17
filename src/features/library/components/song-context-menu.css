@@ -1,0 +1,13 @@
+.songContextMenuLayer { position: fixed; inset: 0; z-index: 1200; }
+.songContextMenu { position: absolute; box-sizing: border-box; width: 236px; max-height: calc(100dvh - 24px); overflow: auto; padding: 8px; border: 1px solid rgba(163, 193, 198, .25); border-radius: 14px; background: linear-gradient(var(--lt-surface, #111c22), var(--lt-surface, #111c22)), var(--lt-bg, #111c22); color: var(--lt-text, #edf5f4); box-shadow: 0 16px 50px rgba(0, 0, 0, .45); }
+.songContextMenuHead { display: flex; align-items: center; gap: 10px; padding: 8px; }
+.songContextMenuHead > span { min-width: 0; }
+.songContextMenuHead strong, .songContextMenuHead small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.songContextMenuHead strong { font-size: 12px; }
+.songContextMenuHead small { margin-top: 4px; font-size: 11px; opacity: .65; }
+.songContextMenuCover { width: 36px; height: 36px; border-radius: 7px; flex-shrink: 0; }
+.songContextMenu > button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 32px; padding: 7px 9px; color: inherit; background: transparent; border: 0; border-radius: 7px; text-align: left; font: inherit; font-size: 12px; cursor: pointer; }
+.songContextMenu > button:hover, .songContextMenu > button:focus-visible { background: rgba(255, 255, 255, .08); outline: 1px solid var(--lt-accent, #8dffce); }
+.songContextMenu .dangerMenuItem { color: #ffaaaa; }
+.songContextMenuIcon { display: grid; place-items: center; }
+.songContextMenuDivider { height: 1px; margin: 4px 0; background: rgba(163, 193, 198, .15); }
