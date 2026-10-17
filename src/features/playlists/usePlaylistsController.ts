@@ -7,6 +7,7 @@ import { prettyTitle } from "../search/search.utils";
 import { makeLocalId, readLocalJson, writeLocalJson } from "../../shared/storage/localStorage";
 import { PLAYLIST_STORAGE_KEY } from "./playlist.constants";
 import type { Playlist } from "./playlist.types";
+import { prepareGeneratedPlaylist } from "./generatedPlaylist";
 import { cleanPlaylistList } from "./playlist.utils";
 
 export type PlaylistsControllerOptions = {
@@ -105,6 +106,16 @@ export function usePlaylistsController({
       setPlaylistPickerName("");
     }
   }, [playlistPickerSong?.id, playlists, setStatusText, showAppToast, songsById]);
+
+  const createPlaylistFromSongs = useCallback((name: string, ids: string[]) => {
+    const prepared = prepareGeneratedPlaylist(name, ids, songsById, playlists);
+    if (!prepared) return null;
+    const id = prepared.existingId || makeLocalId("playlist");
+    if (!prepared.existingId) setPlaylists((items) => [{ id, name: prepared.name, songIds: prepared.songIds, createdAt: Date.now() }, ...items]);
+    setSelectedPlaylistId(id);
+    showAppToast(prepared.existingId ? "playlist already saved" : "mix saved to playlists", "success");
+    return id;
+  }, [playlists, songsById, showAppToast]);
 
   const createPlaylist = useCallback((forcedName?: string) => {
     const sourceName = typeof forcedName === "string" ? forcedName : newPlaylistName;
@@ -299,6 +310,7 @@ export function usePlaylistsController({
     setRenamingPlaylistName,
     createPlaylist,
     createPlaylistWithSong,
+    createPlaylistFromSongs,
     removePlaylist,
     startRenamePlaylist,
     cancelRenamePlaylist,

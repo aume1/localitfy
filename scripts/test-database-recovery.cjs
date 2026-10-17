@@ -51,7 +51,25 @@ try {
     db.patchSong("legacy-song", { genre: "Synthpop" });
     if (db.getSongs().find((item) => item.id === "legacy-song")?.genre !== "Synthpop") throw new Error("genre metadata was not persisted");
     db.saveSettings({ phase3Recovery: "before-backup" });
+    const now = Date.now();
+    const event = { id: "listen-1", sessionId: "session-1", songId: "legacy-song", startedAt: now - 10_000,
+      updatedAt: now - 5000, endedAt: null, msListened: 4000, outcome: "active", contextType: "library", contextId: null };
+    if (!db.recordPlayEvent(event) || !db.recordPlayEvent(event)) throw new Error("idempotent event checkpoint failed");
+    if (db.recordPlayEvent({ ...event, songId: "missing-song" })) throw new Error("missing song event accepted");
+    if (db.recordPlayEvent({ ...event, sessionId: "changed-session" })) throw new Error("event identity changed");
+    if (db.recordPlayEvent({ ...event, updatedAt: now - 6000, msListened: 3000 })) throw new Error("stale checkpoint accepted");
+    if (!db.recordPlayEvent({ ...event, updatedAt: now, endedAt: now, outcome: "ended", msListened: 8000 })) throw new Error("final event failed");
+    if (db.recordPlayEvent(event)) throw new Error("final event reopened");
+    const vector = new Float32Array(512); vector[0] = 1;
+    const analysis = { songId: "legacy-song", filePath: "C:/Music/legacy.mp3", fileSize: 1234, fileMtime: 5678, vector, rms: 0.2 };
+    if (!db.saveSongAnalysis(analysis)) throw new Error("analysis not persisted");
+    if (db.saveSongAnalysis({ ...analysis, vector: new Float32Array(4) })) throw new Error("invalid embedding persisted");
+    const Database = require("better-sqlite3");
+    const inspect = new Database(process.argv[1]);
+    inspect.prepare("INSERT INTO daily_mixes (day, edition, fingerprint, result, generatedAt) VALUES (?, ?, ?, ?, ?)").run("2026-10-16", 0, "fixture", "{}", now);
     const backupPath = db.backupDatabase("phase3-restore-test");
+    if (inspect.prepare("SELECT COUNT(*) AS n FROM play_events").get().n !== 1) throw new Error("duplicate events persisted");
+    inspect.close();
     console.log(JSON.stringify({ backupPath, schemaVersion: status.schemaVersion }));
   `, [dbPath, dbModulePath]);
 
@@ -83,6 +101,33 @@ try {
     if (settings.phase3Recovery !== "before-backup") throw new Error("backup restore did not restore settings");
     const status = db.getDatabaseStatus();
     if (status.schemaVersion !== status.expectedSchemaVersion) throw new Error("restored database schema is invalid");
+    const Database = require("better-sqlite3");
+    const inspect = new Database(process.argv[1]);
+    const event = inspect.prepare("SELECT * FROM play_events WHERE id = ?").get("listen-1");
+    if (event?.msListened !== 8000 || event.outcome !== "ended") throw new Error("history backup/restore failed");
+    const analysis = inspect.prepare("SELECT * FROM song_analysis WHERE songId = ?").get("legacy-song");
+    if (analysis?.vector?.length !== 2048 || analysis.rms !== 0.2) throw new Error("analysis backup/restore failed");
+    if (inspect.prepare("SELECT fingerprint FROM daily_mixes WHERE day = ?").get("2026-10-16")?.fingerprint !== "fixture") throw new Error("daily mixes backup/restore failed");
+    db.clearListeningHistory();
+    if (db.recordPlayEvent(event)) throw new Error("cleared session resurrected history");
+    db.saveSettings({ listeningHistoryEnabled: false });
+    const future = Date.now() + 10;
+    if (db.recordPlayEvent({ ...event, id: "disabled-history", startedAt: future, updatedAt: future, endedAt: null, outcome: "active", msListened: 0 })) throw new Error("history recorded while disabled");
+    db.saveSettings({ listeningHistoryEnabled: true });
+    if (!db.recordPlayEvent({ ...event, id: "after-clear", startedAt: future, updatedAt: future, endedAt: null, outcome: "active", msListened: 0 })) throw new Error("new session did not record after clear");
+    db.deleteSong("legacy-song");
+    if (inspect.prepare("SELECT COUNT(*) AS n FROM song_analysis").get().n !== 0) throw new Error("deleted song analysis retained");
+    if (inspect.prepare("SELECT COUNT(*) AS n FROM play_events").get().n !== 0) throw new Error("deleted song history retained");
+    db.insertSongs([{ id: "clear-song", filePath: "C:/Music/clear.mp3", title: "clear test" }]);
+    const now = Date.now() + 10;
+    const checkpoint = { id: "listen-clear", sessionId: "session", songId: "clear-song", startedAt: now,
+      updatedAt: now, endedAt: null, msListened: 0, outcome: "active", contextType: "library", contextId: null };
+    if (!db.recordPlayEvent(checkpoint)) throw new Error("clear fixture not recorded");
+    db.clearLibrary();
+    if (inspect.prepare("SELECT COUNT(*) AS n FROM play_events").get().n !== 0) throw new Error("cleared library history retained");
+    if (inspect.prepare("SELECT COUNT(*) AS n FROM daily_mixes").get().n !== 0) throw new Error("cleared library mixes retained");
+    if (db.recordPlayEvent(checkpoint)) throw new Error("late checkpoint recreated cleared history");
+    inspect.close();
   `, [dbPath, dbModulePath]);
 
   console.log(`[database-recovery] migration + verified backup restore passed (schema ${migration.schemaVersion})`);

@@ -203,6 +203,13 @@
   .settingsPage .settingsCategoryHeader > span { width: 100%; }
 }
 
+.experimentalControls {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
 /* Sidebar tab order and visibility (Appearance). */
 .settingsPage .sidebarTabsGroups { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-top: 14px; }
 .settingsPage .sidebarTabsGroup .eyebrow { margin: 0 0 8px; color: var(--settings-muted); font-size: 11px; letter-spacing: .1em; }

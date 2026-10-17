@@ -24,7 +24,8 @@ test("every preload invoke channel has a native handler owner", () => {
   const nativeSources = [
     read("electron/main.cjs"),
     read("electron/ipc/router.cjs"),
-    read("electron/ipc/discord.cjs")
+    read("electron/ipc/discord.cjs"),
+    read("electron/ipc/analysis.cjs")
   ].join("\n");
 
   const invokes = collectInvokeChannels(preload);

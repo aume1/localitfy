@@ -1,0 +1,42 @@
+name: analysis-native
+
+on:
+  pull_request:
+    paths:
+      - "electron/analysis/**"
+      - "electron/db.cjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/analysis-native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  package-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Native runtime load
+        run: node -e "const ort = require('onnxruntime-node'); if(typeof ort.InferenceSession?.create !== 'function') throw new Error('ONNX CPU runtime unavailable')"
+      - run: npm run build
+      - name: Build unpacked app
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            npx electron-builder --win dir --x64 --publish never
+          else
+            npx electron-builder --linux dir --x64 --publish never
+          fi
+      - name: Check bundled runtime
+        run: node scripts/check-analysis-native-package.cjs
