@@ -11,7 +11,22 @@ export function removeBracketNoise(text:string,strength:DiscordTitleCleanup="hea
 export function removeLooseNoiseWords(text:string,strength:DiscordTitleCleanup="heavy"){if(strength!=="heavy")return collapseSpaces(text);return collapseSpaces(text.replace(/\b(?:official\s+music\s+video|official\s+video|official\s+audio|lyric\s+video|lyrics?\s+video)\b/gi," ").replace(/\b(?:visualizer|hq|hd|4k|320kbps|full\s+song)\b/gi," ").replace(/\b(?:slowed\s*(?:and|&)?\s*reverb|slowedandreverb|slowedreverb|sped\s*up|bass\s*boosted|nightcore|remaster(?:ed)?|extended\s+mix)\b/gi," ").replace(/\b(?:from\s+tiktok|tiktok\s+version|youtube\s+rip)\b/gi," "));}
 export function cleanupSongTitle(rawTitle:string,strength:DiscordTitleCleanup="heavy"){let text=removeUrlNoise(normalizeUiText(rawTitle||"untitled"));text=stripAudioExtension(text).replace(/[_]+/g," ").replace(/[–—]+/g," - ").replace(/[“”]/g,'"').replace(/[‘’]/g,"'");text=stripTrackNumber(stripDuplicateCopySuffix(text));text=removeBracketNoise(text,strength);text=removeLooseNoiseWords(text,strength);if(strength==="heavy")text=text.replace(/\s+[|/]+\s*(?:slowed|reverb|sped up|nightcore|lyrics?|official|audio|video).*$/i,"").replace(/\s+-\s*(?:slowed|reverb|sped up|nightcore|lyrics?|official|audio|video).*$/i,"");return collapseSpaces(text.replace(/\s*[{}\[\]]\s*/g," ").replace(/\s*\(\s*\)\s*/g," ").replace(/(^|\s)[+~]+(?=\s|$)/g," ").replace(/\s+[–—-]\s*$/g," "))||"untitled";}
 export function shortenWords(text:string,maxWords=7){const words=collapseSpaces(text).split(" ").filter(Boolean);return words.length?words.slice(0,maxWords).join(" "):"untitled";}
-export function prettyTitle(rawTitle:string,maxWords=7){return lower(shortenWords(cleanupSongTitle(rawTitle,"heavy"),maxWords));}
+// Title cleanup runs in many virtualized rows. Bound the cache so large imports
+// cannot retain every unique title indefinitely.
+const prettyTitleCache = new Map<string, string>();
+const PRETTY_TITLE_CACHE_LIMIT = 2048;
+export function prettyTitle(rawTitle:string,maxWords=7){
+  const key = `${maxWords}\u0000${rawTitle}`;
+  const cached = prettyTitleCache.get(key);
+  if (cached !== undefined) return cached;
+  const result = lower(shortenWords(cleanupSongTitle(rawTitle,"heavy"),maxWords));
+  if (prettyTitleCache.size >= PRETTY_TITLE_CACHE_LIMIT) {
+    const oldest = prettyTitleCache.keys().next().value;
+    if (oldest !== undefined) prettyTitleCache.delete(oldest);
+  }
+  prettyTitleCache.set(key, result);
+  return result;
+}
 export function heroTitleDensityClass(title:string){const letters=collapseSpaces(title||"").replace(/[^a-z0-9]/gi,"");if(letters.length<=5)return"heroTitleTiny";if(letters.length<=11)return"heroTitleShort";if(letters.length>=32)return"heroTitleLong";return"heroTitleNormal";}
 export function previewTitle(rawTitle:string,cleanup:DiscordTitleCleanup,maxWords=7){if(cleanup==="off")return lower(shortenWords(collapseSpaces(rawTitle||"local song"),maxWords));if(cleanup==="light")return lower(shortenWords(cleanupSongTitle(rawTitle||"local song","light"),maxWords));return lower(shortenWords(cleanupSongTitle(rawTitle,"heavy"),maxWords));}
 export function compactSongKey(text:string){return lower(cleanupSongTitle(text||"","heavy")).replace(/\b(official|audio|lyrics|lyric|video|visualizer|remix|remastered|slowed|reverb|sped|nightcore|lofi)\b/g," ").replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();}
@@ -32,7 +47,17 @@ export function sanitizeSongRecord(song:Partial<Song>&Record<string,unknown>,ind
 export function sanitizeSongList(input:unknown):Song[]{return Array.isArray(input)?input.filter((item):item is Partial<Song>&Record<string,unknown>=>Boolean(item&&typeof item==="object")).map(sanitizeSongRecord):[];}
 export function getMetadataRepairPatch(song:Song):Partial<Song>{const clean=sanitizeSongRecord(song,0),patch:Partial<Song>={};if(clean.title!==song.title)patch.title=clean.title;if(clean.artist!==song.artist)patch.artist=clean.artist;if(clean.album!==song.album)patch.album=clean.album;if(clean.duration!==song.duration)patch.duration=clean.duration;if(clean.playCount!==song.playCount)patch.playCount=clean.playCount;if((song.playbackPosition||0)<0||!Number.isFinite(Number(song.playbackPosition||0)))patch.playbackPosition=0;return patch;}
 export function buildSongSearchEntry(song:Song):SongSearchEntry{const raw=stripAudioExtension(fileNameFromPath(song.filePath||song.url||"")),fileName=normalizeSearchText(raw),title=normalizeSearchText(song.title),artist=normalizeSearchText(song.artist),album=normalizeSearchText(song.album),filePath=normalizeSearchText(song.filePath||song.url||""),compactTitle=compactSongKey(song.title||raw),compactArtist=compactSongKey(song.artist||""),compactAlbum=compactSongKey(song.album||"");const haystack=[title,artist,album,fileName,filePath,compactTitle,compactArtist,compactAlbum,song.liked?"liked favorite heart":""].filter(Boolean).join(" ");return{song,title,artist,album,fileName,filePath,compactTitle,compactArtist,compactAlbum,haystack,tokens:Array.from(new Set(haystack.split(" ").filter(Boolean)))};}
+// Song state updates replace objects rather than mutating them. Cache by identity
+// so liking one track does not renormalize every unchanged track in the library.
+const songSearchEntryCache = new WeakMap<Song, SongSearchEntry>();
+export function buildSongSearchEntryCached(song: Song): SongSearchEntry {
+  const cached = songSearchEntryCache.get(song);
+  if (cached) return cached;
+  const entry = buildSongSearchEntry(song);
+  songSearchEntryCache.set(song, entry);
+  return entry;
+}
 export function scoreSongSearch(entry:SongSearchEntry,search:SearchQueryInfo){if(!search.clean||!search.terms.length)return 1;let score=0;if(entry.title===search.clean)score+=280;if(entry.artist===search.clean)score+=190;if(entry.album===search.clean)score+=150;if(entry.title.startsWith(search.clean))score+=165;if(entry.artist.startsWith(search.clean))score+=110;if(entry.album.startsWith(search.clean))score+=78;if(entry.compactTitle.includes(search.compact))score+=100;if(entry.compactArtist.includes(search.compact))score+=48;if(entry.fileName.includes(search.clean))score+=58;if(entry.filePath.includes(search.clean))score+=36;if(entry.haystack.includes(search.clean))score+=44;for(const term of search.terms){if(entry.title.startsWith(term))score+=36;else if(entry.title.includes(term))score+=26;else if(entry.artist.startsWith(term))score+=22;else if(entry.artist.includes(term))score+=18;else if(entry.album.includes(term))score+=14;else if(entry.fileName.includes(term))score+=12;else if(entry.filePath.includes(term))score+=8;else if(entry.tokens.some((token)=>token.startsWith(term)||token.includes(term)))score+=5;else return 0;}score+=Math.min(entry.song.playCount||0,60)/6;if(entry.song.liked)score+=3;return score;}
-export function rankSongsForSearch(entries:SongSearchEntry[],query:string){const search=prepareSearchQuery(query);if(!search.clean)return entries.map((entry)=>entry.song);return entries.map((entry,index)=>({entry,index,score:scoreSongSearch(entry,search)})).filter((item)=>item.score>0).sort((a,b)=>b.score-a.score||a.index-b.index).map((item)=>item.entry.song);}
+export function rankSongsForSearch(entries:SongSearchEntry[],query:string){const search=prepareSearchQuery(query);if(!search.clean)return entries.map((entry)=>entry.song);const matches:Array<{entry:SongSearchEntry;index:number;score:number}>=[];for(let index=0;index<entries.length;index+=1){const entry=entries[index];const score=scoreSongSearch(entry,search);if(score>0)matches.push({entry,index,score});}matches.sort((a,b)=>b.score-a.score||a.index-b.index);return matches.map((item)=>item.entry.song);}
 export function prettyMeta(text:string){return lower(collapseSpaces(text))||"unknown artist";}
 export function discordArtist(text:string){const value=prettyMeta(text);return !value||value==="unknown"||value==="unknown artist"?"coderpixel :p":value;}

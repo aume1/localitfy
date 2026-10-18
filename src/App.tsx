@@ -152,10 +152,11 @@ import {
   reorderSongList,
   saveLibraryOrder,
   sortLibrarySongs,
+  topPlayedSongs,
   stableSongSourceKey
 } from "./features/library";
 import {
-  buildSongSearchEntry,
+  buildSongSearchEntryCached,
   heroTitleDensityClass,
   prettyMeta,
   prettyTitle,
@@ -1685,7 +1686,7 @@ function MainModeApp() {
 
   const starParticleStyles = useMemo<CSSProperties[]>(() => [], []);
 
-  const librarySearchIndex = useMemo(() => songs.map((song) => buildSongSearchEntry(song)), [songs]);
+  const librarySearchIndex = useMemo(() => songs.map((song) => buildSongSearchEntryCached(song)), [songs]);
 
   const filteredSongs = useMemo(() => {
     if (!deferredQuery.trim()) return songs;
@@ -1707,9 +1708,7 @@ function MainModeApp() {
     });
   }, [songs]);
 
-  const topSongs = useMemo(() => {
-    return [...songs].sort((a, b) => b.playCount - a.playCount).slice(0, 6);
-  }, [songs]);
+  const topSongs = useMemo(() => topPlayedSongs(songs, 6), [songs]);
 
   const mostPlayed = topSongs[0] ?? null;
   const missingSongsForLibrary = useMemo(() => songs.filter((song) => song.fileExists === false), [songs]);

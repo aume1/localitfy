@@ -22,7 +22,8 @@ import {
   getSongCoverUsageKeys,
   pixelArtForSong,
   songSignature,
-  stableHash
+  stableHash,
+  selectBalancedPixelAsset
 } from "./cover.runtime";
 import { readLocalJson, writeLocalJson } from "../../shared/storage/localStorage";
 
@@ -158,38 +159,24 @@ export function useCoversController({
     return pool[index] || pixelArtForSong(song);
   }, [pixelArtPool]);
 
+  const selectablePixelArtPool = useMemo(() => pixelArtPool.filter((asset) =>
+    Boolean(asset.path || asset.url || asset.file) && !excludedPixelCoverKeySet.has(getPixelArtAssetKey(asset))
+  ), [excludedPixelCoverKeySet, pixelArtPool]);
+
   const pickBalancedPixelAsset = useCallback((
     song: Song,
     salt = "manual",
     usageOverride?: Map<string, number>,
     poolOverride?: RuntimePixelArtAsset[]
   ): RuntimePixelArtAsset | null => {
-    const pool = (poolOverride || pixelArtPool).filter((asset) => {
-      if (!(asset.path || asset.url || asset.file)) return false;
-      return poolOverride ? true : !excludedPixelCoverKeySet.has(getPixelArtAssetKey(asset));
-    });
-    if (!pool.length) return null;
-
-    const usage = usageOverride || pixelArtUsageMap;
-    const currentKeys = new Set([song.coverPath, song.coverUrl].filter(Boolean) as string[]);
-    const randomSalt = `${Date.now()}::${Math.random()}::${salt}`;
-
-    const ranked = pool
-      .map((asset, index) => {
-        const key = getPixelArtAssetKey(asset);
-        const isCurrent = currentKeys.has(asset.path || "") || currentKeys.has(asset.url || "") || currentKeys.has(asset.file || "");
-        return {
-          asset,
-          isCurrent,
-          usage: usage.get(key) || 0,
-          score: stableHash(`${songSignature(song)}::${randomSalt}::${index}::${asset.file}`)
-        };
-      })
-      .filter((entry) => pool.length <= 1 || !entry.isCurrent)
-      .sort((a, b) => a.usage - b.usage || a.score - b.score);
-
-    return ranked[0]?.asset || pool[0] || null;
-  }, [excludedPixelCoverKeySet, pixelArtPool, pixelArtUsageMap]);
+    const pool = poolOverride
+      ? poolOverride.filter((asset) => Boolean(asset.path || asset.url || asset.file))
+      : selectablePixelArtPool;
+    return selectBalancedPixelAsset(
+      pool, song, usageOverride || pixelArtUsageMap,
+      `${Date.now()}::${Math.random()}::${salt}`
+    );
+  }, [pixelArtUsageMap, selectablePixelArtPool]);
 
   const coverToolsActive = view === "covers" || (view === "settings" && (settingsCategory === "covers" || settingsCategory === "advanced"));
 
@@ -223,7 +210,7 @@ export function useCoversController({
         if (!entry.excluded) counts.set(tag, (counts.get(tag) || 0) + 1);
       });
     });
-    counts.set("leastUsed", coverGalleryAssets.filter((entry) => !entry.excluded).length);
+    counts.set("leastUsed", counts.get("all") || 0);
     return counts;
   }, [coverGalleryAssets]);
 
@@ -258,13 +245,20 @@ export function useCoversController({
 
   const coverStats = useMemo(() => {
     const usable = coverGalleryAssets.filter((entry) => !entry.excluded);
-    const used = usable.filter((entry) => entry.usage > 0);
-    const least = [...usable].sort((a, b) => a.usage - b.usage || a.asset.label.localeCompare(b.asset.label))[0] || null;
-    const most = [...usable].sort((a, b) => b.usage - a.usage || a.asset.label.localeCompare(b.asset.label))[0] || null;
+    let usedCount = 0;
+    let least: (typeof usable)[number] | null = null;
+    let most: (typeof usable)[number] | null = null;
+    for (const entry of usable) {
+      if (entry.usage > 0) usedCount += 1;
+      if (!least || entry.usage < least.usage ||
+        (entry.usage === least.usage && entry.asset.label.localeCompare(least.asset.label) < 0)) least = entry;
+      if (!most || entry.usage > most.usage ||
+        (entry.usage === most.usage && entry.asset.label.localeCompare(most.asset.label) < 0)) most = entry;
+    }
     return {
       total: coverGalleryAssets.length,
       usable: usable.length,
-      used: used.length,
+      used: usedCount,
       favorites: favoritePixelCoverKeys.length,
       excluded: excludedPixelCoverKeys.length,
       missingSongs: missingCoverSongs.length,
@@ -436,6 +430,7 @@ export function useCoversController({
         return;
       }
       const nextSongs = [...songs];
+      const songIndexById = new Map(songs.map((song, index) => [song.id, index]));
       const usage = new Map<string, number>();
       let changedCount = 0;
       for (const song of songs) {
@@ -447,8 +442,8 @@ export function useCoversController({
         else if (publicCoverUrl && window.localitfy.patchSong) updated = await window.localitfy.patchSong(song.id, { coverPath: asset.path || null, coverUrl: publicCoverUrl });
         else if (window.localitfy.randomizeSongCover) updated = await window.localitfy.randomizeSongCover(song.id);
         const finalSong = updated || { ...song, coverPath: asset.path || null, coverUrl: publicCoverUrl || song.coverUrl };
-        const index = nextSongs.findIndex((candidate) => candidate.id === finalSong.id);
-        if (index !== -1) nextSongs[index] = finalSong;
+        const index = songIndexById.get(finalSong.id);
+        if (index !== undefined) nextSongs[index] = finalSong;
         const key = getPixelArtAssetKey(asset);
         usage.set(key, (usage.get(key) || 0) + 1);
         changedCount += 1;
@@ -521,6 +516,7 @@ export function useCoversController({
     try {
       const usage = new Map<string, number>(pixelArtUsageMap);
       const nextSongs = [...songs];
+      const songIndexById = new Map(songs.map((song, index) => [song.id, index]));
       let changedCount = 0;
       for (const song of targetSongs) {
         const asset = pickBalancedPixelAsset(song, `${mood}-${changedCount}`, usage, sourcePool);
@@ -531,8 +527,8 @@ export function useCoversController({
         else if (publicCoverUrl && window.localitfy.patchSong) updated = await window.localitfy.patchSong(song.id, { coverPath: asset.path || null, coverUrl: publicCoverUrl });
         else if (window.localitfy.randomizeSongCover) updated = await window.localitfy.randomizeSongCover(song.id);
         const finalSong = updated || { ...song, coverPath: asset.path || null, coverUrl: publicCoverUrl || song.coverUrl };
-        const index = nextSongs.findIndex((candidate) => candidate.id === finalSong.id);
-        if (index !== -1) nextSongs[index] = finalSong;
+        const index = songIndexById.get(finalSong.id);
+        if (index !== undefined) nextSongs[index] = finalSong;
         const key = getPixelArtAssetKey(asset);
         usage.set(key, (usage.get(key) || 0) + 1);
         if (asset.url) usage.set(asset.url, (usage.get(asset.url) || 0) + 1);
