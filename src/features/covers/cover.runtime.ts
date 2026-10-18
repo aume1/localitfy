@@ -23,6 +23,7 @@ export function selectBalancedPixelAsset(pool: RuntimePixelArtAsset[], song: Son
     const asset = pool[index];
     if (pool.length > 1 && (currentKeys.has(asset.path || "") || currentKeys.has(asset.url || "") || currentKeys.has(asset.file || ""))) continue;
     const candidateUsage = usage.get(getPixelArtAssetKey(asset)) || 0;
+    if (candidateUsage > minUsage) continue;
     const score = stableHash(`${signature}::${randomSalt}::${index}::${asset.file}`);
     if (candidateUsage < minUsage || (candidateUsage === minUsage && score < minScore)) {
       best = asset;

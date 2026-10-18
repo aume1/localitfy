@@ -20,6 +20,7 @@ export function topPlayedSongs<T extends Pick<Song, "playCount">>(songs: readonl
   const best: { song: T; plays: number }[] = [];
   for (const song of songs) {
     const plays = Number(song.playCount) || 0;
+    if (best.length === count && plays <= best[count - 1].plays) continue;
     let index = 0;
     while (index < best.length && best[index].plays >= plays) index += 1;
     if (index >= count) continue;
