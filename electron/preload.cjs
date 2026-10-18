@@ -151,6 +151,15 @@ contextBridge.exposeInMainWorld("localitfy", {
     return () => {
       ipcRenderer.removeListener("player:command", handler);
     };
+  },
+
+  onAppMenuCommand: (callback) => {
+    const handler = (_event, payload) => callback(payload);
+    ipcRenderer.on("app-menu:command", handler);
+
+    return () => {
+      ipcRenderer.removeListener("app-menu:command", handler);
+    };
   }
 });
 

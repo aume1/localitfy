@@ -14,6 +14,7 @@ const { createIconRuntime } = require("./runtime/icons.cjs");
 const { createUpdaterRuntime } = require("./runtime/updater.cjs");
 const { createMediaServerRuntime } = require("./runtime/media-server.cjs");
 const { createGenreMetadataBackfill } = require("./runtime/genre-backfill.cjs");
+const { createAppMenuRuntime } = require("./runtime/app-menu.cjs");
 const { installRendererSecurityGuards, installSessionPermissionGuards, isTrustedMainFrameIpcEvent } = require("./runtime/security.cjs");
 const { createDatabaseRepositories } = require("./db/repositories.cjs");
 const http = require("node:http");
@@ -378,6 +379,7 @@ function updateNativeMediaState(payload = {}) {
   if (Object.prototype.hasOwnProperty.call(payload, "minimizeToTray")) minimizeToTray = Boolean(payload.minimizeToTray);
   updateTrayMenu();
   updateTaskbarButtons();
+  appMenu.update(nativeMediaState);
   return { ok: true, state: nativeMediaState, minimizeToTray };
 }
 
@@ -466,7 +468,10 @@ function configureLocaltifyChromiumPerformance() {
 
 app.setName(APP_NAME);
 const LOCALTIFY_CHROMIUM_PERFORMANCE = configureLocaltifyChromiumPerformance();
-try { Menu.setApplicationMenu(null); } catch (error) { console.log("[localtify menu cleanup error]", error?.message || error); }
+const appMenu = createAppMenuRuntime({ Menu, shell, appName: APP_NAME, isDev, sendPlayerCommand,
+  sendAppCommand: (command) => { showMainWindow(); mainWindow?.webContents.send("app-menu:command", command); },
+  requestQuit: () => { allowQuit = true; app.quit(); } });
+appMenu.update();
 
 function getCoverThumbnailDirectory() {
   try {
