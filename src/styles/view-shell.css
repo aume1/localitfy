@@ -331,74 +331,6 @@
   background: var(--workspace-bg) !important;
 }
 
-.headerBar {
-  position: relative !important;
-  top: auto !important;
-  z-index: 10 !important;
-  width: 100% !important;
-  min-height: 58px !important;
-  margin: 0 0 clamp(22px, 2vw, 32px) !important;
-  padding: 0 0 15px !important;
-  display: flex !important;
-  align-items: flex-end !important;
-  justify-content: space-between !important;
-  gap: 20px !important;
-  border-bottom: 1px solid rgba(var(--lt-accent-rgb), .08) !important;
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-.headerText { min-width: 0; display: grid; gap: 5px; }
-.headerText > .eyebrow {
-  margin: 0 !important;
-  color: var(--workspace-accent) !important;
-  font-size: 8px !important;
-  font-weight: 800 !important;
-  letter-spacing: .10em !important;
-}
-.headerText h2 {
-  margin: 0 !important;
-  color: var(--lt-text) !important;
-  font-size: clamp(26px, 2vw, 36px) !important;
-  font-weight: 680 !important;
-  line-height: 1 !important;
-  letter-spacing: -.045em !important;
-}
-
-.headerTools,
-.compactHeaderTools {
-  min-width: 0 !important;
-  flex: 0 1 430px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-}
-
-.searchEasterWrap {
-  width: min(420px, 100%) !important;
-  min-width: 240px !important;
-}
-
-.headerBar .search {
-  width: 100% !important;
-  height: 38px !important;
-  padding: 0 13px !important;
-  border: 1px solid var(--workspace-border) !important;
-  border-radius: 999px !important;
-  outline: 0 !important;
-  color: var(--workspace-text) !important;
-  background: var(--lt-surface) !important;
-  box-shadow: none !important;
-  font-size: 9px !important;
-}
-
-.headerBar .search::placeholder { color: var(--lt-muted) !important; }
-.headerBar .search:focus {
-  border-color: rgba(var(--accent-rgb), .28) !important;
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .045) !important;
-}
-
 .pageTransition:not(.pageTransition-home) {
   width: 100% !important;
   min-width: 0 !important;
@@ -471,17 +403,4 @@
 
   .sidebarResizeHandle { display: none !important; }
   .content { padding: 18px 14px 34px !important; }
-  .headerBar {
-    min-height: 0 !important;
-    align-items: flex-start !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-  }
-  .headerTools,
-  .compactHeaderTools,
-  .searchEasterWrap {
-    width: 100% !important;
-    min-width: 0 !important;
-    flex-basis: auto !important;
-  }
 }

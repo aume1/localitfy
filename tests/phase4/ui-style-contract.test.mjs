@@ -68,3 +68,26 @@ test("permanent visual owners remain explicit and co-located", () => {
   assert.equal(settingsCss.includes(".settingsCategoryRail nav"), true, "Settings layout should style its own navigation");
   assert.equal(settingsCss.includes(".modalWrap"), false, "Settings styles must not affect unrelated modals");
 });
+
+
+test("removed global header selectors stay out of active CSS owners", () => {
+  for (const file of ["src/App.css", "src/features/shell/app-core.css", "src/styles/view-shell.css"]) {
+    const css = read(file);
+    for (const obsolete of [".headerBar", ".headerText", ".headerTools", ".compactHeaderTools", ".searchEasterWrap"]) {
+      assert.equal(css.includes(obsolete), false, file + " still owns removed header style " + obsolete);
+    }
+  }
+});
+
+test("theme controls and library layout follow their owners", () => {
+  const app = read("src/App.css");
+  const themes = read("src/styles/themes.css");
+  assert.match(app, /background-color: var\(--lt-surface\) !important/);
+  assert.equal(app.includes("--sidebar-line-soft"), false);
+  assert.match(themes, /\.app\[data-theme="mono"\][\s\S]*?color-scheme: light/);
+  assert.match(read("src/features/settings/settings.css"), /\.settingsPage select \{ cursor: pointer; color-scheme: inherit/);
+  assert.match(read("src/features/albums/albums.css"), /font-size: 12px; color-scheme: inherit/);
+  assert.match(read("src/features/library/library.css"), /padding: clamp\(24px, 2\.5vw, 40px\) 0 105px/);
+  assert.match(read("src/features/settings/settings.css"), /padding: 26px 0 100px/);
+  assert.match(read("src/features/settings/settings-premium.css"), /padding: 24px 0 90px/);
+});

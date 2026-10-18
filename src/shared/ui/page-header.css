@@ -31,7 +31,7 @@
   color: var(--lt-text);
   font-size: clamp(25px, 1.7vw, 34px);
   font-weight: 680;
-  line-height: .95;
+  line-height: 1.08;
   letter-spacing: -.045em;
 }
 

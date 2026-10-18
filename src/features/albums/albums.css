@@ -41,7 +41,7 @@
 .albumsPageV318 .albumsSortV318 {
   min-width: 140px; height: 42px; padding: 0 14px; border: 1px solid rgba(var(--lt-accent-rgb), .09);
   border-radius: 999px; outline: none; color: var(--lt-text); background: var(--lt-surface);
-  font: inherit; font-size: 12px; color-scheme: dark; cursor: pointer;
+  font: inherit; font-size: 12px; color-scheme: inherit; cursor: pointer;
 }
 .albumsGridV318 { min-width: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(180px,100%),1fr)); gap: 15px; align-items: start; }
 .albumCardV318 { min-width: 0; display: grid; align-content: start; gap: 9px; padding: 11px; border: 1px solid var(--albums-border); border-radius: 12px; background: var(--lt-surface); color: var(--albums-text); text-align: left; font: inherit; cursor: pointer; }
@@ -105,7 +105,7 @@
   place-items: center;
   border: 1px solid rgba(var(--lt-accent-rgb), .15);
   border-radius: 999px;
-  background: rgba(9,25,35,.94);
+  background: var(--albums-surface);
   color: var(--lt-text);
   font: 500 25px/1 system-ui,sans-serif;
   box-shadow: 0 8px 24px rgba(0,0,0,.24);
