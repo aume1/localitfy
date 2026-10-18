@@ -1,9 +1,3 @@
-.muted-small{
-  display: block;
-  margin-top: 3px;
-
-
-}
 
 @keyframes softPanelIn {
   from {
@@ -108,13 +102,6 @@
   color: var(--accent-contrast) !important;
   border-color: transparent !important;
   background: var(--lt-accent) !important;
-}
-
-.muted-small{
-  margin: 0 !important;
-  color: rgba(255, 255, 255, 0.48) !important;
-  font-size: 11px !important;
-  line-height: 1.35 !important;
 }
 
 .editorActions{
@@ -265,30 +252,12 @@
   letter-spacing: -0.01em;
 }
 
-.appToastDot{
-  width: 9px;
-  height: 9px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: var(--lt-accent, #8dffce);
-  box-shadow: 0 0 18px rgba(var(--lt-accent-rgb, 141, 255, 206), 0.62);
-}
-
-.appToast.work .appToastDot{
-  animation: localitfyScannerPulse 880ms ease-in-out infinite;
-}
-
 .appToast.success{
   border-color: rgba(var(--lt-accent-rgb, 141, 255, 206), 0.34);
 }
 
 .appToast.error{
   border-color: rgba(255, 91, 119, 0.42);
-}
-
-.appToast.error .appToastDot{
-  background: #ff5b77;
-  box-shadow: 0 0 18px rgba(255, 91, 119, 0.48);
 }
 
 .tinyScanner{
@@ -1093,14 +1062,6 @@ body.isResizingSidebar{
   --custom-muted: var(--flat-muted);
 }
 
-.app.flatNoGradientUI *:not(img):not(video):not(canvas){
-  background-image: none !important;
-}
-
-
-.cleanToggleLabel{ display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); font-size: 12px; font-weight: 800; text-transform: lowercase; }
-.cleanToggleLabel input{ width: 16px; height: 16px; accent-color: rgb(var(--lt-accent-rgb)); }
-
 
 .whatsNewOverlay{ position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; padding: 24px;   animation: whatsNewFadeIn .17s ease both; }
 .whatsNewCard{ position: relative;       animation: whatsNewPop .21s cubic-bezier(.16,1,.3,1) both; }
@@ -1553,13 +1514,6 @@ input[type="range"]{
   --shell-sidebar-line: color-mix(in oklab, var(--lt-accent) 24%, transparent);
   --shell-sidebar-text: color-mix(in oklab, var(--lt-text) 84%, var(--lt-accent) 16%);
   --shell-sidebar-muted: color-mix(in oklab, var(--lt-muted) 82%, var(--lt-accent) 18%);
-}
-
-
-.sidebarModeTab:not(.active):hover{
-  color: var(--shell-sidebar-text);
-  background: color-mix(in oklab, var(--lt-accent) 8%, transparent);
-  transform: translateY(-1px);
 }
 
 
@@ -2770,13 +2724,6 @@ button svg,
   stroke: currentColor !important;
 }
 
-
-.settingsThemeSelectPanel select:disabled {
-  cursor: not-allowed !important;
-  opacity: 0.55 !important;
-  filter: grayscale(0.25) !important;
-}
-
 .app,
 .app *{
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
@@ -3013,28 +2960,12 @@ button {
   text-transform: none !important;
 }
 
-.app .appToastDot{
-  width: 8px !important;
-  height: 8px !important;
-  background: rgba(var(--lt-accent-rgb), 0.95) !important;
-  box-shadow: 0 0 16px rgba(var(--lt-accent-rgb), 0.5) !important;
-}
-
 .app .appToast.success{
   border-color: rgba(var(--lt-accent-rgb), 0.3) !important;
 }
 
 .app .appToast.error{
   border-color: rgba(255, 91, 119, 0.42) !important;
-}
-
-.app .appToast.error .appToastDot{
-  background: #ff5b77 !important;
-  box-shadow: 0 0 16px rgba(255, 91, 119, 0.46) !important;
-}
-
-.app .appToast.work .appToastDot{
-  animation: localtifyToastDotWork 900ms ease-in-out infinite !important;
 }
 
 @keyframes localtifyCleanToastIn{
@@ -3157,7 +3088,7 @@ body,
 }
 
 
-body.localtifyIdle .app:not(.songDragActive) :where(.floatingNote, .secretLayer, .ambientParticle, .homePulse, .coverSpark, .softOrbit){
+body.localtifyIdle .app:not(.songDragActive) :where( .secretLayer, .coverSpark){
   animation-play-state: paused !important;
 }
 
@@ -4679,7 +4610,7 @@ body.localtifyBackgroundMode .ambientSurface,
 }
 
 .app :where(input, textarea, select, option):active,
-.app :where(.rangeRow, .slider, .progressTrack, .volumeSlider):active{
+.app :where(.rangeRow):active{
   transform: none !important;
   filter: none !important;
 }
@@ -5564,7 +5495,7 @@ the last imported CSS layer. */
   contain: layout style !important;
 }
 
-.app :where(.secretLayer.arcadeGhost, .lateNightNoteLayer, .lateNightWarning, .misideWhisper, .misideEggNotice){
+.app :where(.secretLayer.arcadeGhost){
   display: none !important;
   animation: none !important;
   pointer-events: none !important;
@@ -5574,7 +5505,7 @@ the last imported CSS layer. */
   display: none !important;
 }
 
-.app :where(.settingsPanelCard, .settingSwitchCard, .settingsResetButton, .settingsChoice, .coverSyncChoice, .songRow, .coverTile).localtifyProximityActive{
+.app :where(.settingsPanelCard, .settingsResetButton, .settingsChoice, .coverSyncChoice, .songRow, .coverTile).localtifyProximityActive{
   transform: none !important;
   box-shadow: inherit !important;
   background-image: inherit !important;
@@ -5632,7 +5563,7 @@ body.localtifyPerfV301 .app{
 }
 
 
-body.localtifyPerfV301 .app :is(.localtifyStarsBackdrop, .localtifyStarsLayer, .ambientOrb, .lightOrb){
+body.localtifyPerfV301 .app :is(.localtifyStarsBackdrop, .localtifyStarsLayer){
   display: none !important;
 }
 
@@ -6240,11 +6171,11 @@ body.isResizingPlayer .app *{
 
 .app .sidebar .navItem.active .navIcon,
 .app .sidebar .navItem.active .navText strong{
-  color: #fff !important;
+  color: var(--lt-text) !important;
 }
 
 .app .sidebar .navItem.active .navText small{
-  color: rgba(255,255,255,.62) !important;
+  color: var(--lt-muted) !important;
 }
 
 .app .sidebar .navItem .navLucideIcon{
@@ -6312,7 +6243,7 @@ body.isResizingPlayer .app *{
   text-shadow: none !important;
 }
 
-.app :is(.mainAction, .heroMain, .circleButton.main:not(.playerBar *), .settingsActionButton.isPrimary, .settingsTinyButton.isPrimary, .editor-playlist-list button.is-on) :is(svg, .buttonInlineIcon, .settingsThemeIcon){
+.app :is(.mainAction, .heroMain, .circleButton.main:not(.playerBar *), .settingsActionButton.isPrimary, .settingsTinyButton.isPrimary, .editor-playlist-list button.is-on) :is(svg, .buttonInlineIcon){
   color: currentColor !important;
   stroke: currentColor !important;
   fill: none;
@@ -6819,7 +6750,7 @@ body.isResizingPlayer .app *{
   border-color: var(--lt-border);
 }
 
-.app :is(.softText, .panel p, .navText small){
+.app :is( .panel p, .navText small){
   color: color-mix(in srgb, var(--text) 68%, transparent);
 }
 
@@ -6946,7 +6877,7 @@ body.isResizingPlayer .app *{
     var(--panel-calm-shadow-hover) !important;
 }
 
-.app :is(.active, .selected, .playing, .isActive, .loggedIn):is(.panel, .ambientSurface, .settingsCard){
+.app :is(.active, .selected, .playing, .loggedIn):is(.panel, .ambientSurface, .settingsCard){
   border-color: rgba(var(--lt-accent-rgb), .22) !important;
   background:
     linear-gradient(180deg, rgba(var(--lt-accent-rgb), .070), rgba(255,255,255,.014)),
@@ -7180,7 +7111,7 @@ body.isResizingPlayer .app *{
   color: var(--lt-text) !important;
 }
 
-.app[data-theme="mono"] :is(.softText, p, small, .navText small){
+.app[data-theme="mono"] :is( p, small, .navText small){
   color: var(--lt-muted) !important;
 }
 
@@ -7624,19 +7555,19 @@ body.isResizingPlayer .app *{
   outline: 0 !important;
 }
 
-.app .sidebar :is(.navItem, .navIcon, .sidebarToolButton, .sidebarGroupLabelV467, .mainAction),
-.sidebar :is(.navItem, .navIcon, .sidebarToolButton, .sidebarGroupLabelV467, .mainAction){
+.app .sidebar :is(.navItem, .navIcon, .sidebarGroupLabelV467, .mainAction),
+.sidebar :is(.navItem, .navIcon, .sidebarGroupLabelV467, .mainAction){
   outline: 0 !important;
   box-shadow: none !important;
 }
 
-.app .sidebar :is(.navItem, .sidebarToolButton),
-.sidebar :is(.navItem, .sidebarToolButton){
+.app .sidebar :is(.navItem),
+.sidebar :is(.navItem){
   border-color: transparent !important;
 }
 
-.app .sidebar :is(.navItem.active, .navItem[aria-current="page"], .sidebarToolButton.active),
-.sidebar :is(.navItem.active, .navItem[aria-current="page"], .sidebarToolButton.active){
+.app .sidebar :is(.navItem.active, .navItem[aria-current="page"]),
+.sidebar :is(.navItem.active, .navItem[aria-current="page"]){
   border-color: transparent !important;
   box-shadow: none !important;
   background:

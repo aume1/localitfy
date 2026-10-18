@@ -1,6 +1,6 @@
 /* localtify V324 — effects owner. No window transparency. No standalone ambience orbs. Smooth visual settings. */
 
-.app[data-playing="on"] :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura, .homeListenCard.playing .homeListenCover.coverAura, .homeFreshCard.playing .homeFreshCover.coverAura){
+.app[data-playing="on"] :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura){
   position: relative !important;
   isolation: isolate !important;
   contain: paint !important;
@@ -8,7 +8,7 @@
   transition: transform 135ms cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
-.app[data-playing="on"] :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura, .homeListenCard.playing .homeListenCover.coverAura, .homeFreshCard.playing .homeFreshCover.coverAura)::before{
+.app[data-playing="on"] :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura)::before{
   opacity: min(var(--active-song-glow-opacity, 0.28), 0.34) !important;
   filter: blur(14px) saturate(1.18) !important;
   transform: translateZ(0) scale(var(--active-song-glow-scale, 1.01)) !important;
@@ -23,7 +23,7 @@
   display: block;
 }
 
-.app :is(.ambientOrb, .sideAmbienceOrb, .lightOrb, .ambientSurfaceGlow, .orb, .localtifyStarsBackdrop, .localtifyStarsLayer, .localtifyStarParticle, .localtifyStarsNebula, .localtifyStarSweep, .themeBackdrop, .animatedThemeBackdrop, .backgroundGradient, .appBackdrop, .appBackgroundLayer){
+.app :is( .orb, .localtifyStarsBackdrop, .localtifyStarsLayer, .localtifyStarParticle, .localtifyStarsNebula, .localtifyStarSweep){
   display: none !important;
   opacity: 0 !important;
   background: none !important;
@@ -146,37 +146,37 @@
   --v321-card-shadow: none;
 }
 
-.app :where(.panel, .settingsPanelCard, .homeShelfPanel, .homeListenPanel, .homeFreshPanel, .homeLibraryPanel, .homeAlbumPanel, .coverTargetPanelCleanOnly, .statCard){
+.app :where(.panel, .settingsPanelCard, .coverTargetPanelCleanOnly){
   background: var(--v321-panel-bg) !important;
   border-color: var(--v321-panel-border) !important;
   box-shadow: var(--v321-card-shadow) !important;
   transition: background-color var(--v321-fast), border-color var(--v321-fast), box-shadow var(--v321-fast), transform var(--v321-fast) !important;
 }
 
-.app[data-card-background="glassy"] :where(.panel, .settingsPanelCard, .homeShelfPanel, .homeListenPanel, .homeFreshPanel, .homeLibraryPanel, .homeAlbumPanel, .coverTargetPanelCleanOnly, .statCard){
+.app[data-card-background="glassy"] :where(.panel, .settingsPanelCard, .coverTargetPanelCleanOnly){
   backdrop-filter: blur(16px) saturate(1.08) !important;
   -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
 }
 
-.app[data-card-background="solid"] :where(.panel, .settingsPanelCard, .homeShelfPanel, .homeListenPanel, .homeFreshPanel, .homeLibraryPanel, .homeAlbumPanel, .coverTargetPanelCleanOnly, .statCard),
-.app[data-card-background="oledFlat"] :where(.panel, .settingsPanelCard, .homeShelfPanel, .homeListenPanel, .homeFreshPanel, .homeLibraryPanel, .homeAlbumPanel, .coverTargetPanelCleanOnly, .statCard){
+.app[data-card-background="solid"] :where(.panel, .settingsPanelCard, .coverTargetPanelCleanOnly),
+.app[data-card-background="oledFlat"] :where(.panel, .settingsPanelCard, .coverTargetPanelCleanOnly){
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-.app[data-card-background="solid"] :where(.homeListenCard, .homeFreshCard, .homeAlbumCard, .songRow){
+.app[data-card-background="solid"] :where( .homeAlbumCard, .songRow){
   background: rgba(18, 17, 24, 0.96) !important;
   border-color: rgba(255, 255, 255, 0.07) !important;
   box-shadow: none !important;
 }
 
-.app[data-card-background="glassy"] :where(.homeListenCard, .homeFreshCard, .homeAlbumCard, .songRow){
+.app[data-card-background="glassy"] :where( .homeAlbumCard, .songRow){
   background: rgba(19, 17, 25, 0.58) !important;
   border-color: rgba(255, 255, 255, 0.095) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
 }
 
-.app[data-card-background="oledFlat"] :where(.homeListenCard, .homeFreshCard, .homeAlbumCard, .songRow){
+.app[data-card-background="oledFlat"] :where( .homeAlbumCard, .songRow){
   background: rgba(2, 2, 6, 0.98) !important;
   border-color: rgba(255, 255, 255, 0.052) !important;
   box-shadow: none !important;
@@ -233,8 +233,7 @@
 
 .app[data-home-banner="cleanBlack"] .hero.ambientSurface::before,
 .app[data-home-banner="cleanBlack"] .hero.ambientSurface::after,
-.app[data-home-banner="cleanBlack"] .heroAmbiencePulse,
-.app[data-home-banner="cleanBlack"] .heroCoverGhost{
+.app[data-home-banner="cleanBlack"] .heroAmbiencePulse{
   display: none !important;
 }
 
@@ -247,10 +246,6 @@
   display: none !important;
 }
 
-.app[data-home-banner="none"] .homeShelfStack{
-  margin-top: 0 !important;
-}
-
 .app[data-home-layout="compact"] .hero{
   min-height: 230px !important;
   padding: clamp(22px, 3vw, 40px) !important;
@@ -258,22 +253,6 @@
 
 .app[data-home-layout="compact"] .heroTitle{
   font-size: clamp(38px, 4.8vw, 76px) !important;
-}
-
-.app[data-home-layout="compact"] .homeShelfStack{
-  gap: 14px !important;
-}
-
-.app[data-home-layout="compact"] .homeShelfPanel{
-  padding: 16px !important;
-}
-
-.app[data-home-layout="compact"] .homeListenRail{
-  grid-template-columns: repeat(3, minmax(240px, 1fr)) !important;
-}
-
-.app[data-home-layout="compact"] .homeFreshRail{
-  grid-auto-columns: minmax(150px, 170px) !important;
 }
 
 .app[data-home-layout="balanced"] .hero{
@@ -293,14 +272,6 @@
 .app[data-home-layout="bigHero"] .heroArtWrap{
   width: clamp(220px, 18vw, 330px) !important;
   height: clamp(220px, 18vw, 330px) !important;
-}
-
-.app[data-home-layout="bigHero"] .homeShelfStack{
-  gap: 22px !important;
-}
-
-.app[data-home-layout="bigHero"] .homeListenRail{
-  grid-template-columns: repeat(4, minmax(280px, 1fr)) !important;
 }
 
 .app[data-library-row-style="compactRows"] .songRow{
@@ -406,7 +377,7 @@
 }
 
 /* localtify 0.3.9 V301 — effects sleep when renderer is busy */
-body.localtifyPerfV301 .app.isScrolling :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura, .homeListenCard.playing .homeListenCover.coverAura, .homeFreshCard.playing .homeFreshCover.coverAura)::before{
+body.localtifyPerfV301 .app.isScrolling :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura)::before{
   opacity: 0 !important;
   filter: none !important;
   transform: none !important;
@@ -420,15 +391,14 @@ body.localtifyPerfV301.localtifyBackgroundMode .app .heroAmbiencePulse,
 body.localtifyPerfV301.localtifyBackgroundMode .app .coverAura::before,
 body.localtifyPerfV301.localtifyBackgroundMode .app .songArt::before,
 body.localtifyPerfV301.localtifyBackgroundMode .app .homeAlbumArt::before,
-body.localtifyPerfV301.localtifyBackgroundMode .app .homeListenCover::before,
-body.localtifyPerfV301.localtifyBackgroundMode .app .homeFreshCover::before{
+body.localtifyPerfV301.localtifyBackgroundMode .app .homeListenCover::before{
   opacity: 0 !important;
   animation: none !important;
   filter: none !important;
 }
 
 /* localtify 0.3.9 V303 — profiler fix: sleep expensive paint while scrolling/audio analyser is busy */
-body.localtifyPerfV303 .app.isScrolling :is(.heroAmbiencePulse, .coverAura::before, .songArt::before, .homeAlbumArt::before, .homeListenCover::before, .homeFreshCover::before, .playerBar::before){
+body.localtifyPerfV303 .app.isScrolling :is(.heroAmbiencePulse, .coverAura::before, .songArt::before, .homeAlbumArt::before, .homeListenCover::before, .playerBar::before){
   opacity: 0 !important;
   filter: none !important;
   animation: none !important;
@@ -436,14 +406,14 @@ body.localtifyPerfV303 .app.isScrolling :is(.heroAmbiencePulse, .coverAura::befo
   transform: none !important;
 }
 
-body.localtifyPerfV303 .app.isScrolling :is(.homeAlbumCard, .homeFreshCard, .homeListenCard, .songRow, .playlistSongRow, .settingsPanelCard){
+body.localtifyPerfV303 .app.isScrolling :is(.homeAlbumCard, .songRow, .playlistSongRow, .settingsPanelCard){
   transition-property: background-color, border-color, color, opacity !important;
   transition-duration: 90ms !important;
   filter: none !important;
   box-shadow: none !important;
 }
 
-body.localtifyPerfV303 .app.isScrolling :is(.homeListenBackground, .homeListenBackgroundImage, .localtifyStarsLayer, .localtifyStarsBackdrop){
+body.localtifyPerfV303 .app.isScrolling :is( .localtifyStarsLayer, .localtifyStarsBackdrop){
   animation: none !important;
   transition: none !important;
   filter: none !important;
@@ -457,25 +427,25 @@ body.localtifyPerfV303 .app.isScrolling .playerBar[data-cover-sync]::after{
 }
 
 /* localtify 0.3.9 V305 — keep audio smooth by sleeping expensive paint while the renderer is busy. */
-.app.localtifyInteractionBusy :is(.coverAura::before, .heroAmbiencePulse, .homeListenBackground, .homeListenBackgroundImage, .homeAlbumArt::before, .homeFreshCover::before, .songArt::before, .playerBar::before){
+.app.localtifyInteractionBusy :is(.coverAura::before, .heroAmbiencePulse, .homeAlbumArt::before, .songArt::before, .playerBar::before){
   opacity: 0 !important;
   filter: none !important;
   animation: none !important;
   transition: none !important;
 }
 
-.app.localtifyInteractionBusy :is(.nowPlayingCopySwap, .nowPlayingArtSwap, .simpleHeroArtSwap, .homeAlbumCard, .homeListenCard, .homeFreshCard, .songRow, .playlistSongRow){
+.app.localtifyInteractionBusy :is(.nowPlayingCopySwap, .nowPlayingArtSwap, .simpleHeroArtSwap, .homeAlbumCard, .songRow, .playlistSongRow){
   animation: none !important;
   transition-duration: 0ms !important;
 }
 
-body.localtifyAudioPlaying .app :is(.localtifyProximityActive, .proximityActive, [data-proximity-active="true"]){
+body.localtifyAudioPlaying .app :is(.localtifyProximityActive, [data-proximity-active="true"]){
   transform: none !important;
   filter: none !important;
 }
 
 /* localtify 0.3.9 V305 — harsher paint suppression while audio plays / scrolling */
-body.localtifyPerfV305 .app.isScrolling :is(.hero.heroPremium, .homeShelfStack, .homeShelfPanel, .homeListenPanel, .homeFreshPanel, .homeLibraryPanel, .homeAlbumCard, .homeFreshCard, .homeListenCard, .songRow, .playlistSongRow, .playerBar){
+body.localtifyPerfV305 .app.isScrolling :is(.hero.heroPremium, .homeAlbumCard, .songRow, .playlistSongRow, .playerBar){
   animation: none !important;
   transition-duration: 0ms !important;
   transition-delay: 0ms !important;
@@ -483,17 +453,17 @@ body.localtifyPerfV305 .app.isScrolling :is(.hero.heroPremium, .homeShelfStack, 
   filter: none !important;
 }
 
-body.localtifyPerfV305.localtifyAudioPlaying .app :is(.coverAura, .coverAura::before, .coverAura::after, .heroAmbiencePulse, .homeListenBackground, .homeListenBackgroundImage, .homeAlbumArt::before, .homeFreshCover::before, .songArt::before, .playerBar::before, .playerBar::after){
+body.localtifyPerfV305.localtifyAudioPlaying .app :is(.coverAura, .coverAura::before, .coverAura::after, .heroAmbiencePulse, .homeAlbumArt::before, .songArt::before, .playerBar::before, .playerBar::after){
   animation: none !important;
   filter: none !important;
 }
 
-body.localtifyPerfV305.localtifyAudioPlaying .app :is(.nowPlayingCopySwap, .nowPlayingArtSwap, .simpleHeroArtSwap, .homeAlbumCard, .homeFreshCard, .homeListenCard, .songRow, .playlistSongRow){
+body.localtifyPerfV305.localtifyAudioPlaying .app :is(.nowPlayingCopySwap, .nowPlayingArtSwap, .simpleHeroArtSwap, .homeAlbumCard, .songRow, .playlistSongRow){
   transition-duration: 80ms !important;
   animation-duration: 80ms !important;
 }
 
-body.localtifyPerfV305.localtifyAudioPlaying .app.heroMotionActive :is(.hero.heroPremium.heroLayoutMotion, .homeShelfStack, .homeShelfPanel, .homeListenPanel, .homeFreshPanel, .homeLibraryPanel){
+body.localtifyPerfV305.localtifyAudioPlaying .app.heroMotionActive :is(.hero.heroPremium.heroLayoutMotion){
   animation: none !important;
   transition-duration: 120ms !important;
   filter: none !important;
@@ -664,11 +634,7 @@ main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .navLucideIco
 
 /* Closed: text is completely invisible; no half-cut labels while closed/opening. */
 main.app.app[data-sidebar-behavior="slim"] > .appShell > .sidebar .navText,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .navText,
-main.app.app[data-sidebar-behavior="slim"] > .appShell > .sidebar .logoWrap h1,
-main.app.app[data-sidebar-behavior="slim"] > .appShell > .sidebar .logoWrap p,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .logoWrap h1,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .logoWrap p{
+main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .navText{
   opacity: 0 !important;
   visibility: hidden !important;
   transform: translate3d(-8px,0,0) !important;
@@ -681,11 +647,7 @@ main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .logoWrap p{
 
 /* Open: reveal labels after the rail has expanded enough. */
 main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:hover .navText,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within .navText,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:hover .logoWrap h1,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:hover .logoWrap p,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within .logoWrap h1,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within .logoWrap p{
+main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within .navText{
   opacity: 1 !important;
   visibility: visible !important;
   transform: translate3d(0,0,0) !important;
@@ -779,8 +741,7 @@ main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .sidebarResiz
 }
 
 /* Home-specific hover perf: do not let sidebar hover restart expensive card filters. */
-main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :is(.homeListenCard, .homeFreshCard, .homeAlbumCard, .homeShelfPanel, .homeListenPanel, .homeFreshPanel){
-  transition-property: background-color, border-color, opacity !important;
+main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :is( .homeAlbumCard){
   filter: none !important;
 }
 
@@ -819,9 +780,7 @@ main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar{
     background-color 180ms ease !important;
 }
 
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .navText,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .logoWrap h1,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .logoWrap p{
+main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .navText{
   transition:
     opacity 140ms ease 80ms,
     transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -829,11 +788,7 @@ main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .logoWrap p{
 }
 
 main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:hover .navText,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within .navText,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:hover .logoWrap h1,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:hover .logoWrap p,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within .logoWrap h1,
-main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within .logoWrap p{
+main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within .navText{
   transition:
     opacity 180ms ease 130ms,
     transform 240ms cubic-bezier(0.16, 1, 0.3, 1) 110ms,
@@ -868,7 +823,7 @@ main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within 
    Important: this does NOT remove image blur, cover tint, hero blur, or player blur. */
 
 
-.app :is(.homeFreshCard, .homeListenCard, .homeAlbumCard, .playlistCard){
+.app :is( .homeAlbumCard, .playlistCard){
   contain: layout paint style;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -883,30 +838,30 @@ main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar:focus-within 
 
 /* Scroll defense: reduce transition churn only.
    Do not disable filter/backdrop-filter because Localtify's cover blur uses those. */
-.app.isScrolling :is(.songRow, .playlistSongRow, .homeFreshCard, .homeListenCard, .homeAlbumCard){
+.app.isScrolling :is(.songRow, .playlistSongRow, .homeAlbumCard){
 
   transition-duration: 90ms !important;
 }
 
 /* Override older V303/V305 performance blocks that killed blur while audio played or while scrolling. */
-body.localtifyPerfV303 .app.isScrolling :is(.homeListenBackground, .homeListenBackgroundImage, .playerBar::before, .playerBar::after),
-body.localtifyPerfV305.localtifyAudioPlaying .app :is(.coverAura, .coverAura::before, .coverAura::after, .heroAmbiencePulse, .homeListenBackground, .homeListenBackgroundImage, .homeAlbumArt::before, .homeFreshCover::before, .songArt::before, .playerBar::before, .playerBar::after){
+body.localtifyPerfV303 .app.isScrolling :is( .playerBar::before, .playerBar::after),
+body.localtifyPerfV305.localtifyAudioPlaying .app :is(.coverAura, .coverAura::before, .coverAura::after, .heroAmbiencePulse, .homeAlbumArt::before, .songArt::before, .playerBar::before, .playerBar::after){
   filter: revert !important;
 }
 
 /* Keep sidebar hover cheap without deleting card blur. */
-main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :is(.homeListenCard, .homeFreshCard, .homeAlbumCard){
+main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :is( .homeAlbumCard){
   transition-property: background-color, border-color, opacity, transform !important;
   contain: paint style;
 }
 
-main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :is(.homeListenCard img, .homeFreshCard img, .homeAlbumCard img, .homeListenBackgroundImage){
+main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :is( .homeAlbumCard img){
   transform: translateZ(0);
   backface-visibility: hidden;
 }
 
 /* Explicitly keep these blur/tint systems alive. */
-.app :is(.heroAmbiencePulse, .homeListenBackgroundImage, .playerBar::before, .playerBar::after, .coverAura::before, .coverAura::after){
+.app :is(.heroAmbiencePulse, .playerBar::before, .playerBar::after, .coverAura::before, .coverAura::after){
   backface-visibility: hidden;
   transform: translateZ(0);
 }
@@ -914,7 +869,7 @@ main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :i
 /* localtify 0.3.9 V365 — analytics + compositor polish.
    Keep blur/cover ambience alive while moving row/card motion onto safer composite paths. */
 
-.app :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura, .homeListenCard.playing .homeListenCover.coverAura, .homeFreshCard.playing .homeFreshCover.coverAura){
+.app :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura){
   position: relative !important;
   isolation: isolate !important;
   contain: layout paint style !important;
@@ -933,14 +888,14 @@ main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :i
 }
 
 /* Active scroll should reduce animation churn, not remove visual identity. */
-.app.isScrolling :is(.songRow, .playlistSongRow, .homeFreshCard, .homeListenCard, .homeAlbumCard){
+.app.isScrolling :is(.songRow, .playlistSongRow, .homeAlbumCard){
   transition-property: background-color, border-color, opacity, transform !important;
   transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
 /* Undo old scroll/audio rules that tried to kill blur-heavy layers. */
-body.localtifyPerfV303 .app.isScrolling :is(.homeListenBackground, .homeListenBackgroundImage, .playerBar::before, .playerBar::after),
-body.localtifyPerfV305.localtifyAudioPlaying .app :is(.heroAmbiencePulse, .homeListenBackground, .homeListenBackgroundImage, .homeAlbumArt::before, .homeFreshCover::before, .playerBar::before, .playerBar::after){
+body.localtifyPerfV303 .app.isScrolling :is( .playerBar::before, .playerBar::after),
+body.localtifyPerfV305.localtifyAudioPlaying .app :is(.heroAmbiencePulse, .homeAlbumArt::before, .playerBar::before, .playerBar::after){
   filter: revert !important;
   backdrop-filter: revert !important;
   -webkit-backdrop-filter: revert !important;
@@ -988,7 +943,7 @@ main.app.app > .appShell > .sidebar .navItemAnimatedV468 .navDiscordPillV468{
   width: 5px !important;
   height: 8px !important;
   border-radius: 0 999px 999px 0 !important;
-  background: #fff !important;
+  background: var(--lt-text) !important;
   opacity: 0 !important;
   transform: translate3d(0,-50%,0) scaleY(.25) !important;
   transform-origin: left center !important;
@@ -1023,11 +978,11 @@ main.app.app > .appShell > .sidebar .navItemAnimatedV468.active:focus-visible .n
 /* make active state text/icon visible without a card behind it */
 main.app.app > .appShell > .sidebar .navItemAnimatedV468.active .navIcon,
 main.app.app > .appShell > .sidebar .navItemAnimatedV468.active .navText strong{
-  color: #fff !important;
+  color: var(--lt-text) !important;
 }
 
 main.app.app > .appShell > .sidebar .navItemAnimatedV468.active .navText small{
-  color: rgba(255,255,255,.58) !important;
+  color: var(--lt-muted) !important;
 }
 
 /* icon wrapper that old transform:none rules do not target */
@@ -1283,7 +1238,7 @@ main.app.app > .appShell > .sidebar .navItemAnimatedV468 .navLucideIcon :is(path
   transform: translateZ(0) scale(1.025) !important;
 }
 
-.app[data-platform="linux"][data-playing="on"] :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura, .homeListenCard.playing .homeListenCover.coverAura, .homeFreshCard.playing .homeFreshCover.coverAura)::before{
+.app[data-platform="linux"][data-playing="on"] :is(.songRow.playing .songArt.coverAura, .homeAlbumCard.playing .homeAlbumArt.coverAura)::before{
   opacity: .18 !important;
   filter: blur(10px) saturate(1.06) !important;
 }
@@ -1539,7 +1494,6 @@ main.app.app > .appShell > .sidebar .navItemAnimatedV468 .navLucideIcon :is(path
 
 .app .windowButtons button svg,
 .inlineGlyphIcon,
-.emptyCoverIconSlot svg,
 .localtifyStateIconV373 svg,
 .updateToastIcon svg{
   display: block !important;
@@ -1560,14 +1514,6 @@ main.app.app > .appShell > .sidebar .navItemAnimatedV468 .navLucideIcon :is(path
   width: 13px !important;
   height: 13px !important;
   opacity: .95 !important;
-}
-
-.emptyCoverIconSlot{
-  display: grid !important;
-  place-items: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  color: rgba(255,255,255,0.58) !important;
 }
 
 
@@ -1627,56 +1573,21 @@ main.app.app > .appShell > .sidebar .navItemAnimatedV468 .navLucideIcon :is(path
   background: currentColor !important;
   opacity: .42 !important;
 }
-
-
-/* localtify 0.4.0 — home shelf ownership cleanup.
-   Recent covers is display-only now; quick library owns expand/compact.
-*/
-.app .homeFreshPanel .homeShelfHeader{
-  align-items: end !important;
-}
-
-.app .homeFreshPanel .homeShelfHeader > div{
-  min-width: 0 !important;
-}
-
-.app .homeFreshPanel .homeShelfActionButton{
-  display: none !important;
-}
-
-.app .homeFreshRail,
-.app .homeAlbumGrid,
-.app .homeSongList{
-  contain: layout paint style !important;
-}
-
-.app .homeFreshCard,
-.app .homeListenCard,
 .app .homeAlbumCard,
 .app .songRow{
   content-visibility: auto;
   contain-intrinsic-size: 92px 132px;
 }
-
-/* Keep full animation/motion, but make paint ownership clearer. */
-.app .homeFreshCard :is(img, .coverAura),
-.app .homeListenCard :is(img, .coverAura),
 .app .homeAlbumCard :is(img, .coverAura),
 .app .songRow :is(img, .coverAura){
   transform: translateZ(0);
   backface-visibility: hidden;
 }
-
-.app .homeFreshRail,
-.app .homeListenGrid,
-.app .homeAlbumGrid{
+.app .homeListenGrid{
   content-visibility: auto;
   contain-intrinsic-size: 1px 720px;
   contain: layout paint style;
 }
-
-.app .homeFreshCard,
-.app .homeListenCard,
 .app .homeAlbumCard,
 .app .songRow,
 .app .playlistSongRow{
@@ -1685,13 +1596,13 @@ main.app.app > .appShell > .sidebar .navItemAnimatedV468 .navLucideIcon :is(path
   contain: layout paint style;
 }
 
-.app :is(.homeFreshCard, .homeListenCard, .homeAlbumCard, .songRow, .playlistSongRow) img{
+.app :is( .homeAlbumCard, .songRow, .playlistSongRow) img{
   content-visibility: auto;
   transform: translateZ(0);
   backface-visibility: hidden;
 }
 
-.app :is(.localtifyProximityTarget, .homeFreshCard, .homeListenCard, .homeAlbumCard, .songRow, .playlistSongRow):not(.localtifyProximityActive):not(.playing):not(:hover){
+.app :is(.localtifyProximityTarget, .homeAlbumCard, .songRow, .playlistSongRow):not(.localtifyProximityActive):not(.playing):not(:hover){
   will-change: auto;
 }
 
@@ -1775,3 +1686,10 @@ main.app.app > .appShell > .sidebar .navItemAnimatedV468 .navLucideIcon :is(path
 
 
 /* end localtify v483 Linux desktop polish */
+
+/* Preserve keyboard focus visibility without the old rectangular nav background. */
+main.app.app > .appShell > .sidebar .navItemAnimatedV468:focus-visible .navIcon {
+  outline: 2px solid var(--lt-accent) !important;
+  outline-offset: 3px !important;
+  border-radius: 9px !important;
+}

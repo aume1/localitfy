@@ -17,8 +17,7 @@
   box-shadow: none !important;
 }
 .playlistsPage .eyebrow { margin: 0 0 9px; color: var(--lt-accent); font-size: 11px; letter-spacing: .1em; font-weight: 800; }
-.playlistsPage h3 { margin: 0; color: var(--lt-text); font-size: clamp(18px,1.55vw,24px); font-weight: 700; letter-spacing: -.03em; }
-.playlistsPage .softText, .playlistsPage p:not(.eyebrow, .pageHeader p) { color: var(--playlist-muted); font-size: 13px; line-height: 1.5; }
+.playlistsPage h3 { margin: 0; color: var(--lt-text); font-size: clamp(18px,1.55vw,24px); font-weight: 700; letter-spacing: -.03em; } .playlistsPage p:not(.eyebrow, .pageHeader p) { color: var(--playlist-muted); font-size: 13px; line-height: 1.5; }
 .playlistsPage .playlistHeroPanel { display: grid; grid-template-columns: minmax(0,1fr) 150px; gap: 18px; align-items: center; }
 .playlistHeroCopy { min-width: 0; align-self: center; }
 .playlistHeroCopy h3 { overflow-wrap: anywhere; font-size: clamp(23px,2vw,30px); }
