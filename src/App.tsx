@@ -156,7 +156,7 @@ import {
   stableSongSourceKey
 } from "./features/library";
 import {
-  buildSongSearchEntry,
+  buildSongSearchEntryCached,
   heroTitleDensityClass,
   prettyMeta,
   prettyTitle,
@@ -1686,7 +1686,7 @@ function MainModeApp() {
 
   const starParticleStyles = useMemo<CSSProperties[]>(() => [], []);
 
-  const librarySearchIndex = useMemo(() => songs.map((song) => buildSongSearchEntry(song)), [songs]);
+  const librarySearchIndex = useMemo(() => songs.map((song) => buildSongSearchEntryCached(song)), [songs]);
 
   const filteredSongs = useMemo(() => {
     if (!deferredQuery.trim()) return songs;

@@ -81,4 +81,20 @@ const oldCoversMs = bench(() => songs.slice(0, 1000).map((song, index) => oldPic
 const newCoversMs = bench(() => songs.slice(0, 1000).map((song, index) => newPick(song, "fixed-" + index)), 3);
 console.log("[hotpaths] 10k-song top-6 old/new:", oldTopMs.toFixed(2), "/", newTopMs.toFixed(2), "ms");
 console.log("[hotpaths] 1k cover selections / 128 assets old/new:", oldCoversMs.toFixed(2), "/", newCoversMs.toFixed(2), "ms");
+const originalIndex = Array.from({ length: 10000 }, (_, i) => ({
+  ...songs[i], url: songs[i].filePath, liked: i % 13 === 0
+}));
+const search = loadTs("src/features/search/search.utils.ts", {
+  "../../shared/storage/localStorage": { makeLocalId: () => "id" },
+  "../../shared/utils/format": {
+    collapseSpaces: (x) => String(x || "").replace(/\\s+/g, " ").trim(),
+    lower: (x) => String(x || "").toLowerCase(),
+    normalizeUiText: (x) => String(x || ""),
+    safeNumber: (x) => Number(x) || 0
+  }
+});
+originalIndex.map((song) => search.buildSongSearchEntryCached(song));
+const coldSearchMs = bench(() => originalIndex.map((song) => search.buildSongSearchEntry(song)), 3);
+const warmSearchMs = bench(() => originalIndex.map((song) => search.buildSongSearchEntryCached(song)), 3);
+console.log("[hotpaths] 10k unchanged search entries old/new:", coldSearchMs.toFixed(2), "/", warmSearchMs.toFixed(2), "ms");
 console.log("[hotpaths] old/new outputs match; timings are machine-dependent, not UI latency measurements");
