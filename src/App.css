@@ -130,21 +130,6 @@
 }
 
 
-.searchEasterWrap{
-  position: relative;
-
-}
-
-.searchEasterWrap .search{
-  width: 100%;
-}
-
-
-.compactHeaderTools{
-  align-items: center !important;
-}
-
-
 .hero{
   min-height: clamp(250px, 30vh, 350px) !important;
   grid-template-columns: minmax(0, 1fr) minmax(150px, 214px) !important;
@@ -152,20 +137,6 @@
   padding: clamp(22px, 2.6vw, 34px) !important;
   align-items: center !important;
   border-radius: 18px !important;
-}
-
-
-.headerBar{
-  position: relative !important;
-  top: auto !important;
-  z-index: 6 !important;
-  min-height: 58px !important;
-  margin: 0 0 14px !important;
-  padding: 0 !important;
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  pointer-events: auto !important;
 }
 
 .secretLayer.stars{
@@ -189,18 +160,6 @@
   border: 1px solid rgba(var(--lt-accent-rgb), 0.28) !important;
   background: rgba(6, 6, 8, 0.58) !important;
   box-shadow: 0 18px 60px rgba(0,0,0,0.32) !important;
-}
-
-@media (max-width: 1100px){
-  .headerBar{
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-
-  .searchEasterWrap{
-    width: 100% !important;
-    min-width: 0 !important;
-  }
 }
 
 :root{
@@ -1370,15 +1329,6 @@ body.isResizingSidebar{
     0 22px 58px rgba(0, 0, 0, 0.24) !important;
 }
 
-.headerBar{
-  animation: localtifyShellHeaderIn 360ms var(--shell-ease) both !important;
-}
-
-.headerText h2{
-  letter-spacing: -0.082em !important;
-  text-shadow: 0 18px 48px rgba(0, 0, 0, 0.38) !important;
-}
-
 .eyebrow{
   color: var(--lt-accent) !important;
   text-shadow: 0 0 18px rgba(var(--lt-accent-rgb), 0.18) !important;
@@ -1593,17 +1543,6 @@ input[type="range"]{
 
 ::-webkit-scrollbar-thumb:hover{
   background: rgba(var(--lt-accent-rgb), 0.34) !important;
-}
-
-@keyframes localtifyShellHeaderIn{
-  from{
-    opacity: 0;
-    transform: translate3d(0, 8px, 0) scale(0.992);
-  }
-  to{
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
 }
 
 .app{
@@ -2202,7 +2141,7 @@ body.localitfyThemePainting .app *{
   width: calc(100% - 28px) !important;
   margin-left: 14px !important;
   margin-right: 14px !important;
-  background: linear-gradient(90deg, var(--sidebar-line-soft), rgba(var(--lt-accent-rgb), 0.18), var(--sidebar-line-soft)) !important;
+  background: linear-gradient(90deg, rgba(var(--lt-accent-rgb), .07), rgba(var(--lt-accent-rgb), 0.18), rgba(var(--lt-accent-rgb), .07)) !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
   opacity: 1 !important;
@@ -2888,39 +2827,6 @@ button {
     --sidebar-width-used: 0px;
   }
 
-  .headerBar{
-    min-height: auto !important;
-
-
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
-    align-items: stretch !important;
-  }
-
-  .headerText{
-    display: none !important;
-  }
-
-  .compactHeaderTools{
-    width: 100% !important;
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
-  }
-
-  .searchEasterWrap{
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  .compactHeaderTools .search,
-.search{
-    width: 100% !important;
-    min-width: 0 !important;
-    height: 38px !important;
-  }
-
 
 }
 
@@ -3175,24 +3081,6 @@ body,
     width: 100% !important;
     max-width: 100% !important;
     overflow: hidden !important;
-  }
-
-  .headerBar{
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    margin: -10px -4px 8px -4px !important;
-    padding: 8px 6px 7px !important;
-    overflow: hidden !important;
-  }
-
-  .compactHeaderTools,
-.searchEasterWrap,
-.search{
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
   }
 
 }
@@ -4790,70 +4678,6 @@ body.localtifyBackgroundMode .ambientSurface,
   }
 }
 
-.app .searchEasterWrap{
-
-
-  transform-origin: center;
-  transition:
-    transform 210ms cubic-bezier(.16, 1, .3, 1),
-    filter 210ms ease !important;
-}
-
-.app .searchEasterWrap::after{
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: -2px;
-  height: 2px;
-  border-radius: 999px;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(var(--lt-accent-rgb), .72),
-    rgba(255, 255, 255, .72),
-    transparent
-  );
-  transform: translate3d(-18px, 0, 0) scaleX(.28);
-  transform-origin: left center;
-  transition:
-    opacity 180ms ease,
-    transform 360ms cubic-bezier(.16, 1, .3, 1);
-}
-
-.app .searchEasterWrap:focus-within{
-  transform: translate3d(0, -1px, 0) scaleX(1.018);
-  filter: drop-shadow(0 0 18px rgba(var(--lt-accent-rgb), .10));
-}
-
-.app .searchEasterWrap:focus-within::after{
-  opacity: 1;
-  transform: translate3d(18px, 0, 0) scaleX(1);
-}
-
-.app .search:focus{
-  background: rgba(var(--lt-accent-rgb), .075) !important;
-  border-color: rgba(var(--lt-accent-rgb), .46) !important;
-  box-shadow:
-    0 0 0 3px rgba(var(--lt-accent-rgb), .105),
-    0 14px 40px rgba(0, 0, 0, .18),
-    0 0 36px rgba(var(--lt-accent-rgb), .10) !important;
-}
-
-.app .search::placeholder{
-  transition:
-    opacity 180ms ease,
-    transform 180ms cubic-bezier(.16, 1, .3, 1),
-    color 180ms ease !important;
-}
-
-.app .search:focus::placeholder{
-  opacity: .42;
-  color: rgba(255, 255, 255, .42);
-}
-
 .app :where(input, textarea, select, option):active,
 .app :where(.rangeRow, .slider, .progressTrack, .volumeSlider):active{
   transform: none !important;
@@ -6310,7 +6134,6 @@ body,
 
 /* Release performance: stop repeated entrance animations from repainting the page. */
 .content,
-.headerBar,
 .pageTransition,
 .homeSection,
 .settingsCategoryPage,
@@ -6988,7 +6811,7 @@ body.isResizingPlayer .app *{
 }
 
 /* General readable surfaces: keep blur/motion, just make text/borders less muddy. */
-.app :is(.panel, .ambientSurface, .headerBar, .sidebar){
+.app :is(.panel, .ambientSurface, .sidebar){
   color: color-mix(in srgb, var(--text) 90%, transparent);
 }
 
@@ -7004,13 +6827,13 @@ body.isResizingPlayer .app *{
   color: color-mix(in srgb, var(--text) 48%, transparent);
 }
 
-.app :is(input:not(:where([type="checkbox"], [type="radio"], [type="range"])), textarea, .search){
+.app :is(input:not(:where([type="checkbox"], [type="radio"], [type="range"])), textarea){
   color: color-mix(in srgb, var(--text) 88%, transparent) !important;
-  border-color: rgba(255,255,255,.105) !important;
-  background-color: rgba(10,9,16,.78) !important;
+  border-color: var(--lt-border) !important;
+  background-color: var(--lt-surface) !important;
 }
 
-.app :is(input, textarea, .search)::placeholder{
+.app :is(input, textarea)::placeholder{
   color: color-mix(in srgb, var(--text) 46%, transparent) !important;
 }
 
@@ -7081,8 +6904,7 @@ body.isResizingPlayer .app *{
   --panel-calm-shadow-hover: 0 16px 38px rgba(0,0,0,.22);
 }
 
-/* Header/search consolidated from v471-v473, so older override stacks are no longer needed. */
-.app .content > .headerBar{
+/* Header/search consolidated from v471-v473{
   position: relative !important;
 
   display: flex !important;
@@ -7098,137 +6920,6 @@ body.isResizingPlayer .app *{
     linear-gradient(180deg, rgba(7, 7, 12, .46), rgba(7, 7, 12, .08)),
     transparent !important;
   box-shadow: none !important;
-}
-
-.app .content > .headerBar::before{
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-
-
-  background-repeat: no-repeat;
-
-
-  transform: translate3d(0,0,0);
-  will-change: opacity, transform, filter;
-
-}
-
-.app .content > .headerBar::after{
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-
-  background-repeat: no-repeat;
-
-
-  transform: translate3d(-6px,0,0);
-  will-change: opacity, transform;
-
-}
-
-.app .content > .headerBar > *{
-  position: relative;
-  z-index: 1;
-}
-
-.app .headerText{
-  min-width: 0 !important;
-  display: grid !important;
-
-  align-content: start !important;
-  contain: layout paint style;
-}
-
-.app .headerText .eyebrow{
-  margin: 0 !important;
-
-  font-size: 10px !important;
-  font-weight: 1000 !important;
-  letter-spacing: .18em !important;
-  line-height: 1 !important;
-  text-transform: uppercase !important;
-}
-
-.app .headerText h2{
-  margin: 0 !important;
-  color: color-mix(in srgb, var(--text) 96%, transparent) !important;
-  font-size: clamp(28px, 3.3vw, 46px) !important;
-  font-weight: 1000 !important;
-
-  letter-spacing: -.075em !important;
-  text-shadow: 0 1px 0 rgba(0,0,0,.24) !important;
-}
-
-.app .headerTools.compactHeaderTools{
-  flex: 0 1 470px !important;
-  min-width: min(420px, 44vw) !important;
-  display: flex !important;
-  justify-content: flex-end !important;
-  align-items: center !important;
-
-  contain: layout paint style;
-}
-
-.app .searchEasterWrap{
-
-  position: relative !important;
-
-}
-
-.app .searchEasterWrap::before{
-  content: "";
-  position: absolute;
-
-  z-index: 0;
-  pointer-events: none;
-  border-radius: 999px;
-
-
-  transform: translateZ(0);
-  will-change: auto;
-}
-
-.app .search,
-.app .searchEasterWrap .search{
-  position: relative !important;
-  z-index: 1 !important;
-  width: 100% !important;
-
-
-  border-radius: 999px !important;
-
-
-  outline: none !important;
-  font-size: 12.5px !important;
-  font-weight: 900 !important;
-  letter-spacing: -.005em !important;
-  will-change: auto !important;
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 170ms cubic-bezier(.16, 1, .3, 1) !important;
-}
-
-.app .search::placeholder,
-.app .searchEasterWrap .search::placeholder{
-
-  font-weight: 850 !important;
-  opacity: 1 !important;
-}
-
-
-.app .search:focus,
-.app .searchEasterWrap .search:focus{
-  color: #fff !important;
-
-
-  will-change: transform, border-color, box-shadow !important;
 }
 
 /* Calm panel hierarchy, consolidated from v478. */
@@ -7283,14 +6974,6 @@ body.isResizingPlayer .app *{
   contain: layout style;
 }
 
-
-.app[data-reduce-motion="true"] .content > .headerBar::before,
-.app[data-reduce-motion="true"] .content > .headerBar::after{
-  animation: none !important;
-  opacity: .34 !important;
-  transform: translate3d(0,0,0) !important;
-}
-
 @keyframes localtifyHeaderStarsTwinkleV482{
   0%{
     opacity: .42;
@@ -7325,31 +7008,6 @@ body.isResizingPlayer .app *{
     transform: translate3d(9px, 1px, 0);
   }
 }
-
-@media (max-width: 900px){
-  .app .content > .headerBar{
-    align-items: stretch !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    padding: 16px 16px 12px !important;
-  }
-
-  .app .headerTools.compactHeaderTools{
-    width: 100% !important;
-    min-width: 0 !important;
-    flex-basis: auto !important;
-    justify-content: stretch !important;
-    padding-top: 0 !important;
-  }
-
-  .app .searchEasterWrap{
-    width: 100% !important;
-  }
-
-  .app .headerText h2{
-    font-size: clamp(30px, 10vw, 42px) !important;
-  }
-}
 /* end localtify v482 consolidated app cleanup */
 
 .app{
@@ -7357,69 +7015,6 @@ body.isResizingPlayer .app *{
   --panel-calm-line-hover: color-mix(in oklab, rgba(255,255,255,.09) 42%, var(--lt-accent) 58%) !important;
   --panel-calm-outline-soft: color-mix(in oklab, rgba(255,255,255,.055) 62%, var(--lt-accent) 38%) !important;
   --panel-calm-outline-strong: color-mix(in oklab, rgba(255,255,255,.08) 42%, var(--lt-accent) 58%) !important;
-}
-
-.app .content > .headerBar{
-
-
-  align-items: flex-start !important;
-  border-bottom: 1px solid color-mix(in oklab, rgba(255,255,255,.05) 62%, var(--lt-accent) 38%) !important;
-}
-
-.app .headerText{
-
-  gap: 5px !important;
-}
-
-.app .headerText .eyebrow{
-  color: color-mix(in oklab, rgba(255,255,255,.42) 62%, var(--lt-accent) 38%) !important;
-}
-
-
-.app .searchEasterWrap{
-
-  margin-top: 1px !important;
-}
-
-.app .searchEasterWrap::before{
-
-
-  background:
-    radial-gradient(circle at 16% 50%, rgba(var(--lt-accent-rgb), .15), transparent 38%),
-    linear-gradient(180deg, rgba(255,255,255,.038), transparent 74%) !important;
-}
-
-.app .search,
-.app .searchEasterWrap .search{
-
-  padding: 0 19px !important;
-  border: 1px solid color-mix(in oklab, rgba(255,255,255,.13) 58%, var(--lt-accent) 42%) !important;
-  color: rgba(255,255,255,.96) !important;
-
-
-}
-
-.app .search::placeholder,
-.app .searchEasterWrap .search::placeholder{
-  color: rgba(255,255,255,.74) !important;
-}
-
-.app .search:hover,
-.app .searchEasterWrap .search:hover{
-  border-color: color-mix(in oklab, rgba(255,255,255,.15) 44%, var(--lt-accent) 56%) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.022)),
-    rgba(9, 9, 16, .94) !important;
-}
-
-.app .search:focus,
-.app .searchEasterWrap .search:focus{
-  border-color: color-mix(in oklab, rgba(255,255,255,.08) 26%, var(--lt-accent) 74%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.06),
-    0 0 0 3px rgba(var(--lt-accent-rgb), .11),
-    0 10px 22px rgba(0,0,0,.18) !important;
-  transform: translate3d(0, -1px, 0) !important;
 }
 
 /* Accent-driven calm outlines instead of fixed pink borders. */
@@ -7477,27 +7072,6 @@ body.isResizingPlayer .app *{
   100%{
     opacity: .30;
     transform: translate3d(12px, 0, 0);
-  }
-}
-
-@media (max-width: 980px){
-  .app .content > .headerBar{
-    min-height: 96px !important;
-    padding-top: 20px !important;
-  }
-
-  .app .headerText{
-    padding-top: 2px !important;
-  }
-
-  .app .headerTools.compactHeaderTools{
-    min-width: 0 !important;
-    width: 100% !important;
-    padding-top: 4px !important;
-  }
-
-  .app .searchEasterWrap{
-    width: 100% !important;
   }
 }
 /* end localtify v484 */
@@ -7602,8 +7176,6 @@ body.isResizingPlayer .app *{
 .app[data-theme="mono"] :is(.panel, .ambientSurface, .sidebar, .playerBar){
   border-color: rgba(72, 78, 104, .13) !important;
 }
-
-.app[data-theme="mono"] .headerText h2,
 .app[data-theme="mono"] :is(h1, h2, h3, h4, strong){
   color: var(--lt-text) !important;
 }
@@ -7635,8 +7207,7 @@ body.isResizingPlayer .app *{
 /* Title/search spacing fix */
 
 
-/* Organic stars: the positions drift, not just the whole layer. */
-.app .content > .headerBar::before{
+/* Organic stars: the positions drift{
 
 
   background-image:
@@ -7650,26 +7221,6 @@ body.isResizingPlayer .app *{
     radial-gradient(circle at 79% 63%, rgba(var(--lt-accent-rgb),.64) 0 .95px, transparent 1.8px),
     radial-gradient(circle at 91% 31%, rgba(255,255,255,.80) 0 1px, transparent 1.85px),
     radial-gradient(circle at 96% 70%, rgba(var(--lt-accent-rgb),.52) 0 .85px, transparent 1.7px) !important;
-
-}
-
-.app .content > .headerBar::after{
-
-
-  background-position:
-    0% 0%,
-    -8% 10%,
-    6% -8%,
-    -10% -4%,
-    8% 8%,
-    0% 0% !important;
-  background-image:
-    radial-gradient(circle at 10% 48%, rgba(255,255,255,.60) 0 .85px, transparent 1.7px),
-    radial-gradient(circle at 31% 13%, rgba(var(--lt-accent-rgb),.48) 0 .8px, transparent 1.6px),
-    radial-gradient(circle at 51% 54%, rgba(255,255,255,.54) 0 .85px, transparent 1.7px),
-    radial-gradient(circle at 72% 18%, rgba(var(--lt-accent-rgb),.44) 0 .8px, transparent 1.6px),
-    radial-gradient(circle at 88% 50%, rgba(255,255,255,.50) 0 .85px, transparent 1.7px),
-    linear-gradient(90deg, transparent, rgba(var(--lt-accent-rgb), .028), transparent) !important;
 
 }
 
@@ -7777,48 +7328,6 @@ body.isResizingPlayer .app *{
   --outline-calm-v487: color-mix(in oklab, rgba(255,255,255,.05) 84%, var(--lt-accent) 16%) !important;
   --outline-hover-v487: color-mix(in oklab, rgba(255,255,255,.065) 68%, var(--lt-accent) 32%) !important;
   --outline-active-v487: color-mix(in oklab, rgba(255,255,255,.06) 30%, var(--lt-accent) 70%) !important;
-}
-
-
-/* Star field: individual dot positions shift instead of one flat layer sliding. */
-.app .content > .headerBar::before{
-  opacity: .70 !important;
-  filter: none !important;
-  background-size:
-    101% 101%,
-    103% 101%,
-    98% 103%,
-    104% 100%,
-    100% 104%,
-    105% 101%,
-    99% 105%,
-    103% 102%,
-    101% 99%,
-    106% 103% !important;
-  background-position:
-    0% 0%,
-    6% 12%,
-    -4% 8%,
-    8% -6%,
-    -6% -10%,
-    4% 10%,
-    -8% 6%,
-    7% -8%,
-    -5% 4%,
-    0% 0% !important;
-  animation: localtifyHeaderScatterV487 8s ease-in-out infinite alternate !important;
-}
-
-.app .content > .headerBar::after{
-  opacity: .44 !important;
-  background-size:
-    122% 100%,
-    110% 104%,
-    118% 102%,
-    112% 106%,
-    126% 100%,
-    100% 100% !important;
-  animation: localtifyHeaderScatterSoftV487 12s ease-in-out infinite alternate !important;
 }
 
 @keyframes localtifyHeaderScatterV487{
@@ -8016,87 +7525,13 @@ body.isResizingPlayer .app *{
   background: transparent !important;
   color: var(--lt-text) !important;
 }
-
-.app[data-theme="mono"] .content > .headerBar{
-  border-bottom-color: rgba(55,61,87,.14) !important;
-  background: linear-gradient(180deg, rgba(246,248,252,.80), rgba(246,248,252,.38)) !important;
-}
-
-.app[data-theme="mono"] .content > .headerBar::before,
-.app[data-theme="mono"] .content > .headerBar::after{
-  opacity: .16 !important;
-}
-
-
-.app[data-theme="mono"] .search::placeholder,
-.app[data-theme="mono"] .searchEasterWrap .search::placeholder{
-  color: rgba(52,58,85,.58) !important;
-}
 /* end localtify v487 */
 
 
-/* Update ribbon: black, cleaner, no release link. */
-
-
-/* Light mode search still readable and unclipped. */
-
-/* end localtify v488 */
-
-.app .content > .headerBar{
+/* Update ribbon: black, cleaner{
   min-height: 100px !important;
   padding: 26px 22px 13px !important;
   overflow: visible !important;
-}
-
-.app .headerText{
-  padding-top: 5px !important;
-}
-
-.app .headerText h2{
-  line-height: 1.02 !important;
-  transform: none !important;
-}
-
-.app .headerTools.compactHeaderTools{
-  padding-top: 10px !important;
-  overflow: visible !important;
-}
-
-.app .searchEasterWrap{
-  width: min(100%, 438px) !important;
-  padding: 5px !important;
-  margin: -5px -5px 0 0 !important;
-  overflow: visible !important;
-  contain: layout style !important;
-}
-
-.app .searchEasterWrap::before{
-  inset: 5px !important;
-  opacity: .50 !important;
-}
-
-.app .search,
-.app .searchEasterWrap .search{
-  min-height: 42px !important;
-  border-color: rgba(255,255,255,.17) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.042), rgba(255,255,255,.016)),
-    rgba(8, 8, 14, .92) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.048),
-    0 7px 16px rgba(0,0,0,.15) !important;
-}
-
-.app .search:hover,
-.app .searchEasterWrap .search:hover,
-.app .search:focus,
-.app .searchEasterWrap .search:focus{
-  transform: none !important;
-  border-color: rgba(var(--lt-accent-rgb), .48) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.058),
-    0 0 0 2px rgba(var(--lt-accent-rgb), .12),
-    0 8px 18px rgba(0,0,0,.17) !important;
 }
 
 /* Update notice: black strip, no release link. */
@@ -8164,21 +7599,6 @@ body.isResizingPlayer .app *{
 .app .topUpdateRibbon .updateToastClose,
 .topUpdateRibbon .updateToastClose{
   color: rgba(255,255,255,.58) !important;
-}
-
-/* Light mode search stays visible and unclipped. */
-.app[data-theme="mono"] .searchEasterWrap{
-  overflow: visible !important;
-}
-
-.app[data-theme="mono"] .search,
-.app[data-theme="mono"] .searchEasterWrap .search{
-  color: var(--lt-text) !important;
-  border-color: rgba(55,61,87,.18) !important;
-  background: rgba(255,255,255,.88) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.66),
-    0 8px 18px rgba(55,61,87,.09) !important;
 }
 /* end localtify v489 */
 

@@ -1,3 +1,10 @@
+.app[data-theme="stars"],
+.app[data-theme="midnight"],
+.app[data-theme="mono"] {
+  /* These palettes use light surfaces and dark foregrounds. */
+  color-scheme: light;
+}
+
 .app[data-theme="mint"]{
   --bg: #020706;
   --bg-2: #020706;
