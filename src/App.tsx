@@ -152,6 +152,7 @@ import {
   reorderSongList,
   saveLibraryOrder,
   sortLibrarySongs,
+  topPlayedSongs,
   stableSongSourceKey
 } from "./features/library";
 import {
@@ -1707,9 +1708,7 @@ function MainModeApp() {
     });
   }, [songs]);
 
-  const topSongs = useMemo(() => {
-    return [...songs].sort((a, b) => b.playCount - a.playCount).slice(0, 6);
-  }, [songs]);
+  const topSongs = useMemo(() => topPlayedSongs(songs, 6), [songs]);
 
   const mostPlayed = topSongs[0] ?? null;
   const missingSongsForLibrary = useMemo(() => songs.filter((song) => song.fileExists === false), [songs]);

@@ -45,3 +45,15 @@ test("library view exposes the sort and blocks reordering while sorted", () => {
   }
   assert.match(app, /if \(event\.button !== 0 \|\| !songId \|\| libraryOrderLocked\) return;/);
 });
+
+test("top played songs match full stable sorting without changing the library", () => {
+  const compiled = ts.transpileModule(sortSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const exports = {};
+  runInNewContext(compiled, { exports, Intl });
+  const songs = Array.from({ length: 500 }, (_, index) => ({ id: String(index), artist: "a", album: "b", title: "c", playCount: index % 17 }));
+  const expected = [...songs].sort((a, b) => b.playCount - a.playCount).slice(0, 6).map((song) => song.id);
+  assert.deepEqual(Array.from(exports.topPlayedSongs(songs, 6), (song) => song.id), expected);
+  assert.deepEqual(songs.map((song) => song.id), Array.from({ length: 500 }, (_, index) => String(index)));
+  assert.deepEqual(Array.from(exports.topPlayedSongs(songs, 0)), []);
+  assert.deepEqual(Array.from(exports.topPlayedSongs(songs.slice(0, 3), 6), (song) => song.id), ["0", "1", "2"]);
+});
