@@ -2514,7 +2514,6 @@ body,
 .updatePrimaryButton{
 
 
-  border: 1px solid transparent;
   cursor: pointer;
 
 }
@@ -2565,9 +2564,6 @@ body,
 }
 
 
-.updatePrimaryButton:hover{
-  transform: translateY(-1px) !important;
-}
 
 .whatsNewOverlay{
   padding: 18px !important;

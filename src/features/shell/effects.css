@@ -742,7 +742,6 @@ main.app.app[data-sidebar-behavior="hover"] > .appShell > .sidebar .sidebarResiz
 
 /* Home-specific hover perf: do not let sidebar hover restart expensive card filters. */
 main.app.app[data-sidebar-behavior="hover"]:has(> .appShell > .sidebar:hover) :is( .homeAlbumCard){
-  transition-property: background-color, border-color, opacity !important;
   filter: none !important;
 }
 
