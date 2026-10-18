@@ -105,7 +105,7 @@
   place-items: center;
   border: 1px solid rgba(var(--lt-accent-rgb), .15);
   border-radius: 999px;
-  background: rgba(9,25,35,.94);
+  background: var(--albums-surface);
   color: var(--lt-text);
   font: 500 25px/1 system-ui,sans-serif;
   box-shadow: 0 8px 24px rgba(0,0,0,.24);

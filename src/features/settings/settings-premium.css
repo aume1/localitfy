@@ -10,7 +10,7 @@
   width: min(100%, 1760px);
   margin: 0 auto;
   gap: 18px;
-  padding: 24px clamp(18px, 2.1vw, 38px) 90px;
+  padding: 24px 0 90px;
   color: var(--settings-text);
 }
 .settingsPage.settingsPageV027 .settingsPageIntro {
@@ -256,7 +256,7 @@
   .settingsPage.settingsPageV027 .settingsAppearanceTopGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media (max-width: 670px) {
-  .settingsPage.settingsPageV027 { padding: 14px 12px 86px; }
+  .settingsPage.settingsPageV027 { padding: 14px 0 86px; }
   .settingsPage.settingsPageV027 .settingsAppearanceTopGrid,
   .settingsPage.settingsPageV027 .settingsTwoColumn { grid-template-columns: minmax(0,1fr); }
   .settingsPage.settingsPageV027 .settingsLayoutControls .settingsMiniGrid { grid-template-columns: minmax(0, 1fr); }

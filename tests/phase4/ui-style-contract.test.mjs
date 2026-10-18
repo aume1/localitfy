@@ -88,4 +88,6 @@ test("theme controls and library layout follow their owners", () => {
   assert.match(read("src/features/settings/settings.css"), /\.settingsPage select \{ cursor: pointer; color-scheme: inherit/);
   assert.match(read("src/features/albums/albums.css"), /font-size: 12px; color-scheme: inherit/);
   assert.match(read("src/features/library/library.css"), /padding: clamp\(24px, 2\.5vw, 40px\) 0 105px/);
+  assert.match(read("src/features/settings/settings.css"), /padding: 26px 0 100px/);
+  assert.match(read("src/features/settings/settings-premium.css"), /padding: 24px 0 90px/);
 });

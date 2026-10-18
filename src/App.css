@@ -6816,7 +6816,7 @@ body.isResizingPlayer .app *{
 }
 
 .app :is(.panel, .ambientSurface){
-  border-color: rgba(255,255,255,.105);
+  border-color: var(--lt-border);
 }
 
 .app :is(.softText, .panel p, .navText small){
@@ -7615,7 +7615,6 @@ body.isResizingPlayer .app *{
 .app .content,
 .content{
   border-left: 0 !important;
-  outline-left: 0 !important;
 }
 
 .app .appShell,
