@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const full = process.argv.includes("--full");
+const strictCss = process.argv.includes("--strict-css");
 const ignored = new Set([".git", "node_modules", "dist", "release", ".vite"]);
 const codeExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"]);
 const allFiles = [];
@@ -120,3 +121,4 @@ for (const file of suspects) {
   console.log("[audit-unused] SOURCE " + file + " (direct imports: " + (inbound.get(file)?.length || 0) + ")");
 }
 console.log("[audit-unused] No files changed.");
+if (strictCss && cssCandidates) process.exitCode = 1;

@@ -79,6 +79,7 @@ export default function SidebarNav({ view, changeView, sidebarNavOrder, sidebarH
                     onClick={() => changeView(item.id, "nav")}
                     onContextMenu={(event) => openMenu(event, item.id)}
                     aria-label={`open ${item.label}`}
+                    aria-current={view === item.id ? "page" : undefined}
                   >
                     <span className="navDiscordPillV468" aria-hidden="true" />
                     <span className={`navIcon navIcon-${item.id}`} aria-hidden="true">

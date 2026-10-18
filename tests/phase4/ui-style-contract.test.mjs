@@ -91,3 +91,12 @@ test("theme controls and library layout follow their owners", () => {
   assert.match(read("src/features/settings/settings.css"), /padding: 26px 0 100px/);
   assert.match(read("src/features/settings/settings-premium.css"), /padding: 24px 0 90px/);
 });
+
+test("sidebar navigation retains keyboard focus and theme contrast", () => {
+  const nav = read("src/features/shell/SidebarNav.tsx");
+  const effects = read("src/features/shell/effects.css");
+  assert.ok(nav.includes('aria-current={view === item.id ? "page" : undefined}'));
+  assert.match(effects, /\.navItemAnimatedV468:focus-visible \.navIcon\s*\{\s*outline: 2px solid var\(--lt-accent\) !important/);
+  assert.match(effects, /\.navItemAnimatedV468\.active \.navText strong\s*\{\s*color: var\(--lt-text\) !important/);
+});
+
