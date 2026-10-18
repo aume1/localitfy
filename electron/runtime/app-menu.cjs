@@ -127,4 +127,28 @@ function createAppMenuRuntime({ Menu, shell, appName = "localtify", isDev = fals
   return { update, buildTemplate };
 }
 
-module.exports = { createAppMenuRuntime, MENU_VIEWS };
+/**
+ * Delivers menu commands to the renderer. When the command has to reopen a
+ * closed window, it is held until that renderer subscribes and asks for it.
+ */
+function createAppCommandSender({ ipcRouter, showMainWindow, getWindow }) {
+  const readyContents = new WeakSet();
+  let pending = null;
+
+  ipcRouter.handle("localitfy:app-menu-ready", async (event) => {
+    readyContents.add(event.sender);
+    const command = pending;
+    pending = null;
+    return command;
+  });
+
+  return (command) => {
+    showMainWindow();
+    const contents = getWindow()?.webContents;
+    if (!contents || contents.isDestroyed()) return;
+    if (readyContents.has(contents)) contents.send("app-menu:command", command);
+    else pending = command;
+  };
+}
+
+module.exports = { createAppMenuRuntime, createAppCommandSender, MENU_VIEWS };

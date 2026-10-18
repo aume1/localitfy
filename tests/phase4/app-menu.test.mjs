@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
-const { createAppMenuRuntime, MENU_VIEWS } = require("../../electron/runtime/app-menu.cjs");
+const { createAppMenuRuntime, createAppCommandSender, MENU_VIEWS } = require("../../electron/runtime/app-menu.cjs");
 
 function buildMenu(state, overrides = {}) {
   const sent = [];
@@ -53,4 +53,23 @@ test("menu views exist in the renderer and are handled there", () => {
   for (const type of ["navigate", "settings", "import-music", "import-album-folder", "new-playlist", "find", "feedback", "check-updates"]) {
     assert.match(hook, new RegExp(`case "${type}"`), type);
   }
+});
+
+test("a command that reopens the window waits until the renderer is listening", async () => {
+  const handlers = new Map();
+  const sent = [];
+  const contents = { isDestroyed: () => false, send: (channel, payload) => sent.push([channel, payload]) };
+  let window = null;
+  const send = createAppCommandSender({
+    ipcRouter: { handle: (channel, handler) => handlers.set(channel, handler) },
+    showMainWindow: () => { window = { webContents: contents }; },
+    getWindow: () => window
+  });
+  send({ type: "navigate", view: "albums" });
+  assert.deepEqual(sent, []);
+  const ready = handlers.get("localitfy:app-menu-ready");
+  assert.deepEqual(await ready({ sender: contents }), { type: "navigate", view: "albums" });
+  assert.equal(await ready({ sender: contents }), null);
+  send({ type: "find" });
+  assert.deepEqual(sent, [["app-menu:command", { type: "find" }]]);
 });

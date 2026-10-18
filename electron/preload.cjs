@@ -1,5 +1,9 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
+// A menu command that reopened the window is fetched once and given to one subscriber.
+let appMenuReady = null;
+let appMenuReadyDelivered = false;
+
 contextBridge.exposeInMainWorld("localitfy", {
   bootstrap: (options) => ipcRenderer.invoke("app:bootstrap", options),
   resolvePlaybackUrl: (payload) => ipcRenderer.invoke("playback:resolve-url", payload),
@@ -154,10 +158,19 @@ contextBridge.exposeInMainWorld("localitfy", {
   },
 
   onAppMenuCommand: (callback) => {
+    let active = true;
     const handler = (_event, payload) => callback(payload);
     ipcRenderer.on("app-menu:command", handler);
+    // Picks up a command that reopened this window before it was listening.
+    appMenuReady ??= ipcRenderer.invoke("localitfy:app-menu-ready").catch(() => null);
+    appMenuReady.then((command) => {
+      if (!active || !command || appMenuReadyDelivered) return;
+      appMenuReadyDelivered = true;
+      callback(command);
+    });
 
     return () => {
+      active = false;
       ipcRenderer.removeListener("app-menu:command", handler);
     };
   }

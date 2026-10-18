@@ -14,7 +14,7 @@ const { createIconRuntime } = require("./runtime/icons.cjs");
 const { createUpdaterRuntime } = require("./runtime/updater.cjs");
 const { createMediaServerRuntime } = require("./runtime/media-server.cjs");
 const { createGenreMetadataBackfill } = require("./runtime/genre-backfill.cjs");
-const { createAppMenuRuntime } = require("./runtime/app-menu.cjs");
+const { createAppMenuRuntime, createAppCommandSender } = require("./runtime/app-menu.cjs");
 const { installRendererSecurityGuards, installSessionPermissionGuards, isTrustedMainFrameIpcEvent } = require("./runtime/security.cjs");
 const { createDatabaseRepositories } = require("./db/repositories.cjs");
 const http = require("node:http");
@@ -469,7 +469,7 @@ function configureLocaltifyChromiumPerformance() {
 app.setName(APP_NAME);
 const LOCALTIFY_CHROMIUM_PERFORMANCE = configureLocaltifyChromiumPerformance();
 const appMenu = createAppMenuRuntime({ Menu, shell, appName: APP_NAME, isDev, sendPlayerCommand,
-  sendAppCommand: (command) => { showMainWindow(); mainWindow?.webContents.send("app-menu:command", command); },
+  sendAppCommand: createAppCommandSender({ ipcRouter, showMainWindow, getWindow: () => mainWindow }),
   requestQuit: () => { allowQuit = true; app.quit(); } });
 appMenu.update();
 
