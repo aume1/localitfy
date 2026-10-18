@@ -48,4 +48,6 @@ test("Cover virtual rows keep fixed positions when hovered and gallery items fit
   assert.match(css, /coverSongPickVirtual[\s\S]*?transform: none !important/);
   assert.match(gallery, /Math\.max\(1, Math\.floor/);
   assert.match(gallery, /if \(!entries\.length\) return <div ref=\{parentRef\}/);
+  assert.match(songs, /if \(!songs\.length\) return <div ref=\{parentRef\}/);
+  assert.match(songs, /aria-pressed=\{selected\}/);
 });
