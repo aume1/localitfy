@@ -11,7 +11,22 @@ export function removeBracketNoise(text:string,strength:DiscordTitleCleanup="hea
 export function removeLooseNoiseWords(text:string,strength:DiscordTitleCleanup="heavy"){if(strength!=="heavy")return collapseSpaces(text);return collapseSpaces(text.replace(/\b(?:official\s+music\s+video|official\s+video|official\s+audio|lyric\s+video|lyrics?\s+video)\b/gi," ").replace(/\b(?:visualizer|hq|hd|4k|320kbps|full\s+song)\b/gi," ").replace(/\b(?:slowed\s*(?:and|&)?\s*reverb|slowedandreverb|slowedreverb|sped\s*up|bass\s*boosted|nightcore|remaster(?:ed)?|extended\s+mix)\b/gi," ").replace(/\b(?:from\s+tiktok|tiktok\s+version|youtube\s+rip)\b/gi," "));}
 export function cleanupSongTitle(rawTitle:string,strength:DiscordTitleCleanup="heavy"){let text=removeUrlNoise(normalizeUiText(rawTitle||"untitled"));text=stripAudioExtension(text).replace(/[_]+/g," ").replace(/[–—]+/g," - ").replace(/[“”]/g,'"').replace(/[‘’]/g,"'");text=stripTrackNumber(stripDuplicateCopySuffix(text));text=removeBracketNoise(text,strength);text=removeLooseNoiseWords(text,strength);if(strength==="heavy")text=text.replace(/\s+[|/]+\s*(?:slowed|reverb|sped up|nightcore|lyrics?|official|audio|video).*$/i,"").replace(/\s+-\s*(?:slowed|reverb|sped up|nightcore|lyrics?|official|audio|video).*$/i,"");return collapseSpaces(text.replace(/\s*[{}\[\]]\s*/g," ").replace(/\s*\(\s*\)\s*/g," ").replace(/(^|\s)[+~]+(?=\s|$)/g," ").replace(/\s+[–—-]\s*$/g," "))||"untitled";}
 export function shortenWords(text:string,maxWords=7){const words=collapseSpaces(text).split(" ").filter(Boolean);return words.length?words.slice(0,maxWords).join(" "):"untitled";}
-export function prettyTitle(rawTitle:string,maxWords=7){return lower(shortenWords(cleanupSongTitle(rawTitle,"heavy"),maxWords));}
+// Title cleanup runs in many virtualized rows. Bound the cache so large imports
+// cannot retain every unique title indefinitely.
+const prettyTitleCache = new Map<string, string>();
+const PRETTY_TITLE_CACHE_LIMIT = 2048;
+export function prettyTitle(rawTitle:string,maxWords=7){
+  const key = `${maxWords}\u0000${rawTitle}`;
+  const cached = prettyTitleCache.get(key);
+  if (cached !== undefined) return cached;
+  const result = lower(shortenWords(cleanupSongTitle(rawTitle,"heavy"),maxWords));
+  if (prettyTitleCache.size >= PRETTY_TITLE_CACHE_LIMIT) {
+    const oldest = prettyTitleCache.keys().next().value;
+    if (oldest !== undefined) prettyTitleCache.delete(oldest);
+  }
+  prettyTitleCache.set(key, result);
+  return result;
+}
 export function heroTitleDensityClass(title:string){const letters=collapseSpaces(title||"").replace(/[^a-z0-9]/gi,"");if(letters.length<=5)return"heroTitleTiny";if(letters.length<=11)return"heroTitleShort";if(letters.length>=32)return"heroTitleLong";return"heroTitleNormal";}
 export function previewTitle(rawTitle:string,cleanup:DiscordTitleCleanup,maxWords=7){if(cleanup==="off")return lower(shortenWords(collapseSpaces(rawTitle||"local song"),maxWords));if(cleanup==="light")return lower(shortenWords(cleanupSongTitle(rawTitle||"local song","light"),maxWords));return lower(shortenWords(cleanupSongTitle(rawTitle,"heavy"),maxWords));}
 export function compactSongKey(text:string){return lower(cleanupSongTitle(text||"","heavy")).replace(/\b(official|audio|lyrics|lyric|video|visualizer|remix|remastered|slowed|reverb|sped|nightcore|lofi)\b/g," ").replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();}

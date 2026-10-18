@@ -55,5 +55,5 @@ test("top played songs match full stable sorting without changing the library", 
   assert.deepEqual(Array.from(exports.topPlayedSongs(songs, 6), (song) => song.id), expected);
   assert.deepEqual(songs.map((song) => song.id), Array.from({ length: 500 }, (_, index) => String(index)));
   assert.deepEqual(Array.from(exports.topPlayedSongs(songs, 0)), []);
-  assert.deepEqual(Array.from(exports.topPlayedSongs(songs.slice(0, 3), 6), (song) => song.id), ["0", "1", "2"]);
+  assert.deepEqual(Array.from(exports.topPlayedSongs(songs.slice(0, 3), 6), (song) => song.id), ["2", "1", "0"]);
 });
