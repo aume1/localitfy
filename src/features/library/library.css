@@ -1,7 +1,6 @@
 /* Library owns the Library + Liked presentation. Home remains the visual reference. */
 
 .app:has(.libraryPage) .content {
-  padding: 0 !important;
   overflow-x: hidden !important;
   background: var(--lt-bg) !important;
 }
@@ -469,7 +468,9 @@
 }
 
 .libraryEmpty .localtifyStateCardV373 {
-  max-width: 560px;
+  width: min(100%, 510px);
+  max-width: 510px;
+  margin-inline: auto;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -493,14 +494,13 @@
 }
 
 @media (max-width: 1180px) {
-  .libraryPage { padding-inline: 24px; }
   .libraryStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .libraryTopTools { min-width: 0; }
   .librarySearch { width: min(320px, 36vw); }
 }
 
 @media (max-width: 820px) {
-  .libraryPage { padding: 24px 18px 72px; gap: 22px; }
+  .libraryPage { padding: 24px 0 72px; gap: 22px; }
   .libraryTopBar { align-items: stretch; flex-direction: column; gap: 16px; }
   .libraryTopTools { width: 100%; justify-content: stretch; }
   .librarySearch { width: 100%; min-width: 0; flex: 1 1 auto; }

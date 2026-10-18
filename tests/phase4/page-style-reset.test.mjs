@@ -34,3 +34,20 @@ test("retired reset stylesheet cannot return", () => {
   assert.equal(fs.existsSync(path.join(root, "src/styles/page-foundation.css")), false);
   assert.equal(read("src/main.tsx").includes("page-foundation.css"), false);
 });
+
+
+test("Cover virtual rows keep fixed positions when hovered and gallery items fit their slots", () => {
+  const css = read("src/features/covers/covers.css");
+  const songs = read("src/features/covers/components/VirtualCoverSongList.tsx");
+  const gallery = read("src/features/covers/components/VirtualCoverGalleryGrid.tsx");
+  assert.match(songs, /style=\{\{ top: \`\$\{virtualRow\.start\}px\` \}\}/);
+  assert.match(gallery, /style=\{\{ top: \`\$\{virtualRow\.start\}px\`/);
+  assert.doesNotMatch(songs + gallery, /translate3d\(0, var\(--cover-/);
+  assert.match(css, /height: 228px/);
+  assert.match(gallery, /estimateSize: \(\) => 228/);
+  assert.match(css, /coverSongPickVirtual[\s\S]*?transform: none !important/);
+  assert.match(gallery, /Math\.max\(1, Math\.floor/);
+  assert.match(gallery, /if \(!entries\.length\) return <div ref=\{parentRef\}/);
+  assert.match(songs, /if \(!songs\.length\) return <div ref=\{parentRef\}/);
+  assert.match(songs, /aria-pressed=\{selected\}/);
+});

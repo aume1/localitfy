@@ -42,8 +42,8 @@
 .coverStudioLayout .coverMoodTabs button { display: inline-flex; align-items: center; gap: 10px; padding: 7px 13px; }
 .coverStudioLayout .coverMoodTabs button strong { font-size: 10px; color: var(--cover-muted); }
 .coverStudioLayout .coverMoodTabs button.active,.coverStudioLayout .coverSongTools button.active { border-color: rgba(var(--lt-accent-rgb),.48); background: rgba(var(--lt-accent-rgb),.13); color: var(--cover-text); }
-.coverStudioBody { min-width: 0; display: grid; grid-template-columns: clamp(260px,25vw,340px) minmax(0,1fr); align-items: start; gap: 13px; }
-.coverSelectedSongsPanel,.coverGalleryPanel { min-width: 0; padding: 14px; display: grid; align-content: start; gap: 11px; }
+.coverStudioBody { min-width: 0; display: grid; grid-template-columns: minmax(300px, 360px) minmax(0,1fr); align-items: start; gap: 16px; }
+.coverSelectedSongsPanel,.coverGalleryPanel { min-width: 0; padding: 16px; display: grid; align-content: start; gap: 12px; }
 .coverPanelHeadClean,.coverGalleryHeaderClean { min-width: 0; display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .coverStudioLayout :is(.coverPanelHeadClean,.coverGalleryHeaderClean) > span { color: var(--cover-muted); font-size: 11px; }
 .coverSongSearchWrap,.coverGalleryToolbarClean { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -55,15 +55,18 @@
 .coverSongVirtualCanvas { position: relative; width: 100%; min-width: 0; }
 .coverStudioLayout .coverSongPickVirtual {
   position: absolute; top: 0; left: 0; width: 100%; min-width: 0;
-  height: 54px; display: grid; grid-template-columns: 38px minmax(0,1fr) 20px;
+  height: 56px; display: grid; grid-template-columns: 38px minmax(0,1fr) 20px;
   align-items: center; gap: 10px; padding: 7px 9px; border: 1px solid transparent;
   border-bottom-color: var(--cover-edge); border-radius: 7px;
   background: transparent; text-align: left; color: var(--cover-text); font: inherit;
+  overflow: hidden; transform: none !important;
+  transition: border-color 130ms ease, background-color 130ms ease !important;
 }
-.coverStudioLayout .coverSongPickVirtual:hover { background: var(--cover-raised); }
+.coverStudioLayout .coverSongPickVirtual:hover { border-color: var(--cover-edge); background: var(--cover-raised); }
 .coverStudioLayout .coverSongPickVirtual.active { border-color: rgba(var(--lt-accent-rgb),.3); background: rgba(var(--lt-accent-rgb),.09); }
-.coverSongThumb,.coverSongThumb img { width: 38px; height: 38px; border-radius: 6px; object-fit: cover; }
-.coverSongPickVirtual > span:not(.coverSongThumb) { display: grid; min-width: 0; gap: 4px; }
+.coverSongThumb,.coverSongThumb img { width: 38px; height: 38px; border-radius: 7px; object-fit: cover; }
+.coverStudioLayout .coverSongThumb { overflow: hidden !important; contain: paint; }
+.coverSongPickVirtual > span:not(.coverSongThumb) { display: grid; min-width: 0; gap: 3px; overflow: hidden; }
 .coverSongPickVirtual strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 700; color: var(--cover-text); }
 .coverSongPickVirtual small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; color: var(--cover-muted); }
 .coverSongPickVirtual em { color: var(--lt-accent); text-align: center; font-size: 15px; font-weight: 700; font-style: normal; }
@@ -81,13 +84,13 @@
 .coverGalleryGridCleanOnly { position: relative; min-width: 0; width: 100%; height: min(65vh,660px); min-height: 310px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; }
 .coverGalleryVirtualCanvasCleanOnly { position: relative; width: 100%; min-width: 0; }
 .coverGalleryVirtualRowCleanOnly {
-  position: absolute; left: 0; top: 0; width: 100%; height: 184px;
+  position: absolute; left: 0; top: 0; width: 100%; height: 228px;
   display: grid; align-items: start; gap: 9px; padding: 3px 2px; min-width: 0;
 }
-.coverGalleryCardCleanOnly { min-width: 0; height: 176px; display: grid; grid-template-rows: 100px minmax(0,1fr) auto; gap: 4px; padding: 6px; border: 1px solid var(--cover-edge); border-radius: 10px; background: var(--cover-raised); overflow: hidden; }
+.coverGalleryCardCleanOnly { min-width: 0; height: 218px; display: grid; grid-template-rows: 124px minmax(0,1fr) auto; gap: 6px; padding: 8px; border: 1px solid var(--cover-edge); border-radius: 11px; background: var(--cover-raised); overflow: hidden; transition: border-color 130ms ease, background-color 130ms ease !important; }
 .coverGalleryCardCleanOnly:hover { border-color: color-mix(in oklab,var(--lt-accent) 30%,transparent); background: color-mix(in oklab,var(--lt-accent) 10%,var(--cover-raised)); }
 .coverGalleryCardCleanOnly.excluded { opacity: .55; }
-.coverStudioLayout .coverGalleryImageButtonCleanOnly { min-width: 0; width: 100%; height: 100px; display: block; padding: 0; border: 0; border-radius: 6px; overflow: hidden; background: var(--cover-surface); cursor: pointer; }
+.coverStudioLayout .coverGalleryImageButtonCleanOnly { min-width: 0; width: 100%; height: 124px; display: block; padding: 0; border: 0; border-radius: 6px; overflow: hidden; background: var(--cover-surface); cursor: pointer; }
 .coverGalleryImageShellCleanOnly { position: relative; display: grid; place-items: center; min-width: 0; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; background: var(--cover-surface); }
 .coverGalleryImagePlaceholderCleanOnly { color: var(--cover-muted); font-size: 22px; }
 .coverGalleryImageCleanOnly { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
@@ -96,7 +99,7 @@
 .coverGalleryInfoCleanOnly strong { color: var(--cover-text); font-size: 11px; }
 .coverGalleryInfoCleanOnly small { color: var(--cover-muted); font-size: 10px; }
 .coverGalleryActionsCleanOnly { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.coverStudioLayout .coverGalleryActionsCleanOnly button { min-height: 23px; max-height: 25px; }
+.coverStudioLayout .coverGalleryActionsCleanOnly button { min-height: 28px; max-height: 30px; padding-block: 3px; }
 .coverStudioLayout .coverHideButton { padding: 3px 8px; font-size: 12px; }
 .coverStudioLayout .coverApplyButton { padding: 4px 11px; font-size: 11px; color: var(--cover-text); }
 .coverStudioLayout .coverEmptyState { min-height: 190px; width: 100%; padding: 20px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 15px; }

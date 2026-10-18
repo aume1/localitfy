@@ -165,3 +165,27 @@ test("Library, Covers and Spotify review fixes remain in place", () => {
   assert.doesNotMatch(covers, /Fix missing \$\{/);
   assert.match(downloads, /\.downloadsInputCard > :is\(\.spotifyAuthCard,\.spotifyUrlRow,\.spotifyTrackList\) \{ min-width: 0; width: 100%; \}/);
 });
+
+
+test("Library and Liked use the shared content gutter and meaningful empty states", () => {
+  const library = read("src/features/library/library.css");
+  const view = read("src/features/library/LibraryView.tsx");
+  assert.doesNotMatch(library, /\.app:has\(\.libraryPage\) \.content \{\s*padding: 0 !important/);
+  assert.match(library, /\.libraryPage \{[\s\S]*?padding: clamp\(24px, 2\.5vw, 40px\) 0 105px/);
+  assert.match(view, /cute=\{!isLiked\}/);
+  assert.match(view, /centered=\{!isLiked\}/);
+});
+
+
+test("Advanced reset mascot and feedback card stay contained and theme-aware", () => {
+  const advanced = read("src/features/settings/categories/AdvancedSettings.tsx");
+  const app = read("src/App.tsx");
+  assert.match(advanced, /settingsDangerMascotV501/);
+  assert.match(skin, /\.settingsPage\.settingsPageV027 \.settingsDangerMascotV501 \{/);
+  assert.match(skin, /max-height: 96px/);
+  assert.match(skin, /\.settingsPage\.settingsPageV027 \.settingsDangerPanelV491 \.settingsResetGrid/);
+  for (const selector of ["feedbackSettingsCardV331", "feedbackSettingsHeaderV331", "feedbackWebhookStatusV337", "feedbackSettingsButtonV331"]) {
+    assert.ok(app.includes(selector), "Feedback markup missing " + selector);
+    assert.ok(skin.includes("." + selector), "Feedback styles missing " + selector);
+  }
+});

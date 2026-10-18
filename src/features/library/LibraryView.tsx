@@ -164,8 +164,8 @@ export default function LibraryView(props: LibraryViewProps) {
         ) : (
           <div className="libraryEmpty">
             <LocaltifyStateCard
-              centered
-              cute
+              centered={!isLiked}
+              cute={!isLiked}
               badge={showingMissingFiles ? "✓" : isLiked ? "♡" : query.trim() ? "⌕" : "♪"}
               tone={showingMissingFiles ? "success" : isLiked || query.trim() ? "info" : "warning"}
               eyebrow={showingMissingFiles ? "file check" : isLiked ? "liked songs" : query.trim() ? "search" : "library"}
