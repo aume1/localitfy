@@ -371,6 +371,7 @@
   align-items: flex-start;
   justify-content: flex-start;
   gap: 8px;
+  text-align: left;
   transition: transform 200ms var(--squish), border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
 }
 
@@ -1099,3 +1100,10 @@ body.localtifyPerfV301 .onboardingSummaryGrid.cleaner > div{
   }
 }
 /* end localtify v506 */
+
+/* Keep step content clear of the peeking mascot while it is visible. */
+@media (min-width: 861px){
+  .onboardingBody .onboardingSlide{
+    padding-right: clamp(72px, 8vw, 112px);
+  }
+}

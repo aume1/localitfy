@@ -6,10 +6,6 @@
   background: var(--lt-bg) !important;
 }
 
-.app:has(.pageTransition-home) .headerBar {
-  display: none !important;
-}
-
 .app:has(.pageTransition-home) .pageTransition-home {
   width: 100% !important;
   min-height: 100% !important;

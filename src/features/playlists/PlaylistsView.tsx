@@ -3,7 +3,8 @@ import DailyMixesShelf, { type DailyMixesShelfProps } from "../analysis/DailyMix
 import type { CSSProperties } from "react";
 import { Check, Copy, Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
-import { EmptyCoverIcon, LocaltifyStateCard, MetaDividerDot, PlusMiniIcon } from "../../shared/ui/LocaltifyViewUi";
+import { PageHeader } from "../../shared/ui/PageHeader";
+import { LocaltifyStateCard, MetaDividerDot } from "../../shared/ui/LocaltifyViewUi";
 import { VirtualPlaylistTrackList } from "./components/VirtualPlaylistTrackList";
 import PlaylistCoverCollage from "./components/PlaylistCoverCollage";
 import { formatTime } from "../../shared/utils/format";
@@ -86,92 +87,71 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
 
   return (
     <section data-page-section="playlists" className="playlistsPage playlistPageV029">
-      <div className="playlistTopGrid">
+      <PageHeader
+        eyebrow="your mixes"
+        title="Playlists"
+        description={`${playlistSummaries.length} playlist${playlistSummaries.length === 1 ? "" : "s"} · drag songs onto a playlist to add them`}
+      >
+        <form
+          className="playlistCreateForm"
+          onSubmit={(event) => {
+            event.preventDefault();
+            createPlaylist();
+          }}
+        >
+          <input
+            className="pageHeaderSearch"
+            value={newPlaylistName}
+            onChange={(event) => setNewPlaylistName(event.currentTarget.value)}
+            placeholder="new playlist name"
+            aria-label="New playlist name"
+          />
+          <button className="mainAction" type="submit"><ActionLabel icon={Plus}>new playlist</ActionLabel></button>
+        </form>
+      </PageHeader>
+
+      {selectedPlaylist ? (
         <section className="panel playlistHeroPanel">
           <div className="playlistHeroCopy">
-            <p className="eyebrow">playlists</p>
-            <h3>{selectedPlaylist ? selectedPlaylist.name : "make your first mix"}</h3>
+            <p className="eyebrow">playlist</p>
+            <h3>{selectedPlaylist.name}</h3>
             <p>
-              {selectedPlaylist ? (
-                <>
-                  {selectedPlaylistSongs.length} song{selectedPlaylistSongs.length === 1 ? "" : "s"}
-                  <MetaDividerDot />
-                  {formatTime(selectedPlaylistDuration)} total
-                </>
-              ) : (
-                "Create a playlist, add songs, and keep your local music feeling familiar."
-              )}
+              {selectedPlaylistSongs.length} song{selectedPlaylistSongs.length === 1 ? "" : "s"}
+              <MetaDividerDot />
+              {formatTime(selectedPlaylistDuration)} total
             </p>
           </div>
 
-          {selectedPlaylist ? <PlaylistCoverCollage songs={selectedPlaylistSongs} className="playlistHeroCollage playlistCoverCollage" /> : (
-            <div className="playlistHeroCollage playlistCoverCollage playlistEmptyCollage" aria-hidden="true">
-              <div className="playlistCoverTile empty"><span><EmptyCoverIcon /></span></div>
-              <div className="playlistCoverTile empty"><span><PlusMiniIcon /></span></div>
-              <div className="playlistCoverTile empty"><span><EmptyCoverIcon /></span></div>
-              <div className="playlistCoverTile empty"><span><EmptyCoverIcon /></span></div>
-            </div>
-          )}
+          <PlaylistCoverCollage songs={selectedPlaylistSongs} className="playlistHeroCollage playlistCoverCollage" />
 
           <div className="playlistHeroActions">
             <button
               className="heroMain"
               type="button"
-              onClick={() => selectedPlaylist && void playPlaylist(selectedPlaylist, false)}
-              disabled={!selectedPlaylist || selectedPlaylist.songIds.length === 0}
+              onClick={() => void playPlaylist(selectedPlaylist, false)}
+              disabled={selectedPlaylist.songIds.length === 0}
             >
               <ActionLabel icon={Play}>play</ActionLabel>
             </button>
             <button
               className="softButton"
               type="button"
-              onClick={() => selectedPlaylist && void playPlaylist(selectedPlaylist, true)}
-              disabled={!selectedPlaylist || selectedPlaylist.songIds.length === 0}
+              onClick={() => void playPlaylist(selectedPlaylist, true)}
+              disabled={selectedPlaylist.songIds.length === 0}
             >
               <ActionLabel icon={Shuffle}>shuffle</ActionLabel>
             </button>
-            {selectedPlaylist ? (
-              <>
-                <button className="softButton" type="button" onClick={() => startRenamePlaylist(selectedPlaylist)}>
-                  <ActionLabel icon={Pencil}>rename</ActionLabel>
-                </button>
-                <button className="softButton" type="button" onClick={() => duplicatePlaylist(selectedPlaylist.id)}>
-                  <ActionLabel icon={Copy}>duplicate</ActionLabel>
-                </button>
-              </>
-            ) : null}
           </div>
         </section>
-
-        <aside className="panel playlistCreatePanel">
-          <p className="eyebrow">new playlist</p>
-          <h3>start a mix</h3>
-          <p className="softText">Night drive, gaming, school, sad songs — whatever fits.</p>
-          <form
-            className="playlistCreateForm"
-            onSubmit={(event) => {
-              event.preventDefault();
-              createPlaylist();
-            }}
-          >
-            <input
-              value={newPlaylistName}
-              onChange={(event) => setNewPlaylistName(event.currentTarget.value)}
-              placeholder="Give your playlist a name"
-              aria-label="New playlist name"
-            />
-            <button className="mainAction" type="submit"><ActionLabel icon={Plus}>new playlist</ActionLabel></button>
-          </form>
-        </aside>
-      </div>
+      ) : null}
 
       <DailyMixesShelf {...props.dailyMixes} />
-      <div className="playlistContentGrid">
+      <div className={`playlistContentGrid ${playlistSummaries.length ? "" : "isEmpty"}`}>
         <section className="panel playlistShelfPanel">
           <div className="panelHead">
             <div>
-              <p className="eyebrow">your mixes</p>
-              <h3>library shelves</h3>
+              <p className="eyebrow">saved</p>
+              <h3>your playlists</h3>
             </div>
           </div>
 
@@ -219,59 +199,61 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           </div>
         </section>
 
-        <section className="panel playlistTracksPanel">
-          <div className="panelHead playlistTracksHead">
-            <div className="playlistTracksTitleBlock">
-              <p className="eyebrow">playlist</p>
-              {selectedPlaylist && renamingPlaylistId === selectedPlaylist.id ? (
-                <form
-                  className="playlistRenameForm"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    savePlaylistRename(selectedPlaylist.id);
-                  }}
-                >
-                  <input
-                    value={renamingPlaylistName}
-                    onChange={(event) => setRenamingPlaylistName(event.currentTarget.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") cancelRenamePlaylist();
+        {playlistSummaries.length ? (
+          <section className="panel playlistTracksPanel">
+            <div className="panelHead playlistTracksHead">
+              <div className="playlistTracksTitleBlock">
+                <p className="eyebrow">playlist</p>
+                {selectedPlaylist && renamingPlaylistId === selectedPlaylist.id ? (
+                  <form
+                    className="playlistRenameForm"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      savePlaylistRename(selectedPlaylist.id);
                     }}
-                    placeholder="playlist name"
-                    autoFocus
-                  />
-                  <button className="settingsTinyButton" type="submit"><ActionLabel icon={Check}>save</ActionLabel></button>
-                  <button className="settingsTinyButton" type="button" onClick={cancelRenamePlaylist}><ActionLabel icon={X}>cancel</ActionLabel></button>
-                </form>
-              ) : (
-                <h3>{selectedPlaylist ? selectedPlaylist.name : "nothing selected"}</h3>
-              )}
+                  >
+                    <input
+                      value={renamingPlaylistName}
+                      onChange={(event) => setRenamingPlaylistName(event.currentTarget.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") cancelRenamePlaylist();
+                      }}
+                      placeholder="playlist name"
+                      autoFocus
+                    />
+                    <button className="settingsTinyButton" type="submit"><ActionLabel icon={Check}>save</ActionLabel></button>
+                    <button className="settingsTinyButton" type="button" onClick={cancelRenamePlaylist}><ActionLabel icon={X}>cancel</ActionLabel></button>
+                  </form>
+                ) : (
+                  <h3>{selectedPlaylist ? selectedPlaylist.name : "nothing selected"}</h3>
+                )}
+              </div>
+
+              {selectedPlaylist ? (
+                <div className="playlistManageActions">
+                  <button className="settingsTinyButton" type="button" onClick={() => startRenamePlaylist(selectedPlaylist)}><ActionLabel icon={Pencil}>rename</ActionLabel></button>
+                  <button className="settingsTinyButton" type="button" onClick={() => duplicatePlaylist(selectedPlaylist.id)}><ActionLabel icon={Copy}>duplicate</ActionLabel></button>
+                  <button className="settingsTinyButton danger" type="button" onClick={() => removePlaylist(selectedPlaylist.id)}><ActionLabel icon={Trash2}>remove</ActionLabel></button>
+                </div>
+              ) : null}
             </div>
 
-            {selectedPlaylist ? (
-              <div className="playlistManageActions">
-                <button className="settingsTinyButton" type="button" onClick={() => startRenamePlaylist(selectedPlaylist)}><ActionLabel icon={Pencil}>rename</ActionLabel></button>
-                <button className="settingsTinyButton" type="button" onClick={() => duplicatePlaylist(selectedPlaylist.id)}><ActionLabel icon={Copy}>duplicate</ActionLabel></button>
-                <button className="settingsTinyButton danger" type="button" onClick={() => removePlaylist(selectedPlaylist.id)}><ActionLabel icon={Trash2}>remove</ActionLabel></button>
-              </div>
-            ) : null}
-          </div>
-
-          <VirtualPlaylistTrackList
-            selectedPlaylistId={selectedPlaylist?.id || ""}
-            list={selectedPlaylistSongs}
-            currentId={currentId}
-            isPlaying={isPlaying}
-            draggedSongId={draggedSongId}
-            onSelectSong={selectPlaylistSongAction}
-            onStartSongDrag={startPlaylistSongDragAction}
-            onDropSong={dropPlaylistSongAction}
-            onAppendSong={appendPlaylistSongAction}
-            onDragEnd={endPlaylistSongDragAction}
-            onOpenContextMenu={openPlaylistSongContextMenuAction}
-            onRemoveSong={removePlaylistSongAction}
-          />
-        </section>
+            <VirtualPlaylistTrackList
+              selectedPlaylistId={selectedPlaylist?.id || ""}
+              list={selectedPlaylistSongs}
+              currentId={currentId}
+              isPlaying={isPlaying}
+              draggedSongId={draggedSongId}
+              onSelectSong={selectPlaylistSongAction}
+              onStartSongDrag={startPlaylistSongDragAction}
+              onDropSong={dropPlaylistSongAction}
+              onAppendSong={appendPlaylistSongAction}
+              onDragEnd={endPlaylistSongDragAction}
+              onOpenContextMenu={openPlaylistSongContextMenuAction}
+              onRemoveSong={removePlaylistSongAction}
+            />
+          </section>
+        ) : null}
       </div>
     </section>
   );

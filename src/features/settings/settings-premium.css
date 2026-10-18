@@ -1,5 +1,4 @@
 /* Settings layout refinements. Base control styles live in settings.css. */
-.app:has(.pageTransition-settings) .headerBar { display: none !important; }
 .app:has(.pageTransition-settings) .content { background: var(--lt-bg) !important; }
 .settingsPage.settingsPageV027 {
   --settings-surface: var(--lt-surface);
@@ -138,7 +137,7 @@
 .settingsPageV027 .toggleRow input[type="checkbox"]:checked::before,
 .settingsPageV027 .settingsCompactSwitch input[type="checkbox"]:checked::before { background: var(--lt-bg); transform: translateX(18px); }
 .settingsPage.settingsPageV027 .rangeRow input[type="range"] { width: clamp(180px, 18vw, 300px); accent-color: var(--settings-accent); }
-.settingsPage.settingsPageV027 :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),select,textarea) {
+.settingsPage.settingsPageV027 :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="search"]),select,textarea) {
   min-height: 44px; padding: 9px 12px; border-radius: 9px;
   border-color: var(--settings-edge); background: var(--lt-bg);
   color: var(--settings-text); font-size: 14px;

@@ -71,7 +71,7 @@ export default function AppShell(props: AppShellProps) {
   const { open: onboardingOpen, ...onboardingProps } = onboarding;
   const {
     effectiveSimpleMode, simpleModeView, view, changeView, importSongs, startSidebarResize,
-    contentRef, headerHint, greeting, query, handleSearchInput, updateSidebarLayout, openSidebarSettings
+    contentRef, updateSidebarLayout, openSidebarSettings
   } = navigation;
   const { isSeeking, isVolumeDragging, draggedSongId, isPlaying } = playerBar;
   const { isThreeAm } = home;
@@ -312,48 +312,6 @@ export default function AppShell(props: AppShellProps) {
           </aside>
 
           <section className="content" ref={contentRef}>
-            <header className="headerBar">
-              <div className="headerText">
-                {headerHint ? <p className="eyebrow">{headerHint}</p> : null}
-
-                <h2>
-                  {view === "home" && greeting}
-                  {view === "library" && "your library"}
-                  {view === "artists" && "artists"}
-                  {view === "genres" && "genres"}
-                  {view === "albums" && "albums"}
-                  {view === "playlists" && "playlists"}
-                  {view === "liked" && "liked songs"}
-                  {view === "covers" && "pixel covers"}
-                  {view === "analytics" && "listening analytics"}
-                  {view === "downloads" && "downloads"}
-                  {view === "settings" && "settings"}
-                </h2>
-              </div>
-
-              <div className="headerTools compactHeaderTools">
-                <div className="searchEasterWrap">
-                  <input
-                    className="search"
-                    value={query}
-                    onChange={(event) => {
-                      const nextValue = event.currentTarget.value;
-                      const command = nextValue.trim().toLowerCase();
-
-                      if (command === "/feedback" || command === "feedback") {
-                        event.currentTarget.value = "";
-                        window.dispatchEvent(new CustomEvent("localtify:open-feedback"));
-                        return;
-                      }
-
-                      handleSearchInput(nextValue);
-                    }}
-                    placeholder="Search your music"
-                  />
-                </div>
-              </div>
-            </header>
-
             {mascotDebugMode ? (
               <section className="mascotDebugPanelV498" aria-label="Mascot state debug gallery">
                 <div className="panelHead mascotDebugHeadV498">

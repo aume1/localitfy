@@ -3432,7 +3432,7 @@ body::after,
   display: grid !important;
   grid-template-columns: 1fr !important;
   gap: 10px !important;
-  margin: 18px 0 0 !important;
+  margin: 18px 0 20px !important;
   padding: 0 !important;
   list-style: none !important;
 }
@@ -3452,7 +3452,7 @@ body::after,
     color-mix(in oklab, var(--surface, #111017) 88%, var(--lt-accent, #ff4ee8) 5%) !important;
   color: rgba(255,255,255,.88) !important;
   font-size: 13px !important;
-  font-weight: 750 !important;
+  font-weight: 600 !important;
   line-height: 1.45 !important;
   letter-spacing: -.01em !important;
   white-space: normal !important;
@@ -6708,7 +6708,7 @@ body.isResizingPlayer .app *{
 
 .sidebarGroupLabelV467{
   margin: 0 0 1px 12px;
-  color: rgba(var(--text-rgb), .34);
+  color: color-mix(in srgb, var(--text) 34%, transparent);
   font-size: 9px;
   font-weight: 1000;
   letter-spacing: .18em;
@@ -6744,7 +6744,7 @@ body.isResizingPlayer .app *{
 
 .app .sidebarGroupLabelV467{
   margin: 0 0 2px 13px !important;
-  color: rgba(var(--text-rgb), .36) !important;
+  color: color-mix(in srgb, var(--text) 36%, transparent) !important;
   font-size: 8.5px !important;
   font-weight: 1000 !important;
   letter-spacing: .19em !important;
@@ -6771,7 +6771,7 @@ body.isResizingPlayer .app *{
   border: 1px solid transparent !important;
   background: transparent !important;
   background-image: none !important;
-  color: rgba(var(--text-rgb), .62) !important;
+  color: color-mix(in srgb, var(--text) 62%, transparent) !important;
   transform: translate3d(0,0,0) !important;
   box-shadow: none !important;
   transition:
@@ -6784,7 +6784,7 @@ body.isResizingPlayer .app *{
 
 .app .sidebar .navItem:hover,
 .app .sidebar .navItem:focus-visible{
-  color: rgba(var(--text-rgb), .92) !important;
+  color: color-mix(in srgb, var(--text) 92%, transparent) !important;
   background: rgba(255,255,255,.045) !important;
   border-color: rgba(255,255,255,.075) !important;
   transform: translate3d(2px,0,0) !important;
@@ -6804,7 +6804,7 @@ body.isResizingPlayer .app *{
 }
 
 .app .sidebar .navItem .navIcon{
-  color: rgba(var(--text-rgb), .66) !important;
+  color: color-mix(in srgb, var(--text) 66%, transparent) !important;
   opacity: 1 !important;
   transform: translate3d(0,0,0) scale(1) !important;
   filter: none !important;
@@ -6830,7 +6830,7 @@ body.isResizingPlayer .app *{
 .app .sidebar .navItem.active .navText small,
 .app .sidebar .navItem.active:hover .navText small,
 .app .sidebar .navItem.active:focus-visible .navText small{
-  color: rgba(var(--text-rgb), .62) !important;
+  color: color-mix(in srgb, var(--text) 62%, transparent) !important;
 }
 
 .app .sidebar .navItem:hover .navLucideIcon,
@@ -6989,7 +6989,7 @@ body.isResizingPlayer .app *{
 
 /* General readable surfaces: keep blur/motion, just make text/borders less muddy. */
 .app :is(.panel, .ambientSurface, .headerBar, .sidebar){
-  color: rgba(var(--text-rgb), .90);
+  color: color-mix(in srgb, var(--text) 90%, transparent);
 }
 
 .app :is(.panel, .ambientSurface){
@@ -6997,21 +6997,21 @@ body.isResizingPlayer .app *{
 }
 
 .app :is(.softText, .panel p, .navText small){
-  color: rgba(var(--text-rgb), .68);
+  color: color-mix(in srgb, var(--text) 68%, transparent);
 }
 
 .app :is(.eyebrow, .sidebarGroupLabelV467){
-  color: rgba(var(--text-rgb), .48);
+  color: color-mix(in srgb, var(--text) 48%, transparent);
 }
 
-.app :is(input, textarea, .search){
-  color: rgba(var(--text-rgb), .88) !important;
+.app :is(input:not(:where([type="checkbox"], [type="radio"], [type="range"])), textarea, .search){
+  color: color-mix(in srgb, var(--text) 88%, transparent) !important;
   border-color: rgba(255,255,255,.105) !important;
   background-color: rgba(10,9,16,.78) !important;
 }
 
 .app :is(input, textarea, .search)::placeholder{
-  color: rgba(var(--text-rgb), .46) !important;
+  color: color-mix(in srgb, var(--text) 46%, transparent) !important;
 }
 
 /* Repair import music button contrast: no black text, no muddy label. */
@@ -7156,7 +7156,7 @@ body.isResizingPlayer .app *{
 
 .app .headerText h2{
   margin: 0 !important;
-  color: rgba(var(--text-rgb), .96) !important;
+  color: color-mix(in srgb, var(--text) 96%, transparent) !important;
   font-size: clamp(28px, 3.3vw, 46px) !important;
   font-weight: 1000 !important;
 
@@ -7240,7 +7240,7 @@ body.isResizingPlayer .app *{
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.032),
     var(--panel-calm-shadow) !important;
-  color: rgba(var(--text-rgb), .90) !important;
+  color: color-mix(in srgb, var(--text) 90%, transparent) !important;
   isolation: isolate;
   contain: layout paint style;
 }

@@ -5,7 +5,7 @@ import type { Song, LibraryDropSide } from "../song.types";
 import { Cover, getCardCoverCssUrl } from "../../covers/Cover";
 import { MascotStateArt, PlayingBarsIcon } from "../../../shared/ui/LocaltifyViewUi";
 import { collapseSpaces, formatTime, lower } from "../../../shared/utils/format";
-import { prettyMeta, prettyTitle } from "../../search/search.utils";
+import { looksUnknownMeta, prettyMeta, prettyTitle } from "../../search/search.utils";
 
 export function displaySongWordCountV444(value: string) {
   return collapseSpaces(value).split(/\s+/).filter(Boolean).length;
@@ -27,10 +27,14 @@ export function looksLikeSongInArtistSlotV444(artist: string) {
     || /\b(the|you|your|me|my|love|said|hero|night|ost|collection|theme|song|slowed|remix|edit)\b/.test(value);
 }
 
-export function shouldSwapDisplayTitleArtistV444(song: Pick<Song, "title" | "artist">) {
+export function shouldSwapDisplayTitleArtistV444(song: Pick<Song, "title" | "artist"> & { album?: string | null }) {
   const rawTitle = collapseSpaces(song.title || "");
   const rawArtist = collapseSpaces(song.artist || "");
   if (!rawTitle || !rawArtist) return false;
+
+  // A real album tag means the file was tagged properly, so "The Beatles" stays the artist.
+  const album = lower(collapseSpaces(song.album || ""));
+  if (!looksUnknownMeta(album) && album !== "local files") return false;
 
   const cleanArtist = lower(rawArtist);
   if (cleanArtist === "unknown" || cleanArtist === "unknown artist") return false;
@@ -38,19 +42,19 @@ export function shouldSwapDisplayTitleArtistV444(song: Pick<Song, "title" | "art
   return looksLikeArtistInTitleSlotV444(rawTitle) && looksLikeSongInArtistSlotV444(rawArtist);
 }
 
-export function displaySongTitleV444(song: Pick<Song, "title" | "artist">, maxWords = 7) {
+export function displaySongTitleV444(song: Pick<Song, "title" | "artist"> & { album?: string | null }, maxWords = 7) {
   return shouldSwapDisplayTitleArtistV444(song)
     ? prettyTitle(song.artist, maxWords)
     : prettyTitle(song.title, maxWords);
 }
 
-export function displaySongArtistV444(song: Pick<Song, "title" | "artist">) {
+export function displaySongArtistV444(song: Pick<Song, "title" | "artist"> & { album?: string | null }) {
   return shouldSwapDisplayTitleArtistV444(song)
     ? prettyMeta(song.title)
     : prettyMeta(song.artist);
 }
 
-export function displaySongPickerSublineV444(song: Pick<Song, "title" | "artist">) {
+export function displaySongPickerSublineV444(song: Pick<Song, "title" | "artist"> & { album?: string | null }) {
   const artist = displaySongArtistV444(song);
   if (!artist || artist === "unknown artist") return "Pick a playlist or make a new one.";
   return `${artist} · Pick a playlist or make a new one.`;

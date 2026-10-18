@@ -67,7 +67,7 @@ export default function LibraryView(props: LibraryViewProps) {
   } = props;
 
   const isLiked = view === "liked";
-  const shownLabel = showingMissingFiles ? "missing files" : isLiked ? "liked songs" : "all tracks";
+  const shownLabel = showingMissingFiles ? "missing files" : isLiked ? "tracks" : "all tracks";
   const sortedByArtist = librarySortMode === "artist";
 
   return (
@@ -141,7 +141,7 @@ export default function LibraryView(props: LibraryViewProps) {
         <div className="libraryTracksHead">
           <div>
             <h2 id="library-tracks-title">{shownLabel}</h2>
-            <p>{showingMissingFiles ? "repair or remove entries that no longer resolve" : sortedByArtist ? "sorted by artist · switch to library order to reorder" : isLiked ? "your local favourites" : "drag to reorder · right-click for more"}</p>
+            <p>{showingMissingFiles ? "repair or remove entries that no longer resolve" : sortedByArtist ? "sorted by artist · switch to library order to reorder" : isLiked ? "right-click for more" : "drag to reorder · right-click for more"}</p>
           </div>
           <span className="libraryCount">{visibleSongs.length} {visibleSongs.length === 1 ? "track" : "tracks"}</span>
         </div>

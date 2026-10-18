@@ -1,7 +1,3 @@
-.genresHero {
-  background: radial-gradient(circle at 90% 0%, rgba(var(--accent-rgb), .14), transparent 40%), rgba(255, 255, 255, .025);
-}
-
 .genresGrid {
   grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
 }
