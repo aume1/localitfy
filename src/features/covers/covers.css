@@ -8,7 +8,7 @@
   width: 100%; min-width: 0;
   display: grid; align-content: start;
   gap: 13px;
-  padding: clamp(18px, 2.5vw, 35px) clamp(18px, 2.8vw, 44px) 100px;
+  padding: 0 0 100px;
   color: var(--cover-text);
 }
 .coverStudioLayout *, .coverStudioLayout *::before, .coverStudioLayout *::after { box-sizing: border-box; }
@@ -18,11 +18,8 @@
 .coverStudioLayout button { cursor: pointer; }
 .coverStudioLayout button:disabled { opacity: .45; cursor: not-allowed; }
 .coverStudioLayout :is(button,input):focus-visible { outline: 2px solid var(--lt-accent); outline-offset: 2px; }
-.coverStudioHero { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 15px; padding: 16px 19px; }
-.coverStudioHeroText { flex: 1 1 340px; min-width: 0; }
-.coverStudioHeroText h3 { font-size: clamp(23px,2vw,31px); }
-.coverStudioHeroText > p:last-child { max-width: 610px; margin: 5px 0 0; color: var(--cover-muted); font-size: 12px; line-height: 1.5; }
 .coverStudioHeroActions { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
+.coverStudioHeroActions .heroMain { min-height: 38px; font-size: 12px; font-weight: 700; }
 .coverStudioHeroActions button:not(.heroMain),.coverStudioLayout .coverSongTools button,
 .coverStudioLayout .coverMoodTabs button,.coverStudioLayout .coverGalleryToolbar button,
 .coverStudioLayout .coverQuickPreview button,.coverStudioLayout .coverApplyButton,
@@ -109,7 +106,6 @@
 .coverStudioLayout .coverPreviewEmpty { display: grid; place-items: center; border-radius: 7px; background: var(--cover-raised); color: var(--cover-muted); }
 
 /* Cover tools stay available without filling the hero with maintenance actions. */
-.app:has(.coverStudioLayout) .headerBar { display: none !important; }
 .app:has(.coverStudioLayout) .content { background: var(--lt-bg) !important; }
 .coverStudioLayout .coverStudioHeroActions details { position: relative; }
 .coverStudioLayout .coverStudioHeroActions summary {
@@ -133,8 +129,6 @@
   .coverSongListVirtual { height: 280px; min-height: 200px; }
 }
 @media (max-width: 700px) {
-  .coverStudioLayout { padding: 18px 14px 95px; }
-  .coverStudioHero { padding: 16px; }
   .coverSelectedSongsPanel,.coverGalleryPanel { padding: 13px; }
   .coverGalleryVirtualRowCleanOnly { gap: 5px; }
   .coverGalleryCardCleanOnly { padding: 4px; }

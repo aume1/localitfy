@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { Check, FolderInput, FolderTree, ListPlus, Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
+import { PageHeader } from "../../shared/ui/PageHeader";
 import { Cover } from "../covers/Cover";
 import { CheckMiniIcon, EmptyCoverIcon, LocaltifyStateCard, PlusMiniIcon } from "../../shared/ui/LocaltifyViewUi";
 import { LikeHeartAnimationV443 } from "../library/components/SongRows";
@@ -225,31 +226,32 @@ export default function AlbumsView(props: AlbumsViewProps) {
   return (
 
               <section data-page-section="albums" className="albumsPageV318">
-                <section className="albumsHeroPanelV318">
-                  <div className="albumsHeroArtClusterV318" aria-hidden="true">
-                    {(selectedAlbum?.songs || localAlbums[0]?.songs || songs).slice(0, 4).map((song, index) => (
-                      <Cover key={`${song.id}-${index}`} song={song} className={`albumsHeroMiniCoverV318 cover${index + 1}`} />
-                    ))}
-                  </div>
-                  <div className="albumsHeroCopyV318">
-                    <p className="eyebrow">local albums</p>
-                    <h3>your albums your way</h3>
-                    <p>
-                      group albums from file tags, build your own, or import real album folders from disk.
-                    </p>
-                    <div className="albumsHeroActionsV318">
-                      <button className="mainAction" type="button" onClick={() => openCreateAlbumBuilder(currentSong || songs[0] || null)}><ActionLabel icon={Plus}>add album</ActionLabel></button>
-                      <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("single")} disabled={albumFolderImportBusy}><ActionLabel icon={FolderInput}>import album folder</ActionLabel></button>
-                      <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("library")} disabled={albumFolderImportBusy}><ActionLabel icon={FolderTree}>import album library</ActionLabel></button>
-                      <button className={`heroGhost danger ${albumDeleteConfirmArmed ? "confirmArmed" : ""}`} type="button" onClick={() => void deleteAllAlbums()} disabled={!manualAlbums.length && !metadataAlbums.length}><ActionLabel icon={Trash2}>{albumDeleteConfirmArmed ? "sure? delete" : "delete all albums"}</ActionLabel></button>
-                    </div>
-                  </div>
-                  <div className="albumsHeroStatsV318" aria-label="album summary">
-                    <span><strong>{localAlbums.length}</strong><small>albums</small></span>
-                    <span><strong>{manualAlbumEntries.length}</strong><small>made by you</small></span>
-                    <span><strong>{metadataAlbums.length}</strong><small>from tags</small></span>
-                  </div>
-                </section>
+                <PageHeader
+                  eyebrow="local albums"
+                  title="Albums"
+                  description={`${localAlbums.length} album${localAlbums.length === 1 ? "" : "s"} · ${manualAlbumEntries.length} made by you · ${metadataAlbums.length} from tags`}
+                >
+                  <input
+                    className="pageHeaderSearch"
+                    value={albumSearch}
+                    onChange={(event) => setAlbumSearch(event.currentTarget.value)}
+                    placeholder="search albums or artists"
+                    aria-label="search albums"
+                  />
+                  <select className="albumsSortV318" value={albumSortMode} onChange={(event) => setAlbumSortMode(event.currentTarget.value)} aria-label="sort albums">
+                    <option value="recent">recently added</option>
+                    <option value="title">title</option>
+                    <option value="artist">artist</option>
+                    <option value="year">year</option>
+                  </select>
+                </PageHeader>
+
+                <div className="albumsActionBarV318">
+                  <button className="mainAction" type="button" onClick={() => openCreateAlbumBuilder(currentSong || songs[0] || null)}><ActionLabel icon={Plus}>add album</ActionLabel></button>
+                  <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("single")} disabled={albumFolderImportBusy}><ActionLabel icon={FolderInput}>import album folder</ActionLabel></button>
+                  <button className="heroGhost" type="button" onClick={() => void scanAlbumFolderImport("library")} disabled={albumFolderImportBusy}><ActionLabel icon={FolderTree}>import album library</ActionLabel></button>
+                  <button className={`heroGhost danger albumsDeleteAllV318 ${albumDeleteConfirmArmed ? "confirmArmed" : ""}`} type="button" onClick={() => void deleteAllAlbums()} disabled={!manualAlbums.length && !metadataAlbums.length}><ActionLabel icon={Trash2}>{albumDeleteConfirmArmed ? "sure? delete" : "delete all albums"}</ActionLabel></button>
+                </div>
 
                 {(albumFolderImportBusy || albumFolderImportPreview || albumFolderImportMessage) ? (
                   <section className={`albumFolderImportPanelV309 ${albumFolderImportPreview?.albums?.length ? "hasPreview" : ""}`}>
@@ -324,27 +326,6 @@ export default function AlbumsView(props: AlbumsViewProps) {
                 ) : null}
 
                 <section className="albumsShelfPanelV318">
-                  <div className="albumsToolbarV318">
-                    <div>
-                      <p className="eyebrow">browse</p>
-                      <h3>album shelf</h3>
-                    </div>
-                    <div className="albumsControlsV318">
-                      <input
-                        value={albumSearch}
-                        onChange={(event) => setAlbumSearch(event.currentTarget.value)}
-                        placeholder="search albums or artists"
-                        aria-label="search albums"
-                      />
-                      <select value={albumSortMode} onChange={(event) => setAlbumSortMode(event.currentTarget.value)} aria-label="sort albums">
-                        <option value="recent">recently added</option>
-                        <option value="title">title</option>
-                        <option value="artist">artist</option>
-                        <option value="year">year</option>
-                      </select>
-                    </div>
-                  </div>
-
                   {visibleAlbums.length ? (
                     <div className="albumsGridV318">
                       {visibleAlbums.map((album, index) => {
@@ -353,7 +334,7 @@ export default function AlbumsView(props: AlbumsViewProps) {
                           <button
                             key={album.id}
                             type="button"
-                            className={`albumCardV318 ${selectedAlbum?.id === album.id ? "active" : ""}`}
+                            className={`albumCardV318 ${albumDetailOpen && selectedAlbum?.id === album.id ? "active" : ""}`}
                             onClick={(event) => openAlbumDetail(album.id, event.currentTarget)}
                             aria-label={`open ${album.title} album`}
                             style={{ "--album-card-delay": `${Math.min(index, 18) * 14}ms` } as CSSProperties}

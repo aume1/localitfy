@@ -1,0 +1,92 @@
+/* Shared page header. Mirrors .libraryTopBar so every view opens the same way. */
+.pageHeader {
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(var(--lt-accent-rgb), .08);
+}
+
+.pageHeaderHeading {
+  min-width: 0;
+  flex: 1 1 320px;
+  display: grid;
+  gap: 7px;
+}
+
+.pageHeaderEyebrow {
+  margin: 0;
+  color: var(--lt-accent);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.pageHeaderHeading h1 {
+  margin: 0;
+  color: var(--lt-text);
+  font-size: clamp(25px, 1.7vw, 34px);
+  font-weight: 680;
+  line-height: .95;
+  letter-spacing: -.045em;
+}
+
+.pageHeaderDescription {
+  max-width: 620px;
+  margin: 0;
+  color: var(--lt-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.pageHeaderTools {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.pageHeaderSearch {
+  width: min(360px, 34vw);
+  min-width: 190px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(var(--lt-accent-rgb), .09);
+  border-radius: 999px;
+  outline: none;
+  color: var(--lt-text);
+  background: var(--lt-surface);
+  font: inherit;
+  font-size: 12px;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.pageHeaderSearch::placeholder { color: var(--lt-muted); }
+.pageHeaderSearch:hover { border-color: rgba(var(--lt-accent-rgb), .14); }
+.pageHeaderSearch:focus {
+  border-color: rgba(var(--lt-accent-rgb), .34);
+  box-shadow: 0 0 0 3px rgba(var(--lt-accent-rgb), .05);
+}
+
+.pageHeaderCount {
+  color: var(--lt-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pageHeaderCount strong { color: var(--lt-text); }
+
+@media (max-width: 760px) {
+  .pageHeaderTools { width: 100%; justify-content: flex-start; }
+  .pageHeaderSearch { flex: 1 1 200px; width: auto; }
+}

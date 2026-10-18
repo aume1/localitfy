@@ -6,6 +6,7 @@ import { Cover } from "../covers/Cover";
 import { LikeHeartAnimationV443 } from "../library/components/SongRows";
 import type { Song } from "../library/song.types";
 import { LocaltifyStateCard } from "../../shared/ui/LocaltifyViewUi";
+import { PageHeader } from "../../shared/ui/PageHeader";
 import { formatTime } from "../../shared/utils/format";
 import { prettyMeta, prettyTitle } from "../search/search.utils";
 import { splitArtistCredits } from "./artistCredits";
@@ -203,22 +204,20 @@ export default function ArtistsView({
 
   return (
     <section data-page-section="artists" className="artistsPage" aria-label="artists">
-      <header className="artistsHero">
-        <div>
-          <p className="eyebrow">local artists</p>
-          <h3>browse by artist</h3>
-          <p>Every artist found in your local song metadata. Semicolon and “feat.” credits are listed individually.</p>
-        </div>
-        <div className="artistsHeroTools">
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.currentTarget.value)}
-            placeholder="search artists"
-            aria-label="search artists"
-          />
-          <span><strong>{visibleArtists.length}</strong> artist{visibleArtists.length === 1 ? "" : "s"}</span>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="local artists"
+        title="Artists"
+        description="Every artist in your song tags. Semicolon and “feat.” credits are listed individually."
+      >
+        <input
+          className="pageHeaderSearch"
+          value={query}
+          onChange={(event) => setQuery(event.currentTarget.value)}
+          placeholder="search artists"
+          aria-label="search artists"
+        />
+        <span className="pageHeaderCount"><strong>{visibleArtists.length}</strong> artist{visibleArtists.length === 1 ? "" : "s"}</span>
+      </PageHeader>
 
       {visibleArtists.length ? (
         <>

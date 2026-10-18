@@ -6,6 +6,7 @@ import { Cover } from "../covers/Cover";
 import { LikeHeartAnimationV443 } from "../library/components/SongRows";
 import type { Song } from "../library/song.types";
 import { LocaltifyStateCard } from "../../shared/ui/LocaltifyViewUi";
+import { PageHeader } from "../../shared/ui/PageHeader";
 import { formatTime } from "../../shared/utils/format";
 import { prettyMeta, prettyTitle } from "../search/search.utils";
 import { splitArtistCredits } from "../artists/artistCredits";
@@ -220,17 +221,14 @@ export default function GenresView({
 
   return (
     <section data-page-section="genres" className="artistsPage genresPage" aria-label="genres">
-      <header className="artistsHero genresHero">
-        <div>
-          <p className="eyebrow">local genres</p>
-          <h3>browse by genre</h3>
-          <p>Genres read directly from your local music tags. Multi-genre tracks appear in every matching genre.</p>
-        </div>
-        <div className="artistsHeroTools">
-          <input value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder="search genres" aria-label="search genres" />
-          <span><strong>{visibleGenres.length}</strong> genre{visibleGenres.length === 1 ? "" : "s"}</span>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="local genres"
+        title="Genres"
+        description="Read directly from your music tags. Multi-genre tracks appear in every matching genre."
+      >
+        <input className="pageHeaderSearch" value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder="search genres" aria-label="search genres" />
+        <span className="pageHeaderCount"><strong>{visibleGenres.length}</strong> genre{visibleGenres.length === 1 ? "" : "s"}</span>
+      </PageHeader>
 
       {visibleGenres.length ? (
         <>

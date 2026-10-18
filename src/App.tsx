@@ -140,7 +140,7 @@ import {
   discordStyleOptions
 } from "./features/discord/discord.constants";
 import { PLAYLIST_STORAGE_KEY } from "./features/playlists/playlist.constants";
-import { clamp, collapseSpaces, formatTime, getGreeting } from "./shared/utils/format";
+import { clamp, collapseSpaces, formatTime } from "./shared/utils/format";
 import { useStableCallback } from "./shared/hooks/useStableCallback";
 import { makeLocalId, readLocalJson } from "./shared/storage/localStorage";
 import {
@@ -408,7 +408,6 @@ function MainModeApp() {
   const arcadeGhostUnlocked = false;
 
   const isThreeAm = now.getHours() === 3;
-  const greeting = isThreeAm ? "late night local files" : getGreeting(now.getHours());
 
   useBodyRuntimeClasses({
     isAppBackgrounded,
@@ -2146,22 +2145,6 @@ function MainModeApp() {
   const queuePreviewSongs = useMemo(() => [] as Song[], []);
   void queuePreviewSongs;
 
-  const headerHint = useMemo(() => {
-    if (view === "home") {
-      return "";
-    }
-
-    if (view === "library") return "";
-    if (view === "artists") return `${libraryArtistCount} artist${libraryArtistCount === 1 ? "" : "s"} in your local library`;
-    if (view === "genres") return "genres from your local file tags";
-    if (view === "albums") return "local albums from metadata and your custom collections";
-    if (view === "playlists") return `${playlists.length} playlist${playlists.length === 1 ? "" : "s"}`;
-    if (view === "liked") return `${likedSongs.length} liked track${likedSongs.length === 1 ? "" : "s"}`;
-    if (view === "covers") return `${coverStats.usable} usable cover${coverStats.usable === 1 ? "" : "s"} • ${coverStats.favorites} favorite${coverStats.favorites === 1 ? "" : "s"}`;
-    if (view === "downloads") return "download direct audio links and import them automatically";
-    if (view === "settings") return "theme, playback, discord, library, and advanced controls";
-    return "your listening numbers and favorite tracks";
-  }, [view, isPlaying, currentSong, songs.length, filteredSongs.length, likedSongs.length, playlists.length, libraryAlbumCount, libraryArtistCount, isThreeAm, coverStats.usable, coverStats.favorites]);
 
   const discordPreview = useMemo(() => buildDiscordPreview({
     settings,
@@ -7909,7 +7892,7 @@ function MainModeApp() {
     updatePrompt
   ]);
 
-  const repeatButtonStateText = repeatMode === "one" ? "1" : repeatMode === "all" ? "all" : "";
+  const repeatButtonStateText = repeatMode === "one" ? "1" : "";
   const repeatButtonTitle = repeatButtonTitleFor(repeatMode, Boolean(activePlaylist), playbackSource);
   const repeatButtonAriaLabel = repeatButtonTitle;
 
@@ -8430,10 +8413,6 @@ function MainModeApp() {
       importSongs,
       startSidebarResize,
       contentRef,
-      headerHint,
-      greeting,
-      query,
-      handleSearchInput,
       updateSidebarLayout: (patch) => void updateSettingsPatch(patch),
       openSidebarSettings
     },

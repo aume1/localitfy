@@ -61,8 +61,7 @@ export type ShellNavigationContract = {
   effectiveSimpleMode: boolean; simpleModeView: ReactNode; view: View;
   changeView: (view: View, source?: string) => unknown; importSongs: () => unknown;
   startSidebarResize: (event: ReactPointerEvent<HTMLButtonElement>) => unknown;
-  contentRef: RefObject<HTMLElement | null>; headerHint: string; greeting: string; query: string;
-  handleSearchInput: (value: string) => unknown;
+  contentRef: RefObject<HTMLElement | null>;
   updateSidebarLayout: (patch: SidebarLayoutPatch) => unknown; openSidebarSettings: () => unknown;
 };
 

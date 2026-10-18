@@ -1,6 +1,7 @@
 import "./downloads.css";
 import { CheckMiniIcon, ResultStatusIcon } from "../../shared/ui/LocaltifyViewUi";
 import { clamp } from "../../shared/utils/format";
+import { PageHeader } from "../../shared/ui/PageHeader";
 
 export type DownloadsViewProps = {
   cancelCurrentDownload: any;
@@ -98,23 +99,16 @@ export default function DownloadsView(props: DownloadsViewProps) {
   return (
 
               <section data-page-section="downloads" className="downloadsLayout downloadsLayoutV031">
+                <PageHeader eyebrow="downloads" title="Downloads" description="Download links or convert local files, then add them to your library.">
+                  <button className="softButton" onClick={() => window.localitfy.openDownloadsFolder(settings.downloadFolder || undefined)}>
+                    Open folder
+                  </button>
+                  <button className="softButton" onClick={() => { changeView("settings", "unknown"); setSettingsCategory("downloads"); }}>
+                    Settings
+                  </button>
+                </PageHeader>
+
                 <section className="panel downloadPanel downloadPanelV031">
-                  <div className="panelHead downloadHeroHead">
-                    <div>
-                      <p className="eyebrow">downloads</p>
-                      <h3>download music</h3>
-                    </div>
-
-                    <div className="downloadHeroActions downloadHeroActionsCompactV475">
-                      <button className="softButton" onClick={() => window.localitfy.openDownloadsFolder(settings.downloadFolder || undefined)}>
-                        Open folder
-                      </button>
-                      <button className="softButton" onClick={() => { changeView("settings", "unknown"); setSettingsCategory("downloads"); }}>
-                        Settings
-                      </button>
-                    </div>
-                  </div>
-
                   <div className="downloadsInputCard" aria-label="Download source and links">
                     <div className="downloadsInputTitle"><strong>Add music</strong><span>Paste links to download or import.</span></div>
                   {/* -- Source tabs -------------------------------- */}

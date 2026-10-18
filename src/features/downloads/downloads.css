@@ -9,7 +9,7 @@
   min-width: 0; width: 100%;
   display: grid; grid-template-columns: minmax(0,1fr);
   gap: 18px;
-  padding: clamp(20px,2.5vw,38px) clamp(18px,2.8vw,48px) 100px;
+  padding: 0 0 100px;
   color: var(--downloads-text);
 }
 .downloadsLayoutV031 *, .downloadsLayoutV031 *::before, .downloadsLayoutV031 *::after { box-sizing: border-box; }
@@ -18,13 +18,13 @@
   border: 0 !important; background: transparent !important; box-shadow: none !important;
 }
 .downloadsLayoutV031 .eyebrow { margin: 0 0 8px; color: var(--downloads-accent); font-size: 11px; font-weight: 800; letter-spacing: .11em; }
-.downloadsLayoutV031 .panelHead, .downloadsLayoutV031 .downloadHeroHead {
+.downloadsLayoutV031 .panelHead {
   min-width: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
   gap: 20px; padding-bottom: 17px; border-bottom: 1px solid var(--downloads-edge);
 }
 .downloadsLayoutV031 .panelHead h3 { margin: 0; color: var(--downloads-text); font-size: clamp(23px,2vw,30px); font-weight: 700; letter-spacing: -.035em; }
 .downloadsLayoutV031 .panelHead p:last-child { margin: 9px 0 0; color: var(--downloads-muted); font-size: 13px; line-height: 1.5; }
-.downloadsLayoutV031 .downloadHeroActions, .downloadsLayoutV031 .downloadActions,
+.downloadsLayoutV031 .downloadActions,
 .downloadsLayoutV031 .downloadQueueHeaderActions, .downloadsLayoutV031 .downloadResultActionsV502 {
   display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
 }
@@ -40,7 +40,7 @@
 }
 .downloadsLayoutV031 .spotifyTabDot { width: 8px; height: 8px; border-radius: 50%; background: #72bf9a; }
 .downloadsLayoutV031 .downloadTextarea {
-  width: min(100%, 920px); min-height: 136px; display: block; resize: vertical; padding: 17px 18px;
+  width: 100%; min-height: 136px; display: block; resize: vertical; padding: 17px 18px;
   border: 1px solid color-mix(in oklab,var(--downloads-accent) 32%,transparent); border-radius: 12px;
   color: var(--downloads-text); background: var(--lt-bg); font: inherit; font-size: 13px;
   line-height: 1.6; outline: none;
@@ -48,7 +48,7 @@
 .downloadsLayoutV031 .downloadTextarea::placeholder { color: var(--downloads-muted); }
 .downloadsLayoutV031 :is(input,textarea,button):focus-visible { outline: 2px solid var(--downloads-accent); outline-offset: 2px; }
 .downloadsLayoutV031 button:disabled { opacity: .45; cursor: not-allowed; }
-.downloadsLayoutV031 :is(.heroMain,.heroGhost,.softButton,.mainAction) { min-height: 37px; }
+.downloadsLayoutV031 :is(.heroMain,.heroGhost,.softButton,.mainAction) { min-height: 38px; font-size: 12px; font-weight: 700; }
 .downloadsLayoutV031 .spotifyAuthCard { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 15px; padding: 18px; border: 1px solid var(--downloads-edge); border-radius: 12px; background: var(--downloads-surface); }
 .downloadsLayoutV031 .spotifyAuthLeft { display: flex; align-items: center; gap: 11px; }
 .downloadsLayoutV031 .spotifyAuthLeft > div { display: grid; gap: 6px; }
@@ -113,7 +113,6 @@
 .downloadsLayoutV031 .downloadResult > div { min-width: 0; }
 .downloadsLayoutV031 .downloadResult strong { font-size: 13px; }
 .downloadsLayoutV031 .downloadResult p { margin: 6px 0; color: var(--downloads-muted); font-size: 11px; overflow-wrap: anywhere; }
-.app:has(.downloadsLayoutV031) .headerBar { display: none !important; }
 .app:has(.downloadsLayoutV031) .content { background: var(--lt-bg) !important; }
 .downloadsLayoutV031 .downloadsInputCard {
   display: grid; align-content: start; justify-items: start; gap: 15px;
@@ -124,7 +123,6 @@
 .downloadsLayoutV031 .downloadsInputTitle { display: grid; gap: 3px; }
 .downloadsLayoutV031 .downloadsInputTitle strong { color: var(--downloads-text); font-size: 17px; font-weight: 710; }
 .downloadsLayoutV031 .downloadsInputTitle span { color: var(--downloads-muted); font-size: 12px; }
-.downloadsLayoutV031 .downloadPanelV031 > .downloadHeroHead { margin: 0; padding: 0 0 18px; }
 .downloadsLayoutV031 .downloadTabStrip { margin: 0; }
 .downloadsLayoutV031 .downloadActions { margin-top: 0; }
 .downloadsLayoutV031 .converterBox {

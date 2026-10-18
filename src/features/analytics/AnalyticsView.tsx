@@ -1,6 +1,7 @@
 import "./analytics.css";
 import type { CSSProperties } from "react";
 import { LocaltifyStateCard } from "../../shared/ui/LocaltifyViewUi";
+import { PageHeader } from "../../shared/ui/PageHeader";
 import { formatTime } from "../../shared/utils/format";
 import { prettyTitle } from "../search/search.utils";
 import type { Song } from "../library/song.types";
@@ -44,17 +45,13 @@ export default function AnalyticsView(props: AnalyticsViewProps) {
 
   return (
     <section data-page-section="analytics" className="analyticsStudioV339" aria-label="lightweight listening recap">
-      <section className="analyticsHeroV339">
-        <div className="analyticsHeroCopyV339">
-          <p className="eyebrow">local recap</p>
-          <h3>your listening, cleaned up</h3>
-          <p>
-            {songs.length
-              ? "Fast recap cards from your real local library data: imports, plays, listening time, file health, and library length without heavy charts."
-              : "Import songs and localtify will build a lightweight recap here."}
-          </p>
-        </div>
-
+      <PageHeader
+        eyebrow="local recap"
+        title="Analytics"
+        description={songs.length
+          ? "Imports, plays, listening time, and file health from your local library."
+          : "Import songs and localtify will build a lightweight recap here."}
+      >
         <div className="analyticsHeroMeterV339" aria-label="library readiness">
           <span style={{ "--meter": `${playedPercent}%` } as CSSProperties}>
             <strong>{playedPercent}%</strong>
@@ -69,7 +66,7 @@ export default function AnalyticsView(props: AnalyticsViewProps) {
             <small>health</small>
           </span>
         </div>
-      </section>
+      </PageHeader>
 
       {!songs.length ? (
         <LocaltifyStateCard

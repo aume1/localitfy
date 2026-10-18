@@ -100,7 +100,7 @@
 .settingsPage .settingsMiniGrid,
 .settingsPage .settingsResetGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 12px; }
 .settingsPage :is(.settingsSelectField, .settingsTextFieldV027) { min-width: 0; display: grid; gap: 7px; color: var(--settings-muted); font-size: 12px; }
-.settingsPage :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+.settingsPage :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="search"]), select, textarea) {
   min-width: 0; max-width: 100%; min-height: 40px; padding: 9px 12px;
   border: 1px solid rgba(125, 164, 187, .2); border-radius: 9px;
   background: var(--lt-bg); color: var(--settings-text); font: inherit; font-size: 13px; outline: none;
