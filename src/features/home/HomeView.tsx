@@ -1,11 +1,13 @@
 import "./home.css";
-import type { CSSProperties } from "react";
-import { Images, Maximize2, Minimize2, Play, Shuffle } from "lucide-react";
+import { Fragment, useCallback, useState, type CSSProperties, type ReactNode } from "react";
+import { Maximize2, Minimize2, Play, Shuffle, SlidersHorizontal } from "lucide-react";
 import { Cover } from "../covers/Cover";
 import { MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
 import { prettyMeta, prettyTitle } from "../search/search.utils";
 import type { Song } from "../library/song.types";
 import type { Settings } from "../settings/settings.types";
+import HomeCustomizePanel from "./HomeCustomizePanel";
+import { visibleHomeSections, type HomeLayoutPatch, type HomeSectionId } from "./homeLayout";
 
 export type HomeViewProps = {
   ambientStyle: CSSProperties;
@@ -26,9 +28,10 @@ export type HomeViewProps = {
   playableSongCount: number;
   playerError: string | null;
   selectSong: (songId: string, shouldPlay?: boolean) => unknown;
-  settings: Pick<Settings, "heroExpanded" | "volume">;
+  settings: Pick<Settings, "heroExpanded" | "volume" | "homeSectionOrder" | "homeHiddenSections">;
   shuffleLibrarySongsAction: () => unknown;
   toggleHeroExpanded: () => unknown;
+  updateHomeLayout: (patch: HomeLayoutPatch) => unknown;
 };
 
 export default function HomeView(props: HomeViewProps) {
@@ -53,8 +56,12 @@ export default function HomeView(props: HomeViewProps) {
     selectSong,
     settings,
     shuffleLibrarySongsAction,
-    toggleHeroExpanded
+    toggleHeroExpanded,
+    updateHomeLayout
   } = props;
+
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const closeCustomize = useCallback(() => setCustomizeOpen(false), []);
 
   const listenNowSongs = homeListenNowSongs.slice(0, 8);
   const newReleaseSongs = (homeFreshShelfSongs.length ? homeFreshShelfSongs : homeListenNowSongs).slice(0, 10);
@@ -81,16 +88,8 @@ export default function HomeView(props: HomeViewProps) {
     shuffleLibrarySongsAction();
   };
 
-  return (
-    <div className="homePage" style={homeStyle}>
-      <header className="homeTopBar">
-        <h1>Home</h1>
-        <button className="homeCustomizeButton" type="button" onClick={openCoversViewWithCurrentSong}>
-          <Images size={13} strokeWidth={2.1} aria-hidden="true" />
-          <span>Customize Home</span>
-        </button>
-      </header>
-
+  const sections: Record<HomeSectionId, ReactNode> = {
+    jumpBack: (
       <section
         className={`homeJumpBack ${settings.heroExpanded ? "expanded" : "compact"} ${heroMotionClass}`}
         aria-label="jump back in"
@@ -123,7 +122,8 @@ export default function HomeView(props: HomeViewProps) {
           </div>
         ) : null}
       </section>
-
+    ),
+    listenNow: (
       <section className="homeSection homeListenSection" aria-labelledby="home-listen-title">
         <h3 id="home-listen-title">Listen now</h3>
         {listenNowSongs.length ? (
@@ -155,57 +155,91 @@ export default function HomeView(props: HomeViewProps) {
           </div>
         )}
       </section>
+    ),
+    mostListened: mostListenedSongs.length ? (
+      <section className="homeSection homeArtistsSection" aria-labelledby="home-most-listened-title">
+        <h3 id="home-most-listened-title">Most listened</h3>
+        <div className="homeArtistRail">
+          {mostListenedSongs.map((song) => (
+            <button
+              key={`${song.id}-${song.artist || "unknown"}`}
+              className="homeArtistCard"
+              type="button"
+              onClick={() => void selectSong(song.id, true)}
+              title={`play ${song.artist || song.title}`}
+            >
+              <span className="homeArtistCoverWrap">
+                <Cover song={song} className="homeArtistCover" />
+                <span className="homeArtistPlay" aria-hidden="true"><Play size={13} fill="currentColor" /></span>
+              </span>
+              <strong>{prettyMeta(song.artist || "unknown artist")}</strong>
+            </button>
+          ))}
+        </div>
+      </section>
+    ) : null,
+    newReleases: newReleaseSongs.length ? (
+      <section className="homeSection homeReleasesSection" aria-labelledby="home-releases-title">
+        <h3 id="home-releases-title">New Releases</h3>
+        <div className="homeReleaseRail">
+          {newReleaseSongs.map((song) => (
+            <button
+              key={song.id}
+              className={`homeReleaseCard ${song.id === currentId ? "active" : ""}`}
+              type="button"
+              onClick={() => void selectSong(song.id, true)}
+              title={`play ${song.title}`}
+            >
+              <span className="homeReleaseCoverWrap">
+                <Cover song={song} className="homeReleaseCover" />
+                <span className="homeReleasePlay" aria-hidden="true"><Play size={15} fill="currentColor" /></span>
+              </span>
+              <span className="homeReleaseCopy">
+                <strong>{prettyTitle(song.title, 5)}</strong>
+                <small>{prettyMeta(song.artist)}</small>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+    ) : null
+  };
+  const visibleSections = visibleHomeSections(settings.homeSectionOrder, settings.homeHiddenSections);
 
-      {mostListenedSongs.length ? (
-        <section className="homeSection homeArtistsSection" aria-labelledby="home-most-listened-title">
-          <h3 id="home-most-listened-title">Most listened</h3>
-          <div className="homeArtistRail">
-            {mostListenedSongs.map((song) => (
-              <button
-                key={`${song.id}-${song.artist || "unknown"}`}
-                className="homeArtistCard"
-                type="button"
-                onClick={() => void selectSong(song.id, true)}
-                title={`play ${song.artist || song.title}`}
-              >
-                <span className="homeArtistCoverWrap">
-                  <Cover song={song} className="homeArtistCover" />
-                  <span className="homeArtistPlay" aria-hidden="true"><Play size={13} fill="currentColor" /></span>
-                </span>
-                <strong>{prettyMeta(song.artist || "unknown artist")}</strong>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
+  return (
+    <div className="homePage" style={homeStyle}>
+      <header className="homeTopBar">
+        <h1>Home</h1>
+        <button
+          className={`homeCustomizeButton ${customizeOpen ? "active" : ""}`}
+          type="button"
+          onClick={() => setCustomizeOpen((open) => !open)}
+          aria-expanded={customizeOpen}
+          aria-controls="home-customize-panel"
+        >
+          <SlidersHorizontal size={13} strokeWidth={2.1} aria-hidden="true" />
+          <span>Customize Home</span>
+        </button>
+        {customizeOpen ? (
+          <HomeCustomizePanel
+            sectionOrder={settings.homeSectionOrder}
+            hiddenSections={settings.homeHiddenSections}
+            updateHomeLayout={updateHomeLayout}
+            openCovers={openCoversViewWithCurrentSong}
+            onClose={closeCustomize}
+          />
+        ) : null}
+      </header>
 
-      {newReleaseSongs.length ? (
-        <section className="homeSection homeReleasesSection" aria-labelledby="home-releases-title">
-          <h3 id="home-releases-title">New Releases</h3>
-          <div className="homeReleaseRail">
-            {newReleaseSongs.map((song) => (
-              <button
-                key={song.id}
-                className={`homeReleaseCard ${song.id === currentId ? "active" : ""}`}
-                type="button"
-                onClick={() => void selectSong(song.id, true)}
-                title={`play ${song.title}`}
-              >
-                <span className="homeReleaseCoverWrap">
-                  <Cover song={song} className="homeReleaseCover" />
-                  <span className="homeReleasePlay" aria-hidden="true"><Play size={15} fill="currentColor" /></span>
-                </span>
-                <span className="homeReleaseCopy">
-                  <strong>{prettyTitle(song.title, 5)}</strong>
-                  <small>{prettyMeta(song.artist)}</small>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      {visibleSections.length ? visibleSections.map((id) => <Fragment key={id}>{sections[id]}</Fragment>) : (
+        <div className="homeEmptyState homeAllHidden">
+          <div><strong>every section is hidden</strong><span>use Customize Home to bring some back.</span></div>
+        </div>
+      )}
 
       <span className="homeNowPlayingLabel" aria-hidden="true">{currentNowPlayingLabel}</span>
     </div>
   );
 }
+
+

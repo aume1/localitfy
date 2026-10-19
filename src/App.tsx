@@ -8437,6 +8437,7 @@ function MainModeApp() {
       settings,
       shuffleLibrarySongsAction,
       toggleHeroExpanded,
+      updateHomeLayout: (patch) => void updateSettingsPatch(patch),
     },
     library: {
       changeView,
