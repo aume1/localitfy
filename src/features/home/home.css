@@ -78,11 +78,80 @@
   transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
 }
 
-.homeCustomizeButton:hover {
+.homeCustomizeButton:hover,
+.homeCustomizeButton.active {
   color: var(--lt-text);
   border-color: rgba(var(--lt-accent-rgb), 0.22);
   background: rgba(var(--lt-accent-rgb), 0.085);
 }
+
+/* Sections after the header share z-index 1, so the header sits above them for its popover. */
+.homePage > .homeTopBar { z-index: 5; }
+
+.homeCustomizePanel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 248px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(var(--lt-accent-rgb), 0.16);
+  border-radius: 12px;
+  /* Theme surfaces are translucent; layer one over the opaque background so shelves don't show through. */
+  background: linear-gradient(var(--lt-surface-raised), var(--lt-surface-raised)), var(--lt-bg);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+}
+
+.homeCustomizeHead { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:2px 2px 0 6px; }
+.homeCustomizeHead strong { color:var(--lt-text); font-size:11px; font-weight:700; }
+.homeCustomizeList { margin:0; padding:0; list-style:none; display:grid; gap:2px; }
+
+.homeCustomizeRow {
+  min-height: 32px;
+  padding: 0 4px 0 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(3, 26px);
+  align-items: center;
+  gap: 2px;
+  border-radius: 8px;
+  color: var(--lt-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.homeCustomizeRow:hover { background: rgba(var(--lt-accent-rgb), 0.06); }
+.homeCustomizeRow.isHidden > span { color: var(--lt-muted); opacity: .6; }
+
+.homeCustomizeRow button,
+.homeCustomizeReset,
+.homeCustomizeLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  color: var(--lt-muted);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.homeCustomizeRow button { width: 26px; height: 26px; }
+.homeCustomizeRow button.active { color: var(--lt-accent); }
+.homeCustomizeReset { gap:5px; height:24px; padding:0 8px; font-size:10px; font-weight:700; }
+.homeCustomizeLink { justify-content:flex-start; gap:7px; height:30px; padding:0 8px; border-top:1px solid rgba(var(--lt-accent-rgb), 0.08); border-radius:0 0 6px 6px; font-size:10px; font-weight:700; }
+
+.homeCustomizeRow button:hover:not(:disabled),
+.homeCustomizeReset:hover:not(:disabled),
+.homeCustomizeLink:hover {
+  color: var(--lt-text);
+  background: rgba(var(--lt-accent-rgb), 0.1);
+}
+
+.homeCustomizeRow button:disabled,
+.homeCustomizeReset:disabled { opacity: .3; cursor: default; }
 
 .homeJumpBack {
   position: relative;
@@ -197,6 +266,9 @@
 .homeStartButton:focus-visible,
 .homeRoundButton:focus-visible,
 .homeCustomizeButton:focus-visible,
+.homeCustomizeRow button:focus-visible,
+.homeCustomizeReset:focus-visible,
+.homeCustomizeLink:focus-visible,
 .homeListenRow:focus-visible,
 .homeArtistCard:focus-visible,
 .homeReleaseCard:focus-visible {
@@ -235,7 +307,8 @@
   width: 100%;
 }
 
-.homeSection > h3 {
+.homeSection > h3,
+.homeSectionHead > h3 {
   margin: 0 0 14px;
   color: var(--lt-text);
   font-size: clamp(18px, 1.15vw, 23px);
@@ -365,6 +438,16 @@
 .homeReleaseCopy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .homeReleaseCopy strong { color:var(--lt-muted); font-size:clamp(8px,.6vw,10px); font-weight:680; }
 .homeReleaseCopy small { color:var(--lt-muted); font-size:clamp(7px,.52vw,9px); font-weight:600; }
+
+.homeSectionHead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.homeSectionHead > h3 { margin:0; }
+.homeSectionAction { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border:1px solid rgba(var(--lt-accent-rgb),.14); border-radius:999px; color:var(--lt-muted); background:transparent; font:inherit; font-size:9px; font-weight:650; cursor:pointer; white-space:nowrap; }
+.homeSectionAction:hover { color:var(--lt-text); border-color:rgba(var(--lt-accent-rgb),.32); background:rgba(var(--lt-accent-rgb),.07); }
+.homeSectionAction:focus-visible { outline:2px solid rgba(var(--lt-accent-rgb),.66); outline-offset:2px; }
+/* Daily mix covers: up to four song covers in a 2x2 grid. */
+.homeMixCollage { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+.homeMixCollage .homeReleaseCover:only-of-type { grid-area:1 / 1 / 3 / 3; }
+.homeShelfNotice { display:flex; align-items:center; gap:12px; flex-wrap:wrap; color:var(--lt-muted); font-size:9px; }
 
 .homeEmptyState { min-height:150px; display:flex; align-items:center; justify-content:center; gap:14px; color:var(--lt-muted); }
 .homeEmptyMascot { width:72px; height:72px; flex:0 0 auto; }

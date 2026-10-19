@@ -48,6 +48,9 @@ export type Settings = {
   /** Saved tab order per customizable sidebar section; unknown or missing tabs fall back to the default order. */
   sidebarNavOrder: Partial<Record<"library" | "tools", string[]>>;
   sidebarHiddenNav: string[];
+  /** Saved Home section order; unknown or missing sections fall back to the default order. */
+  homeSectionOrder: string[];
+  homeHiddenSections: string[];
   playerBackgroundStyle: "flat" | "coverBlur" | "oledBlack";
   /** Present in the persisted runtime defaults even though the old monolith type omitted it. */
   homeHeroCoverBrightness: number;

@@ -8,7 +8,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
 test("Home keeps the reference music hierarchy without renderer hacks", () => {
-  const source = read("src/features/home/HomeView.tsx");
+  // The shelf rails live next to HomeView in HomeShelves.tsx.
+  const source = read("src/features/home/HomeView.tsx") + read("src/features/home/HomeShelves.tsx");
 
   for (const marker of [
     "JUMP BACK IN",
