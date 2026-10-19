@@ -100,7 +100,10 @@ export function useAlbumsController({
   useEffect(() => {
     if (view !== "albums") return;
     if (selectedAlbumId && localAlbums.some((album) => album.id === selectedAlbumId)) return;
-    setSelectedAlbumId(visibleAlbums[0]?.id || localAlbums[0]?.id || "");
+    // Check the latest id: an "open this album" request can land in the same render and must win.
+    setSelectedAlbumId((current: string) => current && localAlbums.some((album) => album.id === current)
+      ? current
+      : visibleAlbums[0]?.id || localAlbums[0]?.id || "");
   }, [view, selectedAlbumId, localAlbums, visibleAlbums]);
 
   const selectedAlbumIds = albumTrackIds(selectedAlbum);

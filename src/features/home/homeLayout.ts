@@ -1,14 +1,22 @@
 export const homeSections = [
   { id: "jumpBack", label: "Jump back in" },
   { id: "listenNow", label: "Listen now" },
+  { id: "dailyMixes", label: "Daily mixes" },
+  { id: "recentlyPlayed", label: "Recently played" },
   { id: "mostListened", label: "Most listened" },
-  { id: "newReleases", label: "New releases" }
+  { id: "newAlbums", label: "New albums" },
+  { id: "newReleases", label: "New releases" },
+  { id: "likedSongs", label: "Liked songs" },
+  { id: "rediscover", label: "Rediscover" },
+  { id: "notPlayedYet", label: "Not played yet" }
 ] as const;
 
 export type HomeSectionId = (typeof homeSections)[number]["id"];
 export type HomeLayoutPatch = { homeSectionOrder?: HomeSectionId[]; homeHiddenSections?: HomeSectionId[] };
 
 const defaultOrder: HomeSectionId[] = homeSections.map((section) => section.id);
+/** Extra shelves that start hidden so a fresh Home stays short. Customize Home can show them. */
+export const defaultHiddenHomeSections: HomeSectionId[] = ["likedSongs", "rediscover", "notPlayedYet"];
 
 function knownSectionIds(value: unknown): HomeSectionId[] {
   if (!Array.isArray(value)) return [];
@@ -50,5 +58,7 @@ export function toggleHomeSectionHidden(hidden: unknown, id: HomeSectionId): Hom
 }
 
 export function isHomeLayoutCustomized(order: unknown, hidden: unknown) {
-  return normalizeHomeHidden(hidden).length > 0 || resolveHomeSectionOrder(order).some((id, index) => id !== defaultOrder[index]);
+  const current = normalizeHomeHidden(hidden);
+  const hiddenChanged = current.length !== defaultHiddenHomeSections.length || current.some((id) => !defaultHiddenHomeSections.includes(id));
+  return hiddenChanged || resolveHomeSectionOrder(order).some((id, index) => id !== defaultOrder[index]);
 }

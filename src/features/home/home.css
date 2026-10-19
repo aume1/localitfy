@@ -307,7 +307,8 @@
   width: 100%;
 }
 
-.homeSection > h3 {
+.homeSection > h3,
+.homeSectionHead > h3 {
   margin: 0 0 14px;
   color: var(--lt-text);
   font-size: clamp(18px, 1.15vw, 23px);
@@ -437,6 +438,16 @@
 .homeReleaseCopy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .homeReleaseCopy strong { color:var(--lt-muted); font-size:clamp(8px,.6vw,10px); font-weight:680; }
 .homeReleaseCopy small { color:var(--lt-muted); font-size:clamp(7px,.52vw,9px); font-weight:600; }
+
+.homeSectionHead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.homeSectionHead > h3 { margin:0; }
+.homeSectionAction { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border:1px solid rgba(var(--lt-accent-rgb),.14); border-radius:999px; color:var(--lt-muted); background:transparent; font:inherit; font-size:9px; font-weight:650; cursor:pointer; white-space:nowrap; }
+.homeSectionAction:hover { color:var(--lt-text); border-color:rgba(var(--lt-accent-rgb),.32); background:rgba(var(--lt-accent-rgb),.07); }
+.homeSectionAction:focus-visible { outline:2px solid rgba(var(--lt-accent-rgb),.66); outline-offset:2px; }
+/* Daily mix covers: up to four song covers in a 2x2 grid. */
+.homeMixCollage { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+.homeMixCollage .homeReleaseCover:only-of-type { grid-area:1 / 1 / 3 / 3; }
+.homeShelfNotice { display:flex; align-items:center; gap:12px; flex-wrap:wrap; color:var(--lt-muted); font-size:9px; }
 
 .homeEmptyState { min-height:150px; display:flex; align-items:center; justify-content:center; gap:14px; color:var(--lt-muted); }
 .homeEmptyMascot { width:72px; height:72px; flex:0 0 auto; }

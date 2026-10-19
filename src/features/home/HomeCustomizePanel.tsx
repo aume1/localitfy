@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Images, RotateCcw } from "lucide-react";
 import {
-  canMoveHomeSection, homeSections, isHomeLayoutCustomized, moveHomeSection, normalizeHomeHidden,
+  canMoveHomeSection, defaultHiddenHomeSections, homeSections, isHomeLayoutCustomized, moveHomeSection, normalizeHomeHidden,
   resolveHomeSectionOrder, toggleHomeSectionHidden, type HomeLayoutPatch
 } from "./homeLayout";
 
@@ -44,7 +44,7 @@ export default function HomeCustomizePanel({ sectionOrder, hiddenSections, updat
           className="homeCustomizeReset"
           type="button"
           disabled={!isHomeLayoutCustomized(sectionOrder, hiddenSections)}
-          onClick={() => updateHomeLayout({ homeSectionOrder: [], homeHiddenSections: [] })}
+          onClick={() => updateHomeLayout({ homeSectionOrder: [], homeHiddenSections: [...defaultHiddenHomeSections] })}
           title="Restore the default layout"
         >
           <RotateCcw size={11} strokeWidth={2.4} aria-hidden="true" />

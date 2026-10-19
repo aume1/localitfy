@@ -8416,6 +8416,7 @@ function MainModeApp() {
       openSidebarSettings
     },
     home: {
+      albums: albumsController.localAlbums,
       ambientStyle,
       currentId,
       currentNowPlayingLabel,
@@ -8430,10 +8431,15 @@ function MainModeApp() {
       isThreeAm,
       nowPlayingSongMotionClass,
       nowPlayingTransitionKey,
+      openAlbum: pageFocus.openAlbumPage,
+      openAnalysisSettings: () => { setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); },
       openCoversViewWithCurrentSong,
+      openDailyMixes: () => changeView("playlists"),
       playableSongCount: playableSongs.length,
       playerError,
+      playSongs: playAlbumSongs,
       selectSong,
+      songs,
       settings,
       shuffleLibrarySongsAction,
       toggleHeroExpanded,

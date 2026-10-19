@@ -1,15 +1,19 @@
 import "./home.css";
-import { Fragment, useCallback, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Maximize2, Minimize2, Play, Shuffle, SlidersHorizontal } from "lucide-react";
 import { Cover } from "../covers/Cover";
 import { MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
 import { prettyMeta, prettyTitle } from "../search/search.utils";
 import type { Song } from "../library/song.types";
+import type { LocalAlbumEntry } from "../albums/album.types";
 import type { Settings } from "../settings/settings.types";
 import HomeCustomizePanel from "./HomeCustomizePanel";
 import { visibleHomeSections, type HomeLayoutPatch, type HomeSectionId } from "./homeLayout";
+import { HomeAlbumRail, HomeDailyMixRail, HomeSongRail } from "./HomeShelves";
+import { pickLikedSongs, pickNewAlbums, pickNotPlayedYet, pickRecentlyPlayed, pickRediscover } from "./homeShelfPicks";
 
 export type HomeViewProps = {
+  albums: readonly LocalAlbumEntry[];
   ambientStyle: CSSProperties;
   currentId: string | null;
   currentNowPlayingLabel: string;
@@ -24,10 +28,15 @@ export type HomeViewProps = {
   isThreeAm: boolean;
   nowPlayingSongMotionClass: string;
   nowPlayingTransitionKey: string;
+  openAlbum: (albumId: string) => unknown;
+  openAnalysisSettings: () => unknown;
   openCoversViewWithCurrentSong: () => unknown;
+  openDailyMixes: () => unknown;
   playableSongCount: number;
   playerError: string | null;
+  playSongs: (songIds: string[], label: string) => unknown;
   selectSong: (songId: string, shouldPlay?: boolean) => unknown;
+  songs: readonly Song[];
   settings: Pick<Settings, "heroExpanded" | "volume" | "homeSectionOrder" | "homeHiddenSections">;
   shuffleLibrarySongsAction: () => unknown;
   toggleHeroExpanded: () => unknown;
@@ -36,6 +45,7 @@ export type HomeViewProps = {
 
 export default function HomeView(props: HomeViewProps) {
   const {
+    albums,
     ambientStyle,
     currentId,
     currentNowPlayingLabel,
@@ -50,10 +60,15 @@ export default function HomeView(props: HomeViewProps) {
     isThreeAm,
     nowPlayingSongMotionClass,
     nowPlayingTransitionKey,
+    openAlbum,
+    openAnalysisSettings,
     openCoversViewWithCurrentSong,
+    openDailyMixes,
     playableSongCount,
     playerError,
+    playSongs,
     selectSong,
+    songs,
     settings,
     shuffleLibrarySongsAction,
     toggleHeroExpanded,
@@ -74,6 +89,18 @@ export default function HomeView(props: HomeViewProps) {
       return true;
     })
     .slice(0, 10);
+
+  const visibleSections = visibleHomeSections(settings.homeSectionOrder, settings.homeHiddenSections);
+  const showing = (id: HomeSectionId) => visibleSections.includes(id);
+  // Only work out the shelves that are on screen; a hidden shelf costs nothing.
+  const showRecent = showing("recentlyPlayed"), showAlbums = showing("newAlbums"), showLiked = showing("likedSongs");
+  const showRediscover = showing("rediscover"), showUnplayed = showing("notPlayedYet"), showMixes = showing("dailyMixes");
+  const recentlyPlayedSongs = useMemo(() => (showRecent ? pickRecentlyPlayed(songs) : []), [showRecent, songs]);
+  const newAlbums = useMemo(() => (showAlbums ? pickNewAlbums(albums) : []), [showAlbums, albums]);
+  const likedSongs = useMemo(() => (showLiked ? pickLikedSongs(songs) : []), [showLiked, songs]);
+  const rediscoverSongs = useMemo(() => (showRediscover ? pickRediscover(songs, new Date()) : []), [showRediscover, songs]);
+  const notPlayedSongs = useMemo(() => (showUnplayed ? pickNotPlayedYet(songs, new Date()) : []), [showUnplayed, songs]);
+  const songsById = useMemo(() => (showMixes ? new Map(songs.map((song) => [song.id, song])) : new Map<string, Song>()), [showMixes, songs]);
 
   const homeStyle = {
     ...ambientStyle,
@@ -178,33 +205,14 @@ export default function HomeView(props: HomeViewProps) {
         </div>
       </section>
     ) : null,
-    newReleases: newReleaseSongs.length ? (
-      <section className="homeSection homeReleasesSection" aria-labelledby="home-releases-title">
-        <h3 id="home-releases-title">New Releases</h3>
-        <div className="homeReleaseRail">
-          {newReleaseSongs.map((song) => (
-            <button
-              key={song.id}
-              className={`homeReleaseCard ${song.id === currentId ? "active" : ""}`}
-              type="button"
-              onClick={() => void selectSong(song.id, true)}
-              title={`play ${song.title}`}
-            >
-              <span className="homeReleaseCoverWrap">
-                <Cover song={song} className="homeReleaseCover" />
-                <span className="homeReleasePlay" aria-hidden="true"><Play size={15} fill="currentColor" /></span>
-              </span>
-              <span className="homeReleaseCopy">
-                <strong>{prettyTitle(song.title, 5)}</strong>
-                <small>{prettyMeta(song.artist)}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
-    ) : null
+    dailyMixes: <HomeDailyMixRail songsById={songsById} playSongs={playSongs} openDailyMixes={openDailyMixes} openAnalysisSettings={openAnalysisSettings} />,
+    recentlyPlayed: <HomeSongRail id="recently-played" title="Recently played" songs={recentlyPlayedSongs} currentId={currentId} selectSong={selectSong} playSongs={playSongs} emptyText="Songs you play will show up here." />,
+    newAlbums: <HomeAlbumRail albums={newAlbums} openAlbum={openAlbum} />,
+    newReleases: <HomeSongRail id="releases" title="New Releases" songs={newReleaseSongs} currentId={currentId} selectSong={selectSong} />,
+    likedSongs: <HomeSongRail id="liked" title="Liked songs" songs={likedSongs} currentId={currentId} selectSong={selectSong} playSongs={playSongs} emptyText="Tap the heart on a song to keep it here." />,
+    rediscover: <HomeSongRail id="rediscover" title="Rediscover" songs={rediscoverSongs} currentId={currentId} selectSong={selectSong} playSongs={playSongs} emptyText="Songs you played a lot but not in the last month will come back here." />,
+    notPlayedYet: <HomeSongRail id="not-played" title="Not played yet" songs={notPlayedSongs} currentId={currentId} selectSong={selectSong} playSongs={playSongs} emptyText="You have played every song in your library." />
   };
-  const visibleSections = visibleHomeSections(settings.homeSectionOrder, settings.homeHiddenSections);
 
   return (
     <div className="homePage" style={homeStyle}>
