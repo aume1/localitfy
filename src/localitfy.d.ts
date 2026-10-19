@@ -246,6 +246,11 @@ declare global {
     error?: string;
   };
 
+  type LocalitfyAppMenuCommand = {
+    type: "navigate" | "settings" | "import-music" | "import-album-folder" | "new-playlist" | "select-all" | "find" | "feedback" | "check-updates";
+    view?: string;
+  };
+
   type LocalitfyPlayerCommand = {
     type:
       | "toggle"
@@ -637,6 +642,7 @@ declare global {
       onAlbumFolderImportProgress?: (callback: (payload: LocalitfyAlbumFolderProgressPayload) => void) => () => void;
       onDownloadProgress: (callback: (payload: LocalitfyDownloadProgressPayload) => void) => () => void;
       onPlayerCommand: (callback: (payload: LocalitfyPlayerCommand) => void) => () => void;
+      onAppMenuCommand: (callback: (payload: LocalitfyAppMenuCommand) => void) => () => void;
     };
   }
 }

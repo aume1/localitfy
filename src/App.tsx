@@ -63,6 +63,7 @@ import { useDiagnosticsInfo } from "./features/shell/useDiagnosticsInfo";
 import { useFeedbackController } from "./features/feedback";
 import { usePlaylistsController } from "./features/playlists";
 import { useAlbumsController } from "./features/albums/useAlbumsController";
+import { useAppMenuCommands } from "./features/shell/useAppMenuCommands";
 import { updateStatusLabel, useUpdatesController } from "./features/updates";
 import { useSettingsController } from "./features/settings";
 import { Cover } from "./features/covers/Cover";
@@ -8297,6 +8298,15 @@ function MainModeApp() {
     setLibraryScanMessage,
     setStatusText,
     patchSongLocal
+  });
+
+  useAppMenuCommands({
+    changeView,
+    openSettings: () => openSettingsPanel(),
+    importSongs,
+    importAlbumFolder: () => albumsController.scanAlbumFolderImport("single"),
+    openFeedback: openFeedbackPrompt,
+    checkForUpdates: () => { openSettingsPanel("updates"); return manualUpdateCheck(); }
   });
 
   const selectedAlbum = albumsController.selectedAlbum;
