@@ -60,7 +60,7 @@ function createAppMenuRuntime({ Menu, shell, appName = "localtify", isDev = fals
           { role: "paste" },
           { role: "pasteAndMatchStyle" },
           { role: "delete" },
-          { role: "selectAll" },
+          { label: "Select All", accelerator: "Command+A", click: command("select-all") },
           { type: "separator" },
           { label: "Find", accelerator: "Command+F", click: command("find") }
         ]

@@ -25,6 +25,13 @@ function focusWhenReady(selector: string, attempts = 12) {
   if (attempts > 0) window.setTimeout(() => focusWhenReady(selector, attempts - 1), 50);
 }
 
+/** Selects all text in the focused field. Outside text fields it does nothing, so the page UI never gets highlighted. */
+function selectAllInTextField() {
+  const active = document.activeElement;
+  if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) active.select();
+  else if (active instanceof HTMLElement && active.isContentEditable) document.execCommand("selectAll");
+}
+
 /** Handles commands from the native macOS menu bar (electron/runtime/app-menu.cjs). */
 export function useAppMenuCommands(actions: AppMenuActions) {
   const actionsRef = useRef(actions);
@@ -49,6 +56,9 @@ export function useAppMenuCommands(actions: AppMenuActions) {
       case "new-playlist":
         current.changeView("playlists");
         focusWhenReady(".playlistCreateForm input");
+        break;
+      case "select-all":
+        selectAllInTextField();
         break;
       case "find":
         if (!document.querySelector(SEARCH_SELECTOR)) current.changeView("library");
