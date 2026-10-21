@@ -32,6 +32,7 @@ import "./effects.css";
 import "../../styles/view-shell.css";
 
 const SimilarSongsDialog = lazy(() => import("../analysis/SimilarSongsDialog"));
+const LyricsView = lazy(() => import("../lyrics/LyricsView"));
 const LibraryView = lazy(() => import("../library/LibraryView"));
 const ArtistsView = lazy(() => import("../artists/ArtistsView"));
 const GenresView = lazy(() => import("../genres/GenresView"));
@@ -365,6 +366,7 @@ export default function AppShell(props: AppShellProps) {
 
 <PlayerBar {...playerBar} />
           <QueuePanel {...modals.queuePanel} />
+          {modals.lyrics.open ? <Suspense fallback={null}><LyricsView {...modals.lyrics} anchorRef={contentRef} /></Suspense> : null}
         </div>
       )}
 

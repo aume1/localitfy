@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import type { CSSProperties, Dispatch, DragEventHandler, MouseEvent as ReactMouseEvent, MutableRefObject, PointerEventHandler, SetStateAction } from "react";
-import { ListMusic, Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { ListMusic, MicVocal, Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
 import "../player.css";
 import { Cover } from "../../covers/Cover";
 import { PlayerPlayPauseMorphIcon } from "../PlayerPlayPauseMorphIcon";
@@ -48,6 +48,9 @@ export type PlayerBarProps = {
   queueDropHot: boolean;
   queueCount: number;
   queuePanelOpen: boolean;
+  /** Undefined when lyrics are turned off in settings. */
+  lyricsOpen?: boolean;
+  toggleLyrics: () => unknown;
   repeatButtonAriaLabel: string;
   repeatButtonStateText: string;
   repeatButtonTitle: string;
@@ -104,6 +107,8 @@ export default function PlayerBar(props: PlayerBarProps) {
     queueCount,
     queueDropHot,
     queuePanelOpen,
+    lyricsOpen,
+    toggleLyrics,
     repeatButtonAriaLabel,
     repeatButtonStateText,
     repeatButtonTitle,
@@ -259,6 +264,18 @@ export default function PlayerBar(props: PlayerBarProps) {
 
             <div className="playerRight">
               <div className="playerRightTools">
+                {lyricsOpen !== undefined ? (
+                  <button
+                    type="button"
+                    className={`playerQueueButton playerLyricsButton ${lyricsOpen ? "active" : ""}`}
+                    onClick={toggleLyrics}
+                    aria-label={lyricsOpen ? "hide lyrics" : "show lyrics"}
+                    aria-pressed={lyricsOpen}
+                    title="lyrics"
+                  >
+                    <MicVocal className="playerControlIcon" size={17} strokeWidth={2.2} aria-hidden="true" />
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={`playerQueueButton ${queuePanelOpen ? "active" : ""}`}

@@ -44,10 +44,11 @@ test("window normalization is owned outside main", () => {
 });
 
 test("database repositories preserve the existing database API", () => {
-  const names = ["getSongAnalysis", "saveSongAnalysis", "clearSongAnalysis", "clearListeningHistory", "recordPlayEvent", "getSongs", "insertSongs", "patchSong", "deleteSong", "clearLibrary", "getSettings", "saveSettings", "getPlaylists", "savePlaylists", "initDatabase", "backupDatabase", "repairDatabaseNow", "getDatabaseStatus"];
+  const names = ["getSongAnalysis", "saveSongAnalysis", "clearSongAnalysis", "clearListeningHistory", "recordPlayEvent", "getSongs", "getSong", "insertSongs", "patchSong", "deleteSong", "clearLibrary", "getSettings", "saveSettings", "getPlaylists", "savePlaylists", "initDatabase", "backupDatabase", "repairDatabaseNow", "getDatabaseStatus"];
   const fake = Object.fromEntries(names.map((name) => [name, () => name]));
   const repositories = createDatabaseRepositories(fake);
   assert.equal(repositories.songs.list(), "getSongs");
+  assert.equal(repositories.songs.get(), "getSong");
   assert.equal(repositories.settings.save(), "saveSettings");
   assert.equal(repositories.database.backup(), "backupDatabase");
   assert.match(mainSource, /db\/repositories\.cjs/);
