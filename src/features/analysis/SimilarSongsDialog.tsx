@@ -5,10 +5,12 @@ import type { Song } from "../library/song.types";
 import { prettyMeta, prettyTitle } from "../search";
 import { formatTime } from "../../shared/utils/format";
 import type { SimilarSongsResult } from "./analysis.types";
+import type { SimilarSeed } from "./similarSeed";
+import PlaylistCoverCollage from "../playlists/components/PlaylistCoverCollage";
 import "./similar-songs.css";
 
 export type SimilarSongsDialogProps = {
-  seed: Song | null;
+  seed: SimilarSeed | null;
   songsById: Map<string, Song>;
   currentId: string;
   returnFocusTo?: HTMLElement | null;
@@ -24,7 +26,13 @@ const seedMessages: Record<Exclude<SimilarSongsResult["status"], "ready">, strin
   "seed-unavailable": "This song is no longer in your library.",
   "seed-missing": "This song’s audio file is missing. Restore the file before finding similar songs.",
   "seed-unanalyzed": "Analyze this song first, along with a few other tracks, to find audio matches.",
-  "seed-stale": "This song changed or its audio profile is outdated. Analyze it again to find matches."
+  "seed-stale": "This song changed or its audio profile is outdated. Analyze it again to find matches.",
+  "no-history": "Play a few songs through to the end, then try again."
+};
+const groupMessages: Partial<typeof seedMessages> = {
+  "seed-unavailable": "These songs are no longer in your library.",
+  "seed-missing": "None of these songs’ audio files could be found.",
+  "seed-unanalyzed": "None of these songs have a current audio profile yet. Analyze your library, then try again."
 };
 
 export default function SimilarSongsDialog({ seed, songsById, currentId, returnFocusTo, onClose, openAnalysisSettings,
@@ -35,7 +43,8 @@ export default function SimilarSongsDialog({ seed, songsById, currentId, returnF
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
-  const seedId = seed?.id;
+  const seedId = seed?.key;
+  const query = seed?.query;
 
   useLayoutEffect(() => {
     if (!seedId) return;
@@ -61,7 +70,8 @@ export default function SimilarSongsDialog({ seed, songsById, currentId, returnF
     setLoading(true);
     setError("");
     setResult(null);
-    void window.localitfy.findSimilarSongs({ songId: seedId, limit: 30 }).then((next) => {
+    if (!query) return;
+    void window.localitfy.findSimilarSongs({ ...query, limit: 30 }).then((next) => {
       if (!cancelled && next.seedId === seedId) setResult(next);
     }).catch(() => {
       if (!cancelled) setError("Could not load similar songs. Please retry. If this keeps happening, rerun library analysis.");
@@ -71,10 +81,12 @@ export default function SimilarSongsDialog({ seed, songsById, currentId, returnF
 
   const matches = useMemo(() => (result?.status === "ready" ? result.matches : []).flatMap((match) => {
     const song = songsById.get(match.songId);
-    return song && song.id !== seedId && song.fileExists !== false ? [song] : [];
+    return song && song.id !== seedId && song.fileExists !== false ? [{ song, together: match.playedTogether === true }] : [];
   }), [result, songsById, seedId]);
   if (!seed) return null;
-  const ids = matches.map((song) => song.id);
+  const ids = matches.map(({ song }) => song.id);
+  const messages = seed.kind === "group" ? { ...seedMessages, ...groupMessages } : seedMessages;
+  const label = seed.kind === "group" ? seed.title.toLowerCase() : "similar songs";
 
   return <dialog ref={dialogRef} className="similarSongsDialog" aria-labelledby="similar-songs-title" aria-modal="true"
     onKeyDown={(event) => {
@@ -89,23 +101,26 @@ export default function SimilarSongsDialog({ seed, songsById, currentId, returnF
     onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="similarSongsContent">
       <header className="similarSongsHeader">
-        <Cover song={seed} className="similarSongsSeedCover" />
-        <div className="similarSongsHeading"><p className="similarSongsEyebrow">From your library</p><h2 id="similar-songs-title">Similar songs</h2><p className="similarSongsSeedTitle">{prettyTitle(seed.title)} · {prettyMeta(seed.artist)}</p></div>
+        {seed.kind === "song" ? <Cover song={seed.song} className="similarSongsSeedCover" />
+          : <PlaylistCoverCollage songs={seed.songs} className="playlistCoverCollage similarSongsSeedCover" />}
+        <div className="similarSongsHeading"><p className="similarSongsEyebrow">From your library</p>
+          <h2 id="similar-songs-title">{seed.kind === "song" ? "Similar songs" : seed.title}</h2>
+          <p className="similarSongsSeedTitle">{seed.kind === "song" ? `${prettyTitle(seed.song.title)} · ${prettyMeta(seed.song.artist)}` : seed.label}</p></div>
         <button ref={closeRef} type="button" className="similarSongsClose" onClick={onClose} aria-label="Close similar songs"><X size={20} /></button>
       </header>
-      <p className="similarSongsIntro">Closest matches by sound, using saved audio analysis. All comparisons stay on your device.</p>
+      <p className="similarSongsIntro">{seed.kind === "song" ? "Closest matches by sound, using saved audio analysis." : "Songs that sound like these but aren’t among them, using saved audio analysis."} Songs you often play back to back rank higher. All comparisons stay on your device.</p>
       {loading ? <p className="similarSongsNotice" role="status">Comparing analyzed tracks…</p> : null}
       {error ? <div className="similarSongsNotice" role="alert"><p>{error}</p><button type="button" className="similarSongsAction" onClick={() => setAttempt((value) => value + 1)}><RefreshCw size={15} />Retry</button></div> : null}
-      {result && result.status !== "ready" ? <p className="similarSongsNotice" role="status">{seedMessages[result.status]}</p> : null}
+      {result && result.status !== "ready" ? <p className="similarSongsNotice" role="status">{messages[result.status]}</p> : null}
       {result?.status === "ready" && !matches.length ? <p className="similarSongsNotice" role="status">No playable audio matches yet. Analyze more tracks, then try again.</p> : null}
       {result?.status === "ready" && matches.length > 0 ? <>
-        <div className="similarSongsToolbar"><span>{matches.length} matches · {result.compared} tracks compared</span><div>
-          <button type="button" className="similarSongsAction similarSongsPrimary" title="Play these matches as a new queue" onClick={() => playSongs(ids, "similar songs")}><Play size={15} />Play matches</button>
-          <button type="button" className="similarSongsAction" onClick={() => queueSongs(ids, "similar songs")}><Plus size={15} />Queue matches</button>
+        <div className="similarSongsToolbar"><span>{matches.length} matches · {seed.kind === "group" && result.seedCount ? `based on ${result.seedCount} song${result.seedCount === 1 ? "" : "s"} · ` : ""}{result.compared} tracks compared</span><div>
+          <button type="button" className="similarSongsAction similarSongsPrimary" title="Play these matches as a new queue" onClick={() => playSongs(ids, label)}><Play size={15} />Play matches</button>
+          <button type="button" className="similarSongsAction" onClick={() => queueSongs(ids, label)}><Plus size={15} />Queue matches</button>
         </div></div>
-        <ol className="similarSongsList">{matches.map((song) => <li key={song.id} className="similarSongsRow" data-current={currentId === song.id}>
+        <ol className="similarSongsList">{matches.map(({ song, together }) => <li key={song.id} className="similarSongsRow" data-current={currentId === song.id}>
           <Cover song={song} className="similarSongsRowCover" />
-          <div className="similarSongsTrack"><strong title={song.title}>{prettyTitle(song.title)}</strong><span>{prettyMeta(song.artist)} · {prettyMeta(song.album)}</span></div>
+          <div className="similarSongsTrack"><strong title={song.title}>{prettyTitle(song.title)}</strong><span>{prettyMeta(song.artist)} · {prettyMeta(song.album)}</span>{together ? <small className="similarSongsTogether">Often played together</small> : null}</div>
           <span className="similarSongsDuration">{formatTime(song.duration)}</span>
           <button type="button" className="similarSongsIconButton" aria-label={`Play ${song.title}`} onClick={() => void selectSong(song.id, true)}><Play size={17} /></button>
           <button type="button" className="similarSongsIconButton" aria-label={`Queue ${song.title}`} onClick={() => queueSong(song.id)}><Plus size={17} /></button>

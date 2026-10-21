@@ -203,13 +203,14 @@ import type { Settings, SettingsCategory, CustomThemeColorKey, CustomThemePreset
 import type { CoverColorSyncMode, SecretMode, SecretTriggerMode, ThemeId } from "./features/settings/theme.types";
 import type { DiscordArtMode } from "./features/discord/discord.types";
 import type { Playlist, PlaylistSummary } from "./features/playlists/playlist.types";
+import { resolveSimilarSeed, type SimilarSeedRequest } from "./features/analysis/similarSeed";
 import type { View } from "./features/shell/view.types";
 
 const SettingsCategoryContent = lazy(() => import("./features/settings/SettingsCategoryContent"));
 
 
 function MainModeApp() {
-  const [similarSongId, setSimilarSongId] = useState("");
+  const [similarRequest, setSimilarRequest] = useState<SimilarSeedRequest | null>(null);
   const songContextAnchorRef = useRef<HTMLElement | null>(null);
 
   const {
@@ -1747,6 +1748,7 @@ function MainModeApp() {
   const songsById = libraryIndex.songsById;
   const songIndexById = libraryIndex.songIndexById;
   const playableSongs = useMemo(() => songs.filter(isPlayableSong), [songs]);
+  const similarSeed = useMemo(() => resolveSimilarSeed(similarRequest, songsById, songs, playlists), [similarRequest, songsById, songs, playlists]);
   const activePlaylist = useMemo(
     () => playlists.find((playlist) => playlist.id === activePlaylistId) ?? null,
     [activePlaylistId, playlists]
@@ -8435,6 +8437,7 @@ function MainModeApp() {
       openAnalysisSettings: () => { setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); },
       openCoversViewWithCurrentSong,
       openDailyMixes: () => changeView("playlists"),
+      openSimilarSongs: setSimilarRequest,
       playableSongCount: playableSongs.length,
       playerError,
       playSongs: playAlbumSongs,
@@ -8469,6 +8472,7 @@ function MainModeApp() {
       settings,
       showingMissingFiles: view === "library" && libraryFilterMode === "missing",
       shuffleLibrarySongsAction,
+      openSimilarSongs: setSimilarRequest,
       songs,
       view,
       visibleSongs
@@ -8532,6 +8536,7 @@ function MainModeApp() {
       newPlaylistName,
       openPlaylistSongContextMenuAction,
       playPlaylist,
+      openSimilarSongs: setSimilarRequest,
       playlistDragOverPlaylistId,
       playlistSummaries,
       removePlaylist,
@@ -8718,12 +8723,12 @@ function MainModeApp() {
         askRemoveSong,
         goToArtist: pageFocus.openArtistPage,
         goToAlbum: goToSongAlbum,
-        openSimilarSongs: (song: Song) => setSimilarSongId(song.id)
+        openSimilarSongs: (song: Song) => setSimilarRequest({ kind: "song", songId: song.id })
       },
       similarSongs: {
-        seed: songsById.get(similarSongId) || null, songsById, currentId, returnFocusTo: songContextAnchorRef.current,
-        onClose: () => setSimilarSongId(""),
-        openAnalysisSettings: () => { setSimilarSongId(""); setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); },
+        seed: similarSeed, songsById, currentId, returnFocusTo: similarRequest?.kind === "song" ? songContextAnchorRef.current : null,
+        onClose: () => setSimilarRequest(null),
+        openAnalysisSettings: () => { setSimilarRequest(null); setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); },
         selectSong, queueSong, playSongs: playAlbumSongs, queueSongs: queueAlbumSongs
       },
       queuePanel: {

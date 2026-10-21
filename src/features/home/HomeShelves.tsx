@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Play } from "lucide-react";
+import { Play, Radio } from "lucide-react";
 import { Cover } from "../covers/Cover";
 import { prettyMeta, prettyTitle } from "../search/search.utils";
 import type { Song } from "../library/song.types";
@@ -28,10 +28,12 @@ type SongRailProps = {
   /** Shown when the rail is empty. Without it an empty rail is left out entirely. */
   emptyText?: string;
   className?: string;
+  /** Optional "Find similar" action shown beside "Play all". */
+  findSimilar?: () => unknown;
 };
 
 /** A row of song covers. Clicking a cover plays that song; "Play all" plays the row in order. */
-export function HomeSongRail({ id, title, songs, currentId, selectSong, playSongs, emptyText, className = "" }: SongRailProps) {
+export function HomeSongRail({ id, title, songs, currentId, selectSong, playSongs, emptyText, className = "", findSimilar }: SongRailProps) {
   const headingId = `home-${id}-title`;
   if (!songs.length) {
     return emptyText ? (
@@ -46,11 +48,21 @@ export function HomeSongRail({ id, title, songs, currentId, selectSong, playSong
       <HomeSectionHead
         id={headingId}
         title={title}
-        action={playSongs && songs.length > 1 ? (
-          <button className="homeSectionAction" type="button" onClick={() => void playSongs(songs.map((song) => song.id), title.toLowerCase())}>
-            <Play size={10} fill="currentColor" aria-hidden="true" />
-            Play all
-          </button>
+        action={(findSimilar || (playSongs && songs.length > 1)) ? (
+          <span className="homeSectionActions">
+            {findSimilar ? (
+              <button className="homeSectionAction" type="button" onClick={() => void findSimilar()} title="Find songs that sound like these">
+                <Radio size={10} aria-hidden="true" />
+                Find similar
+              </button>
+            ) : null}
+            {playSongs && songs.length > 1 ? (
+              <button className="homeSectionAction" type="button" onClick={() => void playSongs(songs.map((song) => song.id), title.toLowerCase())}>
+                <Play size={10} fill="currentColor" aria-hidden="true" />
+                Play all
+              </button>
+            ) : null}
+          </span>
         ) : null}
       />
       <div className="homeReleaseRail">

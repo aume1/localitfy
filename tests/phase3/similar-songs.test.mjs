@@ -9,6 +9,11 @@ const { createSimilarityService } = require("../../electron/analysis/similarity-
 
 test("similarity requests and invalid vectors are bounded before searching", () => {
   assert.deepEqual(validateSimilarityRequest({ songId: "seed" }), { songId: "seed", limit: 30 });
+  assert.deepEqual(validateSimilarityRequest({ songIds: ["a", "b", "a"], seedKey: "liked", limit: 10 }), { songIds: ["a", "b"], seedKey: "liked", limit: 10 });
+  assert.deepEqual(validateSimilarityRequest({ recent: true }), { recent: true, seedKey: "recent", limit: 30 });
+  for (const payload of [{ songIds: [], seedKey: "k" }, { songIds: ["a"] }, { songIds: Array(2001).fill("a"), seedKey: "k" }, { songIds: [1], seedKey: "k" }]) {
+    assert.throws(() => validateSimilarityRequest(payload));
+  }
   for (const payload of [null, {}, { songId: "" }, { songId: "x".repeat(201) }, { songId: "seed", limit: 500 },
     { songId: "seed", limit: 0 }, { songId: "seed", limit: "30" }]) assert.throws(() => validateSimilarityRequest(payload));
   assert.equal(readNormalizedVector(Buffer.alloc(2048)), null);

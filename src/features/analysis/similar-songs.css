@@ -36,6 +36,7 @@
 .similarSongsTrack strong, .similarSongsTrack span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .similarSongsTrack strong { font-size: 14px; }
 .similarSongsTrack span { margin-top: 4px; font-size: 12px; opacity: .65; }
+.similarSongsTogether { display: inline-block; margin-top: 4px; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 650; color: var(--lt-accent); background: rgba(var(--lt-accent-rgb), .14); }
 .similarSongsDuration { font-size: 12px; opacity: .6; }
 .similarSongsFooter { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(163, 193, 198, .15); }
 .similarSongsFooter > span { font-size: 12px; opacity: .65; }

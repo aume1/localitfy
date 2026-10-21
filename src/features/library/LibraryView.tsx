@@ -1,6 +1,7 @@
 import "./library.css";
 import type { DragEventHandler, ReactNode } from "react";
-import { FileWarning, FolderInput, ListMusic, Shuffle, Trash2 } from "lucide-react";
+import { FileWarning, FolderInput, ListMusic, Radio, Shuffle, Trash2 } from "lucide-react";
+import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
 import { ArcDropdownMenu } from "../../shared/ui/ArcDropdownMenu";
 import { LocaltifyStateCard, MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
@@ -11,6 +12,7 @@ import type { Settings } from "../settings/settings.types";
 import type { View } from "../shell/view.types";
 
 export type LibraryViewProps = {
+  openSimilarSongs: (request: SimilarSeedRequest) => unknown;
   changeView: (view: View, source?: string) => unknown;
   deleteBusy: boolean;
   handleLibraryAreaDragLeave: DragEventHandler<HTMLDivElement>;
@@ -96,7 +98,12 @@ export default function LibraryView(props: LibraryViewProps) {
             <button className="libraryAction" type="button" onClick={shuffleLibrarySongsAction} disabled={songs.length < 2}>
               <ActionLabel icon={Shuffle}>shuffle</ActionLabel>
             </button>
-          ) : null}
+          ) : (
+            <button className="libraryAction" type="button" onClick={() => props.openSimilarSongs({ kind: "liked" })}
+              disabled={!songs.some((song) => song.liked)} title="Find songs in your library that sound like your liked songs">
+              <ActionLabel icon={Radio}>more like these</ActionLabel>
+            </button>
+          )}
         </div>
       </header>
 

@@ -10,6 +10,7 @@ import type { Settings } from "../settings/settings.types";
 const HomeCustomizePanel = lazy(() => import("./HomeCustomizePanel"));
 import { visibleHomeSections, type HomeLayoutPatch, type HomeSectionId } from "./homeLayout";
 import { HomeAlbumRail, HomeDailyMixRail, HomeSongRail } from "./HomeShelves";
+import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import { pickLikedSongs, pickNewAlbums, pickNotPlayedYet, pickRecentlyPlayed, pickRediscover } from "./homeShelfPicks";
 
 export type HomeViewProps = {
@@ -32,6 +33,7 @@ export type HomeViewProps = {
   openAnalysisSettings: () => unknown;
   openCoversViewWithCurrentSong: () => unknown;
   openDailyMixes: () => unknown;
+  openSimilarSongs: (request: SimilarSeedRequest) => unknown;
   playableSongCount: number;
   playerError: string | null;
   playSongs: (songIds: string[], label: string) => unknown;
@@ -213,7 +215,7 @@ export default function HomeView(props: HomeViewProps) {
       </section>
     ) : null,
     dailyMixes: <HomeDailyMixRail songsById={songsById} playSongs={playSongs} openDailyMixes={openDailyMixes} openAnalysisSettings={openAnalysisSettings} />,
-    recentlyPlayed: <HomeSongRail id="recently-played" title="Recently played" songs={recentlyPlayedSongs} currentId={currentId} selectSong={selectSong} playSongs={playSongs} emptyText="Songs you play will show up here." />,
+    recentlyPlayed: <HomeSongRail id="recently-played" title="Recently played" songs={recentlyPlayedSongs} currentId={currentId} selectSong={selectSong} playSongs={playSongs} emptyText="Songs you play will show up here." findSimilar={() => props.openSimilarSongs({ kind: "recent" })} />,
     newAlbums: <HomeAlbumRail albums={newAlbums} openAlbum={openAlbum} />,
     newReleases: <HomeSongRail id="releases" title="New Releases" songs={newReleaseSongs} currentId={currentId} selectSong={selectSong} />,
     likedSongs: <HomeSongRail id="liked" title="Liked songs" songs={likedSongs} currentId={currentId} selectSong={selectSong} playSongs={playSongs} emptyText="Tap the heart on a song to keep it here." />,

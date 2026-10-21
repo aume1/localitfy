@@ -20,9 +20,11 @@ export type AnalysisStatus = {
 
 export type SimilarSongsResult = {
   seedId: string;
-  status: "ready" | "seed-unavailable" | "seed-missing" | "seed-unanalyzed" | "seed-stale";
-  matches: Array<{ songId: string; score: number }>;
+  status: "ready" | "seed-unavailable" | "seed-missing" | "seed-unanalyzed" | "seed-stale" | "no-history";
+  matches: Array<{ songId: string; score: number; playedTogether?: boolean }>;
   compared: number;
+  /** Seed songs with usable audio profiles (more than one for playlists, liked songs and recent listening). */
+  seedCount: number;
 };
 
 export type DailyMix = { id: string; name: string; songIds: string[] };
