@@ -8389,10 +8389,7 @@ function MainModeApp() {
       secretToast,
       starParticleStyles,
       appToast,
-      importAnimation,
-      libraryScanBusy,
-      pixelArtBusy,
-      libraryScanMessage
+      importAnimation
     },
     onboarding: {
       open: onboardingOpen,
