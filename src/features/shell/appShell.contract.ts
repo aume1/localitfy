@@ -11,6 +11,7 @@ import type { SettingsViewProps } from "../settings/SettingsView";
 import type { DownloadsViewProps } from "../downloads/DownloadsView";
 import type { PlayerBarProps } from "../player/components/PlayerBar";
 import type { QueuePanelProps } from "../player/components/QueuePanel";
+import type { LyricsViewProps } from "../lyrics/LyricsView";
 import type { PlaybackAudioElementProps } from "../player/components/PlaybackAudioElement";
 import type { OnboardingProps } from "../../Onboarding";
 import type { SongContextMenuProps } from "../library/components/SongContextMenu";
@@ -66,7 +67,7 @@ export type ShellNavigationContract = {
 };
 
 export type ShellModalContract = {
-  songContextMenu: SongContextMenuProps; similarSongs: SimilarSongsDialogProps; queuePanel: QueuePanelProps; whatsNew: WhatsNewModalProps;
+  songContextMenu: SongContextMenuProps; similarSongs: SimilarSongsDialogProps; queuePanel: QueuePanelProps; lyrics: Omit<LyricsViewProps, "anchorRef">; whatsNew: WhatsNewModalProps;
   songEditor: SongEditorModalProps; playlistPicker: PlaylistPickerModalProps; deleteSong: DeleteSongModalProps;
 };
 

@@ -2584,6 +2584,7 @@ app.whenReady().then(async () => {
   });
   ipcRouter.handle("download:open-folder", async (_event, folder) => { await shell.openPath(getDownloadDirectory(folder)); return true; });
   registerAnalysisIpc(ipcRouter, { app, powerMonitor, repositories: databaseRepositories, ffmpegPath: ffmpegStatic?.replace("app.asar", "app.asar.unpacked") });
+  require("./ipc/lyrics.cjs").registerLyricsIpc(ipcRouter, app, databaseRepositories);
   ipcRouter.handle("listening:record", (_event, payload) => databaseRepositories.listening.record(payload));
   ipcRouter.handle("song:patch", async (_event, id, patch) => { const updated = patchSong(id, patch); return updated ? shapeSong(updated) : null; });
   ipcRouter.handle("song:random-cover", async (_event, id) => {

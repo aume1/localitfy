@@ -8,6 +8,8 @@ export type Settings = {
   experimentalMusicAnalysis: boolean;
   analysisOnBattery: boolean;
   listeningHistoryEnabled: boolean;
+  lyricsEnabled: boolean;
+  lyricsOnlineLookup: boolean;
   theme: ThemeId;
   themePanelCollapsed: boolean;
   customThemeEnabled: boolean;

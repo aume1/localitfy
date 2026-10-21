@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { ToggleRow } from "../settings.shared";
 import type { AnalysisStatus } from "../../analysis/analysis.types";
+import type { Settings } from "../settings.types";
 
 const megabytes = (bytes: number) => `${(bytes / 1_000_000).toFixed(1)} MB`;
 
-export default function ExperimentalSettings() {
+type ExperimentalSettingsProps = { settings: Settings; updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => unknown };
+
+export default function ExperimentalSettings({ settings, updateSetting }: ExperimentalSettingsProps) {
   const [status, setStatus] = useState<AnalysisStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [clearTarget, setClearTarget] = useState<"history" | "analysis" | null>(null);
+  const [lyricsCacheCleared, setLyricsCacheCleared] = useState(false);
   const mounted = useRef(true);
   const requestVersion = useRef(0);
 
@@ -87,6 +91,17 @@ export default function ExperimentalSettings() {
       <div className="settingsPanelHeader"><div><strong>Local listening history</strong><span>Listening time and playback outcomes can help future recommendations. Stored only in your local library database.</span></div></div>
       <fieldset disabled={busy} className="experimentalControls"><ToggleRow label="Save listening history" help="Turning this off stops new history writes. Existing history stays until cleared." checked={status.historyEnabled} onChange={(value) => void run(() => window.localitfy.setListeningHistoryEnabled(value))} /></fieldset>
       <div className="settingsActionRow settingsActionRowCleanV491"><button type="button" className="settingsActionButton" disabled={busy} onClick={() => setClearTarget("history")}>Clear listening history</button></div>
+    </div>
+    <div className="settingsPanelCard settingsFocusPanelV491">
+      <div className="settingsPanelHeader"><div><strong>Lyrics</strong><span>Shows time-synced lyrics for the playing song. Open them with the microphone button in the player. A matching .lrc file next to a song is always used first.</span></div></div>
+      <fieldset className="experimentalControls">
+        <ToggleRow label="Show lyrics" help="Off by default. Adds the lyrics button to the player." checked={settings.lyricsEnabled === true} onChange={(value) => void updateSetting("lyricsEnabled", value)} />
+        <ToggleRow label="Look up lyrics online" help="Sends the song title, artist, album and length to LRCLIB (lrclib.net), a free community lyrics database. Results are cached on this device." checked={settings.lyricsOnlineLookup !== false} onChange={(value) => void updateSetting("lyricsOnlineLookup", value)} />
+      </fieldset>
+      <div className="settingsActionRow settingsActionRowCleanV491">
+        <button type="button" className="settingsActionButton" onClick={() => void window.localitfy.openExternal("https://lrclib.net")}>About LRCLIB</button>
+        <button type="button" className="settingsActionButton" disabled={lyricsCacheCleared} onClick={() => void window.localitfy.clearLyricsCache().then(() => { if (mounted.current) setLyricsCacheCleared(true); })}>{lyricsCacheCleared ? "Lyrics cache cleared" : "Clear lyrics cache"}</button>
+      </div>
     </div>
     {clearTarget ? <div className="settingsPanelCard" role="group" aria-label="Confirm clearing data"><p>Clear {clearTarget === "history" ? "listening history" : "saved analysis"}? Your music, playlists and existing play counts are kept. Database backups may retain earlier data.</p><div className="settingsActionRow"><button type="button" className="settingsActionButton" disabled={busy} onClick={() => { const target = clearTarget; setClearTarget(null); void run(() => target === "history" ? window.localitfy.clearListeningHistory() : window.localitfy.clearAnalysis(), target === "history" ? "History cleared. Recording resumes with the next playback session." : "Saved analysis cleared."); }}>Clear data</button><button type="button" className="settingsActionButton" onClick={() => setClearTarget(null)}>Keep data</button></div></div> : null}
     {message ? <p role="status">{message}</p> : null}

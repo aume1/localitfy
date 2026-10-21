@@ -38,6 +38,8 @@ contextBridge.exposeInMainWorld("localitfy", {
   setListeningHistoryEnabled: (enabled) => ipcRenderer.invoke("listening:set-enabled", enabled),
   clearListeningHistory: () => ipcRenderer.invoke("listening:clear"),
   recordPlayEvent: (payload) => ipcRenderer.invoke("listening:record", payload),
+  getLyrics: (payload) => ipcRenderer.invoke("lyrics:get", payload),
+  clearLyricsCache: () => ipcRenderer.invoke("lyrics:clear-cache"),
   patchSong: (id, patch) => ipcRenderer.invoke("song:patch", id, patch),
   deleteSong: (id) => ipcRenderer.invoke("song:delete", id),
   randomizeSongCover: (id) => ipcRenderer.invoke("song:random-cover", id),

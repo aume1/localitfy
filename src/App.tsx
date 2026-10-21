@@ -407,6 +407,7 @@ function MainModeApp() {
   const [playbackSource, setPlaybackSource] = useState<PlaybackSource | null>(null);
   const pageFocus = usePageFocusRequests(changeView);
   const [queuePanelOpen, setQueuePanelOpen] = useState(false);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
   const arcadeGhostUnlocked = false;
 
   const isThreeAm = now.getHours() === 3;
@@ -520,6 +521,7 @@ function MainModeApp() {
   }
 
   function changeView(nextView: View, source: "nav" | "onboarding" | "settings" | "unknown" = "nav") {
+    setLyricsOpen(false);
     if (view === nextView) return;
 
     if (viewSwitchTimerRef.current !== null) {
@@ -6102,6 +6104,8 @@ function MainModeApp() {
   }
 
   const closeQueuePanel = useCallback(() => setQueuePanelOpen(false), []);
+  const closeLyrics = useCallback(() => setLyricsOpen(false), []);
+  const getLyricsTime = useCallback(() => audioRef.current?.currentTime ?? timeRef.current, []);
 
   function goToSongAlbum(song: Song) {
     pageFocus.goToSongAlbum(song.id, albumIdBySongId, () => setStatusText("no album found for this song"));
@@ -8694,6 +8698,8 @@ function MainModeApp() {
       queueCount: playQueue.length,
       queueDropHot,
       queuePanelOpen,
+      lyricsOpen: settings.lyricsEnabled ? lyricsOpen : undefined,
+      toggleLyrics: () => setLyricsOpen((open) => !open),
       repeatButtonAriaLabel,
       repeatButtonStateText,
       repeatButtonTitle,
@@ -8750,6 +8756,15 @@ function MainModeApp() {
         playQueueItem,
         selectSong,
         openSongContextMenu
+      },
+      lyrics: {
+        open: lyricsOpen && settings.lyricsEnabled,
+        onClose: closeLyrics,
+        song: visualCurrentSong,
+        isPlaying,
+        getTime: getLyricsTime,
+        seekTo: (seconds: number) => handleSeek((seconds / (durationRef.current || currentDuration || currentSong?.duration || 1)) * 100),
+        openSettings: () => { setLyricsOpen(false); setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); }
       },
       whatsNew: {
         open: Boolean(whatsNewOpen),

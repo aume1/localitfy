@@ -8,6 +8,7 @@ function createDatabaseRepositories(databaseModule) {
   return Object.freeze({
     songs: Object.freeze({
       list: requireFunction(databaseModule, "getSongs"),
+      get: requireFunction(databaseModule, "getSong"),
       insertMany: requireFunction(databaseModule, "insertSongs"),
       patch: requireFunction(databaseModule, "patchSong"),
       remove: requireFunction(databaseModule, "deleteSong"),

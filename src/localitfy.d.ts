@@ -553,6 +553,8 @@ declare global {
       setListeningHistoryEnabled: (enabled: boolean) => Promise<AnalysisStatus>;
       clearListeningHistory: () => Promise<AnalysisStatus>;
       recordPlayEvent: (payload: PlayEvent) => Promise<boolean>;
+      getLyrics: (payload: { id: string; refresh?: boolean }) => Promise<import("./features/lyrics/lyrics.types").LyricsResult>;
+      clearLyricsCache: () => Promise<boolean>;
       patchSong: (id: string, patch: Partial<Song>) => Promise<Song | null>;
       deleteSong: (id: string) => Promise<Song[]>;
 
