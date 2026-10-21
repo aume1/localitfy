@@ -37,6 +37,7 @@ export type Settings = {
   denseList: boolean;
   reducedMotion: boolean;
   catBuddyEnabled: boolean;
+  idleScreensaverEnabled: boolean;
   showHeroBadge: boolean;
   simpleMode: boolean;
   lastSongId: string;

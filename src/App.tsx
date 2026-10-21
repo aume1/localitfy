@@ -370,7 +370,8 @@ function MainModeApp() {
     currentSongId: currentId,
     isPlaying,
     animeVisuals: settings.animeVisuals,
-    animatedBackgrounds: settings.animatedBackgrounds
+    animatedBackgrounds: settings.animatedBackgrounds,
+    idleEnabled: settings.idleScreensaverEnabled !== false
   });
 
   const {
@@ -4787,7 +4788,8 @@ function MainModeApp() {
       animatedGlow: defaultSettings.animatedGlow,
       softCorners: defaultSettings.softCorners,
       reducedMotion: defaultSettings.reducedMotion,
-      catBuddyEnabled: defaultSettings.catBuddyEnabled
+      catBuddyEnabled: defaultSettings.catBuddyEnabled,
+      idleScreensaverEnabled: defaultSettings.idleScreensaverEnabled
     });
     setStatusText("appearance reset");
     showAppToast("Appearance reset", "success");
