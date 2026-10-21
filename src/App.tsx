@@ -22,6 +22,7 @@ import { createPlayerController } from "./features/player/engine/playerControlle
 import { useNativeMediaSession } from "./features/player/useNativeMediaSession";
 import type { ListeningOutcome } from "./features/player/listeningHistory";
 import { usePlayerRuntime } from "./features/player";
+import { useSongRadio } from "./features/player/useSongRadio";
 import { devPerfStart, devPerfEnd, measureDevTime } from "./shared/perf/devPerf";
 import type { PlayerEngineSource } from "./features/player/engine/PlayerEngine";
 import {
@@ -8306,6 +8307,13 @@ function MainModeApp() {
   const albumIdBySongId = useMemo(() => buildAlbumIdBySongId(albumsController.localAlbums), [albumsController.localAlbums]);
   const nowPlayingContext = resolveNowPlayingContext(currentSong, activePlaylist, playbackSource, albumsController.localAlbums, albumIdBySongId);
   const queuePanelAutoNextSong = queuePanelOpen && !playQueue.length && !isShuffle ? getNextPlayableSongForCache() : null;
+  // Repeat and shuffle already decide what plays forever, so radio only fills in when playback would run out.
+  const songRadioEnabled = settings.songRadio && settings.experimentalMusicAnalysis && repeatMode === "off" && !repeatPlaylist && !isShuffle;
+  const radioSongIds = useSongRadio({
+    enabled: songRadioEnabled, isPlaying, currentSongId: currentSong?.id || "", queue: playQueue, setQueue: setPlayQueue, songsById,
+    continues: songRadioEnabled && !playQueue.length ? Boolean(getAutoTransitionTarget()) : true,
+    onRefill: (count) => setStatusText(`radio: queued ${count} similar song${count === 1 ? "" : "s"}`)
+  });
 
   const downloadPageState = getDownloadPageState({
     downloadBusy,
@@ -8737,6 +8745,7 @@ function MainModeApp() {
         setQueue: setPlayQueue,
         songsById,
         autoNextSong: queuePanelAutoNextSong,
+        radioSongIds,
         repeatMode,
         repeatPreview: queuePanelOpen
           ? getRepeatPreview({ repeatMode, currentSong, activePlaylist, activePlaylistSongs, isShuffle, source: playbackSource, songsById })

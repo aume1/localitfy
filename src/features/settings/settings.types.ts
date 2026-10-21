@@ -72,6 +72,8 @@ export type Settings = {
   crossfadeEnabled: boolean;
   crossfadeSeconds: number;
   gaplessPlayback: boolean;
+  /** When the queue runs out, keep playing songs that sound similar (needs music analysis). */
+  songRadio: boolean;
   volumeNormalization: boolean;
   perSongVolumeMemory: boolean;
   sleepTimerMinutes: number;

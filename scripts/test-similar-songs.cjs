@@ -22,10 +22,10 @@ if (!process.argv.includes("--fixture")) {
   db.initDatabase(databasePath);
   const inspect = new Database(databasePath);
   const service = createSimilarityService({ getDatabasePath: () => databasePath });
-  function add(id, values, { analyzed = true, error } = {}) {
+  function add(id, values, { analyzed = true, error, genre = "" } = {}) {
     const filePath = path.join(root, `${id}.wav`);
     fs.writeFileSync(filePath, Buffer.alloc(64));
-    db.insertSongs([{ id, filePath, title: id, artist: "test", album: "fixture" }]);
+    db.insertSongs([{ id, filePath, title: id, artist: "test", album: "fixture", genre }]);
     if (analyzed) {
       const stat = fs.statSync(filePath);
       const vector = new Float32Array(512);
@@ -35,10 +35,13 @@ if (!process.argv.includes("--fixture")) {
     return filePath;
   }
   const seedFile = add("seed", [1, 0]);
+  // Unrelated background tracks, as in a real library, so the library mean is a small offset rather than the seed direction.
+  for (let i = 0; i < 12; i++) { const values = new Array(20 + i).fill(0); values[20 + i - 1] = 1; add(`background-${i}`, values); }
   add("exact-b", [2, 0]);
   add("exact-a", [3, 0]);
   add("near", [0.9, 0.1]);
   add("far", [0.2, 0.98]);
+  add("orthogonal-near", [0.1, 0.99]);
   add("opposed", [-1, 0]);
   add("orthogonal", [0, 1]);
   add("zero", [0, 0]);
@@ -66,10 +69,11 @@ if (!process.argv.includes("--fixture")) {
     try {
       const result = await service.find({ songId: "seed" });
       assert.equal(result.status, "ready");
-      assert.deepEqual(result.matches.map((item) => item.songId), ["exact-a", "exact-b", "near", "far"]);
-      assert.ok(Math.abs(result.matches[0].score - 1) < 1e-8);
+      // Ranked after removing the library mean: "far" (raw cosine 0.2) and anything orthogonal drop out.
+      assert.deepEqual(result.matches.map((item) => item.songId), ["exact-a", "exact-b", "near"]);
+      assert.ok(Math.abs(result.matches[0].score - .8) < 1e-8, "identical sound, unknown genre");
       assert.ok(result.matches.every((item) => item.score > 0 && item.score <= 1));
-      assert.equal(result.compared, 6);
+      assert.equal(result.compared, 19);
       assert.equal((await service.find({ songId: "seed", limit: 2 })).matches.length, 2);
       assert.equal((await service.find({ songId: "unanalyzed" })).status, "seed-unanalyzed");
       assert.equal((await service.find({ songId: "failed" })).status, "seed-unanalyzed");
@@ -82,7 +86,7 @@ if (!process.argv.includes("--fixture")) {
       const group = await service.find({ songIds: ["seed", "orthogonal", "does-not-exist"], seedKey: "playlist:p1" });
       assert.equal(group.seedId, "playlist:p1"); assert.equal(group.status, "ready"); assert.equal(group.seedCount, 2);
       assert.ok(group.matches.every((item) => !["seed", "orthogonal"].includes(item.songId)));
-      assert.equal(group.matches[0].songId, "far", "a candidate close to both seeds' styles ranks first");
+      assert.ok(["near", "orthogonal-near"].every((id) => group.matches.some((item) => item.songId === id)), "a group matches each of its styles");
       assert.equal((await service.find({ songIds: ["unanalyzed", "failed"], seedKey: "k" })).status, "seed-unanalyzed");
       assert.equal((await service.find({ songIds: ["nope"], seedKey: "k" })).status, "seed-unavailable");
       assert.equal((await service.find({ recent: true })).status, "no-history");
@@ -99,18 +103,27 @@ if (!process.argv.includes("--fixture")) {
         play.run(`e${n++}`, session, first, start, start + 180_000, start + 180_000, 180_000, "ended");
         play.run(`e${n++}`, session, second, start + 181_000, start + 181_000 + secondMs, start + 181_000 + secondMs, secondMs, secondOutcome);
       };
-      pair("s1", now - 3 * day, "seed", "far"); pair("s2", now - day, "far", "seed");
-      pair("s1", now - 3 * day + 600_000, "seed", "near");
+      pair("s1", now - 3 * day, "seed", "near"); pair("s2", now - day, "near", "seed");
+      pair("s1", now - 3 * day + 600_000, "seed", "exact-a");
       pair("s3", now - 3 * day, "seed", "exact-b", "replaced", 4_000); pair("s4", now - day, "seed", "exact-b", "replaced", 4_000);
       const boosted = await service.find({ songId: "seed" });
-      const far = boosted.matches.find((item) => item.songId === "far");
-      const before = result.matches.find((item) => item.songId === "far");
-      assert.equal(far.playedTogether, true); assert.ok(far.score > before.score && far.score - before.score <= .06 + 1e-9);
-      assert.equal(boosted.matches.find((item) => item.songId === "near").playedTogether, undefined, "one day is not a pattern");
+      const near = boosted.matches.find((item) => item.songId === "near");
+      const before = result.matches.find((item) => item.songId === "near");
+      assert.equal(near.playedTogether, true); assert.ok(near.score > before.score && near.score - before.score <= .06 + 1e-9);
+      assert.equal(boosted.matches.find((item) => item.songId === "exact-a").playedTogether, undefined, "one day is not a pattern");
       assert.equal(boosted.matches.find((item) => item.songId === "exact-b").playedTogether, undefined, "skipped followers do not count");
       const recent = await service.find({ recent: true });
       assert.equal(recent.status, "ready"); assert.ok(recent.seedCount >= 3);
-      assert.ok(recent.matches.every((item) => !["seed", "far", "near"].includes(item.songId)));
+      assert.ok(recent.matches.every((item) => !["seed", "near", "exact-a"].includes(item.songId)));
+      // Genre tags break ties between similar sounds; songs that are nearly always skipped rank lower.
+      add("tagged-seed", [0, 0, 1], { genre: "Hip Hop; pop rap" });
+      add("same-genre", [0, 0, 1], { genre: "hip-hop" });
+      add("other-genre", [0, 0, 1], { genre: "Alternative Rock" });
+      add("untagged-twin", [0, 0, 1]);
+      add("skipped-twin", [0, 0, 1], { genre: "hip hop" });
+      for (let i = 0; i < 6; i++) play.run(`skip${i}`, "s5", "skipped-twin", now - i * 3_600_000, now - i * 3_600_000 + 4_000, now - i * 3_600_000 + 4_000, 4_000, "replaced");
+      const tagged = (await service.find({ songId: "tagged-seed" })).matches.map((item) => item.songId);
+      assert.deepEqual(tagged.slice(0, 4), ["same-genre", "untagged-twin", "skipped-twin", "other-genre"], tagged.join(", "));
       // A file changed while candidates were checked must invalidate the seed result too.
       let seedChecks = 0;
       const staleDuringRead = await findSimilarSongs(inspect, { songId: "seed" }, { statFile: async (file) => {

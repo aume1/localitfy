@@ -14,7 +14,8 @@ if (!process.argv.includes("--fixture")) {
   const root = process.argv.at(-1); const databasePath = path.join(root, "library.sqlite");
   const db = require("../electron/db.cjs");
   const Database = require("better-sqlite3");
-  const { getDailyMixes, listeningStats } = require("../electron/analysis/daily-mixes.cjs");
+  const { getDailyMixes } = require("../electron/analysis/daily-mixes.cjs");
+  const { listeningStats } = require("../electron/analysis/listening-signals.cjs");
   const { createSimilarityService } = require("../electron/analysis/similarity-service.cjs");
   db.initDatabase(databasePath); const inspect = new Database(databasePath);
   let service = createSimilarityService({ getDatabasePath: () => databasePath });

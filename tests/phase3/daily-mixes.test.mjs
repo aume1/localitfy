@@ -5,7 +5,8 @@ import ts from "typescript";
 import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
 const require = createRequire(import.meta.url);
-const { generateMixes, validateDailyMixRequest, localDay, genreTags } = require("../../electron/analysis/daily-mixes.cjs");
+const { generateMixes, validateDailyMixRequest, localDay } = require("../../electron/analysis/daily-mixes.cjs");
+const { genreTags } = require("../../electron/analysis/listening-signals.cjs");
 function tracks(groups, size) {
   return Array.from({ length: groups * size }, (_, index) => {
     const vector = new Float64Array(512); vector[Math.floor(index / size)] = 1;

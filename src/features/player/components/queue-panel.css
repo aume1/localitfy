@@ -257,3 +257,4 @@
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
+.queuePanelRadioTag { color: var(--lt-accent); font-weight: 650; }
