@@ -464,6 +464,7 @@
 
 .homeSection > h3 { margin-bottom: 14px; }
 .homeSectionHead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.homeSectionActions { display:inline-flex; align-items:center; gap:6px; }
 .homeSectionAction { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border:1px solid rgba(var(--lt-accent-rgb),.14); border-radius:999px; color:var(--lt-muted); background:transparent; font:inherit; font-size:9px; font-weight:650; cursor:pointer; white-space:nowrap; }
 .homeSectionAction:hover { color:var(--lt-text); border-color:rgba(var(--lt-accent-rgb),.32); background:rgba(var(--lt-accent-rgb),.07); }
 .homeSectionAction:focus-visible { outline:2px solid rgba(var(--lt-accent-rgb),.66); outline-offset:2px; }

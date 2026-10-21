@@ -78,6 +78,39 @@ if (!process.argv.includes("--fixture")) {
       for (const songId of ["changed", "retimed", "old-model", "old-analyzer", "repointed", "malformed", "nonfinite", "zero"]) {
         assert.equal((await service.find({ songId })).status, "seed-stale", songId);
       }
+      // Groups (playlists, liked songs) exclude their own members and score by each candidate's closest seeds.
+      const group = await service.find({ songIds: ["seed", "orthogonal", "does-not-exist"], seedKey: "playlist:p1" });
+      assert.equal(group.seedId, "playlist:p1"); assert.equal(group.status, "ready"); assert.equal(group.seedCount, 2);
+      assert.ok(group.matches.every((item) => !["seed", "orthogonal"].includes(item.songId)));
+      assert.equal(group.matches[0].songId, "far", "a candidate close to both seeds' styles ranks first");
+      assert.equal((await service.find({ songIds: ["unanalyzed", "failed"], seedKey: "k" })).status, "seed-unanalyzed");
+      assert.equal((await service.find({ songIds: ["nope"], seedKey: "k" })).status, "seed-unavailable");
+      assert.equal((await service.find({ recent: true })).status, "no-history");
+      for (const payload of [{ songIds: [], seedKey: "k" }, { songIds: ["a"] }, { songIds: "a", seedKey: "k" }, { songIds: [""], seedKey: "k" }]) {
+        await assert.rejects(async () => service.find(payload));
+      }
+
+      // Back-to-back plays: only pairs heard on two or more days, where the follower was actually listened to.
+      const day = 86_400_000; const now = Date.now();
+      const play = inspect.prepare(`INSERT INTO play_events (id, sessionId, songId, startedAt, updatedAt, endedAt, msListened, outcome)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+      let n = 0;
+      const pair = (session, start, first, second, secondOutcome = "ended", secondMs = 180_000) => {
+        play.run(`e${n++}`, session, first, start, start + 180_000, start + 180_000, 180_000, "ended");
+        play.run(`e${n++}`, session, second, start + 181_000, start + 181_000 + secondMs, start + 181_000 + secondMs, secondMs, secondOutcome);
+      };
+      pair("s1", now - 3 * day, "seed", "far"); pair("s2", now - day, "far", "seed");
+      pair("s1", now - 3 * day + 600_000, "seed", "near");
+      pair("s3", now - 3 * day, "seed", "exact-b", "replaced", 4_000); pair("s4", now - day, "seed", "exact-b", "replaced", 4_000);
+      const boosted = await service.find({ songId: "seed" });
+      const far = boosted.matches.find((item) => item.songId === "far");
+      const before = result.matches.find((item) => item.songId === "far");
+      assert.equal(far.playedTogether, true); assert.ok(far.score > before.score && far.score - before.score <= .06 + 1e-9);
+      assert.equal(boosted.matches.find((item) => item.songId === "near").playedTogether, undefined, "one day is not a pattern");
+      assert.equal(boosted.matches.find((item) => item.songId === "exact-b").playedTogether, undefined, "skipped followers do not count");
+      const recent = await service.find({ recent: true });
+      assert.equal(recent.status, "ready"); assert.ok(recent.seedCount >= 3);
+      assert.ok(recent.matches.every((item) => !["seed", "far", "near"].includes(item.songId)));
       // A file changed while candidates were checked must invalidate the seed result too.
       let seedChecks = 0;
       const staleDuringRead = await findSimilarSongs(inspect, { songId: "seed" }, { statFile: async (file) => {
@@ -86,7 +119,7 @@ if (!process.argv.includes("--fixture")) {
       } });
       assert.equal(staleDuringRead.status, "seed-stale");
       assert.equal(staleDuringRead.matches.length, 0);
-      console.log("[similar-songs] real SQLite + worker: cosine ranking, limits, identity/version checks, missing/malformed/changed files and seed states passed");
+      console.log("[similar-songs] real SQLite + worker: cosine ranking, limits, identity/version checks, missing/malformed/changed files and seed states, groups, recent listening and back-to-back plays passed");
     } finally {
       service.dispose();
       inspect.close();

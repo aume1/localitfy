@@ -371,7 +371,7 @@ export default function AppShell(props: AppShellProps) {
       )}
 
       <SongContextMenu {...modals.songContextMenu} />
-      {modals.similarSongs.seed ? <Suspense fallback={null}><SimilarSongsDialog key={modals.similarSongs.seed.id} {...modals.similarSongs} /></Suspense> : null}
+      {modals.similarSongs.seed ? <Suspense fallback={null}><SimilarSongsDialog key={modals.similarSongs.seed.key} {...modals.similarSongs} /></Suspense> : null}
 
       <WhatsNewModal {...modals.whatsNew} />
 

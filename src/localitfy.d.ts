@@ -1,4 +1,5 @@
 import type { AnalysisStatus, SimilarSongsResult } from "./features/analysis/analysis.types";
+import type { SimilarSongsQuery } from "./features/analysis/similarSeed";
 import type { PlayEvent } from "./features/player/listeningHistory";
 import type { Song } from "./features/library/song.types";
 import type { Settings } from "./features/settings/settings.types";
@@ -541,7 +542,7 @@ declare global {
       setSongCover?: (id: string, coverPath: string) => Promise<Song | null>;
 
       getDailyMixes: (payload?: { refresh?: boolean }) => Promise<import("./features/analysis/analysis.types").DailyMixesResult>;
-      findSimilarSongs: (payload: { songId: string; limit?: number }) => Promise<SimilarSongsResult>;
+      findSimilarSongs: (payload: SimilarSongsQuery & { limit?: number }) => Promise<SimilarSongsResult>;
       getAnalysisStatus: () => Promise<AnalysisStatus>;
       setAnalysisOnBattery: (allowed: boolean) => Promise<AnalysisStatus>;
       setAnalysisEnabled: (enabled: boolean) => Promise<AnalysisStatus>;

@@ -1,7 +1,8 @@
 import "./playlists.css";
 import DailyMixesShelf, { type DailyMixesShelfProps } from "../analysis/DailyMixesShelf";
 import type { CSSProperties } from "react";
-import { Check, Copy, Pencil, Play, Plus, Shuffle, Trash2, X } from "lucide-react";
+import { Check, Copy, Pencil, Play, Plus, Radio, Shuffle, Trash2, X } from "lucide-react";
+import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { LocaltifyStateCard, MetaDividerDot } from "../../shared/ui/LocaltifyViewUi";
@@ -28,6 +29,7 @@ export type PlaylistsViewProps = {
   newPlaylistName: any;
   openPlaylistSongContextMenuAction: any;
   playPlaylist: any;
+  openSimilarSongs: (request: SimilarSeedRequest) => unknown;
   playlistDragOverPlaylistId: any;
   playlistSummaries: any;
   removePlaylist: any;
@@ -138,6 +140,15 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
               disabled={selectedPlaylist.songIds.length === 0}
             >
               <ActionLabel icon={Shuffle}>shuffle</ActionLabel>
+            </button>
+            <button
+              className="softButton"
+              type="button"
+              onClick={() => props.openSimilarSongs({ kind: "playlist", playlistId: selectedPlaylist.id })}
+              disabled={selectedPlaylistSongs.length === 0}
+              title="Find songs in your library that sound like this playlist"
+            >
+              <ActionLabel icon={Radio}>more like this</ActionLabel>
             </button>
           </div>
         </section>
