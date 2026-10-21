@@ -6,6 +6,7 @@
   PlayerEngineState,
   PlayerEngineUnsubscribe
 } from "./PlayerEngine";
+import { clampFinite as clamp } from "../../../shared/utils/format";
 
 const MEDIA_EVENTS: readonly PlayerEngineEvent[] = [
   "loadstart",
@@ -19,11 +20,6 @@ const MEDIA_EVENTS: readonly PlayerEngineEvent[] = [
   "ratechange",
   "error"
 ];
-
-function clamp(value: number, min: number, max: number) {
-  if (!Number.isFinite(value)) return min;
-  return Math.min(max, Math.max(min, value));
-}
 
 export class HtmlAudioEngine implements PlayerEngine {
   readonly element: HTMLAudioElement;
