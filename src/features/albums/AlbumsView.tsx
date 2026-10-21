@@ -8,7 +8,7 @@ import { ArcDropdownMenu } from "../../shared/ui/ArcDropdownMenu";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { Cover } from "../covers/Cover";
 import { CheckMiniIcon, EmptyCoverIcon, LocaltifyStateCard, PlusMiniIcon } from "../../shared/ui/LocaltifyViewUi";
-import { LikeHeartAnimationV443 } from "../library/components/SongRows";
+import { LikeHeartAnimationV443 } from "../../shared/ui/LikeHeartAnimation";
 import { formatTime, toCssUrl } from "../../shared/utils/format";
 import { getSongAmbientSource } from "../covers/cover.ambient";
 import { prettyMeta, prettyTitle } from "../search/search.utils";
