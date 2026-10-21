@@ -42,6 +42,6 @@ test("radio picks unplayed, playable matches and seeds from the last distinct so
 test("radio is wired into the queue and stays out of repeat and shuffle", () => {
   assert.match(app, /settings\.songRadio && settings\.experimentalMusicAnalysis && repeatMode === "off" && !repeatPlaylist && !isShuffle/);
   assert.match(app, /useSongRadio\(\{[\s\S]*setQueue: setPlayQueue/);
-  assert.match(app, /radioSongIds,\n\s+repeatMode,/);
+  assert.match(app, /radioSongIds,\s+repeatMode,/);
   assert.match(source, /Never replace something the user queued/);
 });
