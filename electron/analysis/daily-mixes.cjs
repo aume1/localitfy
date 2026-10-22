@@ -2,13 +2,9 @@ const fs = require("node:fs");
 const { createHash } = require("node:crypto");
 const { MODEL, ANALYZER_VERSION } = require("./model.cjs");
 const { readNormalizedVector } = require("./similarity.cjs");
+const { AUDIO_WEIGHT, GENRE_WEIGHT, dot, normalize, genreTags, genreTokens, libraryMean, centered, listeningStats } = require("./listening-signals.cjs");
 const GENERATOR_VERSION = 2;
 const MIX_LENGTH = 25;
-const AUDIO_WEIGHT = .6;
-const GENRE_WEIGHT = .4;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const HISTORY_DAYS = 90;
-const HISTORY_HALF_LIFE_DAYS = 21;
 function validateDailyMixRequest(payload = {}) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)
     || (payload.refresh !== undefined && typeof payload.refresh !== "boolean")) throw new TypeError("Invalid mix request");
@@ -17,49 +13,19 @@ function validateDailyMixRequest(payload = {}) {
 function localDay(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
-function dot(a, b) { let sum = 0; for (let i = 0; i < a.length; i++) sum += a[i] * b[i]; return sum; }
 function noise(seed, id) { return createHash("sha256").update(`${seed}:${id}`).digest().readUInt32LE(0) / 0xffffffff; }
 function artist(track) { return String(track.artist || "").trim().toLowerCase(); }
-
-function genreKey(text) { return String(text).toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim(); }
-// "dance-pop; electronic" -> tags {dance pop, electronic}; words of multi-word tags link related genres.
-function genreTags(value) {
-  const tags = new Map();
-  for (const part of String(value || "").split(/[;,/|]/)) {
-    const key = genreKey(part);
-    if (key && key.length <= 60 && !tags.has(key)) tags.set(key, part.trim());
-  }
-  return tags;
-}
-function genreTokens(tags) {
-  const tokens = new Map();
-  for (const key of tags.keys()) {
-    tokens.set(key, 1);
-    const words = key.split(" ");
-    if (words.length > 1) for (const word of words) if (word.length > 1 && !tokens.has(word)) tokens.set(word, .5);
-  }
-  return tokens;
-}
-function normalize(vector) {
-  const norm = Math.sqrt(dot(vector, vector));
-  if (norm > 1e-9) for (let i = 0; i < vector.length; i++) vector[i] /= norm;
-  else vector.fill(0);
-  return vector;
-}
 
 // Audio profiles share a narrow cone, so center them on the library mean before clustering,
 // then append genre tags. A feature dot product is AUDIO_WEIGHT * audio cosine + GENRE_WEIGHT * genre cosine.
 function buildFeatures(tracks) {
   const dimensions = tracks[0].vector.length;
-  const mean = new Float64Array(dimensions);
-  for (const track of tracks) for (let i = 0; i < dimensions; i++) mean[i] += track.vector[i] / tracks.length;
+  const mean = libraryMean(tracks.map((track) => track.vector));
   const tokens = tracks.map((track) => genreTokens(track.tags));
   const vocabulary = new Map([...new Set(tokens.flatMap((map) => [...map.keys()]))].sort().map((token, index) => [token, index]));
   const audioScale = Math.sqrt(AUDIO_WEIGHT); const genreScale = Math.sqrt(GENRE_WEIGHT);
   return tracks.map((track, index) => {
-    const audio = new Float64Array(dimensions);
-    for (let i = 0; i < dimensions; i++) audio[i] = track.vector[i] - mean[i];
-    normalize(audio);
+    const audio = centered(track.vector, mean);
     const genre = new Float64Array(vocabulary.size);
     for (const [token, weight] of tokens[index]) genre[vocabulary.get(token)] = weight;
     normalize(genre);
@@ -233,24 +199,6 @@ function generateMixes(input, seed, { recent = new Map() } = {}) {
   });
 }
 
-// Decayed per-song listening outcomes. Finished or crossfaded plays count for a song; leaving early counts against it.
-function listeningStats(database, now) {
-  const since = now.getTime() - HISTORY_DAYS * DAY_MS; const stats = new Map();
-  const rows = database.prepare(`SELECT e.songId, e.startedAt, e.msListened, e.outcome, s.durationMs, s.duration
-    FROM play_events e JOIN songs s ON s.id = e.songId WHERE e.startedAt >= ? AND e.outcome <> 'active'`).iterate(since);
-  for (const row of rows) {
-    const duration = Number(row.durationMs) || (Number(row.duration) || 0) * 1000;
-    const weight = Math.pow(.5, Math.max(0, now.getTime() - row.startedAt) / (HISTORY_HALF_LIFE_DAYS * DAY_MS));
-    const finished = row.outcome === "ended" || row.outcome === "transition" || (duration > 0 && row.msListened >= duration * .8);
-    const skipped = !finished && row.outcome === "replaced" && row.msListened < (duration > 0 ? Math.min(30_000, duration * .5) : 30_000);
-    if (!finished && !skipped) continue;
-    const entry = stats.get(row.songId) || { finishes: 0, skips: 0 };
-    if (finished) entry.finishes += weight; else entry.skips += weight;
-    stats.set(row.songId, entry);
-  }
-  return stats;
-}
-
 // Songs from the last few days' mixes (and today's earlier edition) are pushed back so mixes keep rotating.
 function recentAppearances(database, day, cached) {
   const recent = new Map(); const weights = [1, .6, .3];
@@ -326,4 +274,4 @@ async function getDailyMixes(database, request, { statFile = fs.promises.stat, n
     return result;
   }).immediate();
 }
-module.exports = { generateMixes, getDailyMixes, localDay, validateDailyMixRequest, genreTags, listeningStats };
+module.exports = { generateMixes, getDailyMixes, localDay, validateDailyMixRequest };

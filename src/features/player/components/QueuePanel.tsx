@@ -23,6 +23,8 @@ export type QueuePanelProps = {
   songsById: Map<string, Song>;
   /** Shown when nothing is queued: the song normal playback would continue with. */
   autoNextSong: Song | null;
+  /** Songs song radio added, labelled in the list. */
+  radioSongIds?: ReadonlySet<string>;
   repeatMode: RepeatMode;
   repeatPreview: QueuePanelRepeatPreview | null;
   playQueueItem: (index: number) => unknown;
@@ -43,6 +45,7 @@ export default function QueuePanel({
   setQueue,
   songsById,
   autoNextSong,
+  radioSongIds,
   repeatMode,
   repeatPreview,
   playQueueItem,
@@ -168,7 +171,7 @@ export default function QueuePanel({
                     <Cover song={song} className="queuePanelCover" />
                     <span className="queuePanelCopy">
                       <strong>{prettyTitle(song.title, 8)}</strong>
-                      <small>{prettyMeta(song.artist)}</small>
+                      <small>{radioSongIds?.has(song.id) ? <span className="queuePanelRadioTag">radio · </span> : null}{prettyMeta(song.artist)}</small>
                     </span>
                   </button>
                   <span className="queuePanelDuration">{formatTime(song.duration || 0)}</span>

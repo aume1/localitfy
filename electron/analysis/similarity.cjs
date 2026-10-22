@@ -1,5 +1,7 @@
 const fs = require("node:fs");
 const { MODEL, ANALYZER_VERSION } = require("./model.cjs");
+const { AUDIO_WEIGHT, GENRE_WEIGHT, dot, genreTags, genreTokens, genreSimilarity, libraryMean, centered, classifyPlay,
+  listeningStats, skipRate } = require("./listening-signals.cjs");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_SEED_IDS = 2000;
@@ -9,6 +11,9 @@ const CO_PLAY_DAYS = 180;
 const CO_PLAY_HALF_LIFE_DAYS = 60;
 const CO_PLAY_GAP_MS = 10 * 60 * 1000;
 const CO_PLAY_BOOST = .06;
+const SKIP_PENALTY = .15;
+// An untagged song is treated as an average genre match, so missing tags neither win nor lose outright.
+const UNKNOWN_GENRE = .5;
 
 function identifier(value) { return typeof value === "string" && value.length > 0 && value.length <= 200; }
 
@@ -56,11 +61,6 @@ async function fileMatches(record, statFile) {
   } catch { return false; }
 }
 
-function listened(event) {
-  const duration = Number(event.durationMs) || (Number(event.duration) || 0) * 1000;
-  return event.outcome === "ended" || event.outcome === "transition" || event.msListened >= Math.min(30_000, duration > 0 ? duration * .5 : 30_000);
-}
-
 // Songs heard back to back (same session, both actually listened to) with a seed. A pair only counts once per
 // day and must recur on two or more days, so one album or library run in order does not become a signal.
 function coPlayWeights(database, seedIds, now = Date.now()) {
@@ -70,7 +70,7 @@ function coPlayWeights(database, seedIds, now = Date.now()) {
   const pairs = new Map();
   let previous = null;
   for (const row of rows) {
-    const heard = listened(row);
+    const { heard } = classifyPlay(row);
     if (previous && heard && previous.sessionId === row.sessionId && previous.songId !== row.songId
       && row.startedAt - previous.updatedAt <= CO_PLAY_GAP_MS) {
       const day = Math.floor(row.startedAt / DAY_MS);
@@ -98,7 +98,7 @@ function recentSeedIds(database, now = Date.now()) {
     JOIN songs s ON s.id = e.songId WHERE e.startedAt >= ? AND e.outcome <> 'active' ORDER BY e.startedAt DESC`).iterate(now - 30 * DAY_MS);
   for (const row of rows) {
     if (ids.length >= RECENT_SEEDS) break;
-    if (listened(row) && !ids.includes(row.songId)) ids.push(row.songId);
+    if (classifyPlay(row).heard && !ids.includes(row.songId)) ids.push(row.songId);
   }
   return ids;
 }
@@ -110,7 +110,7 @@ function sampleSeeds(ids) {
 }
 
 async function loadSeeds(database, ids, statFile) {
-  const query = database.prepare(`SELECT s.id AS songId, s.filePath AS currentFilePath, a.* FROM songs s
+  const query = database.prepare(`SELECT s.id AS songId, s.filePath AS currentFilePath, s.genre, a.* FROM songs s
     LEFT JOIN song_analysis a ON a.songId = s.id WHERE s.id = ?`);
   const seeds = []; let missing = 0; let found = 0;
   for (const id of ids) {
@@ -147,26 +147,41 @@ async function findSimilarSongs(database, payload, { statFile = fs.promises.stat
   const excluded = new Set(requested);
   const seedPaths = new Set(seeds.map((seed) => seed.currentFilePath));
   const coPlay = coPlayWeights(database, new Set(seeds.map((seed) => seed.songId)), now);
+  const stats = listeningStats(database, now);
   const top = Math.min(3, seeds.length);
 
   const candidates = database.prepare(`
-    SELECT s.filePath AS currentFilePath, a.* FROM song_analysis a JOIN songs s ON s.id = a.songId
+    SELECT s.filePath AS currentFilePath, s.genre, a.* FROM song_analysis a JOIN songs s ON s.id = a.songId
     WHERE a.status = 'ready' AND a.modelId = ? AND a.analyzerVersion = ? AND a.filePath = s.filePath
-  `).iterate(MODEL.id, ANALYZER_VERSION);
+  `).all(MODEL.id, ANALYZER_VERSION).flatMap((record) => {
+    const vector = readNormalizedVector(record.vector);
+    return vector ? [{ ...record, vector }] : [];
+  });
+  // Same signals as daily mixes: library-centered sound blended with genre tags.
+  const mean = libraryMean([...candidates, ...seeds].map((record) => record.vector));
+  const profile = (record) => ({ audio: centered(record.vector, mean), genre: genreTokens(genreTags(record.genre)) });
+  const seedProfiles = seeds.map(profile);
   const rankBatch = async (batch) => {
     const validFiles = await Promise.all(batch.map((record) => fileMatches(record, statFile)));
     for (let index = 0; index < batch.length; index++) {
       if (!validFiles[index]) continue;
       const candidate = batch[index];
-      const vector = readNormalizedVector(candidate.vector);
-      if (!vector) continue;
       result.compared += 1;
+      const point = profile(candidate);
       // A group seed scores each candidate by its closest few seeds, so a mixed playlist matches each of its styles.
-      const scores = seeds.map((seed) => { let score = 0; for (let i = 0; i < vector.length; i++) score += seed.vector[i] * vector[i]; return score; });
+      let closestSound = -Infinity;
+      const scores = seedProfiles.map((seed) => {
+        const audio = dot(seed.audio, point.audio); const genre = genreSimilarity(seed.genre, point.genre);
+        closestSound = Math.max(closestSound, audio);
+        return AUDIO_WEIGHT * audio + GENRE_WEIGHT * (genre ?? UNKNOWN_GENRE);
+      });
+      // Tags alone never make a match: the sound has to resemble at least one seed.
+      if (closestSound <= 0) continue;
       scores.sort((a, b) => b - a);
       let score = 0;
       for (let i = 0; i < top; i++) score += scores[i] / top;
-      // Orthogonal/opposed profiles are not useful suggestions. Scores are not probabilities.
+      score -= SKIP_PENALTY * skipRate(stats.get(candidate.songId));
+      // Unrelated or opposed profiles are not useful suggestions. Scores are not probabilities.
       if (score <= 0) continue;
       const together = coPlay.get(candidate.songId) || 0;
       const match = { songId: candidate.songId, score: Math.min(1, score + Math.min(CO_PLAY_BOOST, .03 * Math.log1p(together))) };
