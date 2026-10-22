@@ -24,6 +24,14 @@ test("yt-dlp runtime pins official binaries and verifies SHA-256", () => {
   assert.equal(runtime.YTDLP_VERSION, "2026.08.19");
   assert.equal(runtime.getPinnedYtDlpAsset("win32", "x64")?.sha256, "66674953fe251b89f4d08c5f0e35e0728679bd67ab3d7d05c0562af101dd3e7a");
   assert.equal(runtime.getPinnedYtDlpAsset("linux", "x64")?.sha256, "58162f9bfdc27458ea47bfcb311cf47028f17d8154a8bf7d689861d46399230a");
+  for (const arch of ["arm64", "x64"]) assert.equal(runtime.getPinnedYtDlpAsset("darwin", arch)?.sha256, "0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202");
   assert.match(runtimeSource, /SHA-256 verification failed/);
   assert.match(runtimeSource, /https:\/\/github\.com\/yt-dlp\/yt-dlp\/releases\/download/);
+});
+
+test("Spotify imports without an artist use the matched video's uploader, never the spotify_<id> file prefix", () => {
+  const main = fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8");
+  const helper = main.slice(main.indexOf("async function makeSongFromFileWithExactSpotifyTrack"), main.indexOf("async function importNewAudioFilesFromDirectory"));
+  assert.match(helper, /\|\| matchedArtist \|\| \(\/\^spotify_\/i\.test\(baseSong\.artist\) \? "unknown artist" : ""\)/);
+  assert.match(main, /const sourceInfo = \{[^\n]*matchedArtist: item\.matchedArtist \};/);
 });

@@ -1448,7 +1448,9 @@ async function makeSongFromFileWithMetadata(filePath, tracks = [], pixelArtFiles
 async function makeSongFromFileWithExactSpotifyTrack(filePath, track = {}, pixelArtFiles = [], usedCovers = new Set(), sourceInfo = {}) {
   const baseSong = await makeSongFromFile(filePath, pixelArtFiles, usedCovers);
   const title = String(track?.title || track?.name || "").trim();
-  const artist = String(track?.artist || track?.artists || "").trim();
+  // Public Spotify pages can leave out the artist: then use who posted the matched video, never the "spotify_<id>" file prefix.
+  const matchedArtist = String(sourceInfo?.matchedArtist || "").replace(/\s+-\s+topic$|\s*vevo$/i, "").trim();
+  const artist = String(track?.artist || track?.artists || "").trim() || matchedArtist || (/^spotify_/i.test(baseSong.artist) ? "unknown artist" : "");
   const album = String(track?.albumName || track?.album || "").trim();
   const coverUrl = String(track?.coverUrl || track?.spotifyCoverUrl || track?.albumCoverUrl || "").trim();
   const duration = Number(track?.duration || Math.round(Number(track?.durationMs || 0) / 1000) || baseSong.duration || 0);
@@ -2670,7 +2672,7 @@ app.whenReady().then(async () => {
           const filePath = item.filePath;
           importedFilePaths.push(filePath);
           const spotifyTrackId = String(item.spotifyTrackId || track?.spotifyTrackId || track?.id || "").trim();
-          const sourceInfo = { sourceTrackId: spotifyTrackId, sourceUrl: String(item.spotifyUrl || track?.spotifyUrl || (spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : "")).trim(), sourceProvider: String(item.provider || "youtube"), sourceProviderUrl: String(item.providerUrl || ""), sourceMatchScore: Number(item.matchScore || 0) };
+          const sourceInfo = { sourceTrackId: spotifyTrackId, sourceUrl: String(item.spotifyUrl || track?.spotifyUrl || (spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : "")).trim(), sourceProvider: String(item.provider || "youtube"), sourceProviderUrl: String(item.providerUrl || ""), sourceMatchScore: Number(item.matchScore || 0), matchedArtist: item.matchedArtist };
           const song = await makeSongFromFileWithExactSpotifyTrack(filePath, track, pixelArtFiles, usedCovers, sourceInfo);
           importedSongs.push(song);
           importedSongIds.push(song.id);
