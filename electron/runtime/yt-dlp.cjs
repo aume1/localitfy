@@ -7,7 +7,15 @@ const path = require("node:path");
 const { spawn } = require("node:child_process");
 
 const YTDLP_VERSION = "2026.08.19";
+// yt-dlp_macos is a universal binary, so Apple silicon and Intel Macs share it.
+const MACOS_ASSET = Object.freeze({
+  assetName: "yt-dlp_macos",
+  binaryName: "yt-dlp",
+  sha256: "0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202"
+});
 const YTDLP_ASSETS = Object.freeze({
+  "darwin-arm64": MACOS_ASSET,
+  "darwin-x64": MACOS_ASSET,
   "win32-x64": Object.freeze({
     assetName: "yt-dlp.exe",
     binaryName: "yt-dlp.exe",
