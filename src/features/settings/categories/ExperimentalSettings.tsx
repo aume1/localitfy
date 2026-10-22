@@ -59,7 +59,11 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
     <div className="settingsPanelCard settingsFocusPanelV491">
       <div className="settingsPanelHeader"><div><strong>Audio similarity analysis</strong><span>Analyze your tracks, then choose Similar songs from a song’s menu to find audio matches. Results may vary. Your music and analysis stay on this device.</span></div></div>
       <fieldset disabled={busy || !status.supported} className="experimentalControls">
-        <ToggleRow label="Enable music analysis" help="Off by default. Enabling does not download a model or start scanning your library." checked={status.enabled} onChange={(value) => void run(() => window.localitfy.setAnalysisEnabled(value))} />
+        <ToggleRow label="Enable music analysis" help="Off by default. Enabling does not download a model or start scanning your library." checked={status.enabled} onChange={(value) => void run(async () => {
+          const status = await window.localitfy.setAnalysisEnabled(value);
+          await updateSetting("experimentalMusicAnalysis", value);
+          return status;
+        })} />
       </fieldset>
       {!status.supported ? <p>Music analysis currently requires Apple silicon on macOS. Listening history is available on this device.</p> : null}
       <p>{status.model.name} · {megabytes(status.model.bytes)} download and installed model files</p>
