@@ -1,0 +1,76 @@
+/* Settings → Experimental → Not for me */
+.notForMeTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notForMeTabs {
+  display: flex;
+  gap: 6px;
+}
+
+.notForMeFilter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 220px;
+  max-width: 340px;
+}
+
+.notForMeFilter svg {
+  position: absolute;
+  left: 11px;
+  opacity: .6;
+  pointer-events: none;
+}
+
+.notForMeFilter input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px 0 32px;
+  border: 1px solid var(--lt-border, rgba(255, 255, 255, .12));
+  border-radius: 10px;
+  background: var(--lt-surface-raised);
+  color: var(--lt-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.notForMeList {
+  display: grid;
+  gap: 6px;
+  max-height: 420px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.notForMeList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: var(--lt-surface-raised);
+}
+
+.notForMeList span {
+  display: grid;
+  min-width: 0;
+}
+
+.notForMeList strong,
+.notForMeList small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notForMeList small {
+  opacity: .62;
+}

@@ -74,6 +74,9 @@ export type Settings = {
   gaplessPlayback: boolean;
   /** When the queue runs out, keep playing songs that sound similar (needs music analysis). */
   songRadio: boolean;
+  /** Song IDs and artist names left out of daily mixes, similar songs and song radio. */
+  notForMeSongs: string[];
+  notForMeArtists: string[];
   volumeNormalization: boolean;
   perSongVolumeMemory: boolean;
   sleepTimerMinutes: number;

@@ -1,7 +1,8 @@
-import { Disc3, Heart, ListEnd, Pencil, Play, Plus, Radio, SkipForward, Trash2, UserRound } from "lucide-react";
+import { Disc3, Heart, ListEnd, Pencil, Play, Plus, Radio, SkipForward, ThumbsDown, Trash2, UserRound, UserX } from "lucide-react";
 import { Cover } from "../../covers/Cover";
 import { prettyMeta, prettyTitle } from "../../search";
 import { splitArtistCredits } from "../../artists/artistCredits";
+import { hasArtistMark, type NotForMeKind, type NotForMeMarks } from "../../analysis/notForMe";
 import type { Song, SongContextMenuState } from "../song.types";
 import "./song-context-menu.css";
 
@@ -20,6 +21,8 @@ export type SongContextMenuProps = {
   askRemoveSong: (songId: string) => unknown;
   goToArtist: (artistName: string) => unknown;
   goToAlbum: (song: Song) => unknown;
+  /** Present while music analysis is on, since only recommendations use it. */
+  notForMe?: { marks: NotForMeMarks; toggle: (kind: NotForMeKind, value: string) => unknown };
 };
 
 export default function SongContextMenu({
@@ -34,12 +37,14 @@ export default function SongContextMenu({
   toggleLike,
   askRemoveSong,
   goToArtist,
-  goToAlbum
+  goToAlbum,
+  notForMe
 }: SongContextMenuProps) {
   if (!state) return null;
   const song = songsById.get(state.songId);
   if (!song) return null;
   const artistNames = splitArtistCredits(song.artist).slice(0, MAX_ARTIST_LINKS);
+  const leadArtist = song.artist?.trim() ? artistNames[0] : "";
 
   return (
     <div className="songContextMenuLayer" onClick={onClose}>
@@ -76,6 +81,18 @@ export default function SongContextMenu({
         <button type="button" role="menuitem" onClick={() => { onClose(); toggleLike(song.id); }}>
           <span className="songContextMenuIcon"><Heart size={13} strokeWidth={3} /></span> {song.liked ? "remove from liked songs" : "save to liked songs"}
         </button>
+        {notForMe ? (
+          <button type="button" role="menuitem" title="Left out of daily mixes, similar songs and song radio"
+            onClick={() => { onClose(); notForMe.toggle("song", song.id); }}>
+            <span className="songContextMenuIcon"><ThumbsDown size={13} strokeWidth={3} /></span> {notForMe.marks.songs.includes(song.id) ? "undo not for me" : "not for me"}
+          </button>
+        ) : null}
+        {notForMe && leadArtist ? (
+          <button type="button" role="menuitem" title={`${leadArtist} is left out of daily mixes, similar songs and song radio`}
+            onClick={() => { onClose(); notForMe.toggle("artist", leadArtist); }}>
+            <span className="songContextMenuIcon"><UserX size={13} strokeWidth={3} /></span> {hasArtistMark(notForMe.marks, leadArtist) ? "recommend this artist again" : "don't recommend this artist"}
+          </button>
+        ) : null}
         <div className="songContextMenuDivider" aria-hidden="true" />
         {artistNames.map((artistName) => (
           <button key={artistName} type="button" role="menuitem" onClick={() => { onClose(); goToArtist(artistName); }}>

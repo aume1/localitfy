@@ -1,7 +1,7 @@
 const fs = require("node:fs");
 const { MODEL, ANALYZER_VERSION } = require("./model.cjs");
 const { AUDIO_WEIGHT, GENRE_WEIGHT, dot, genreTags, genreTokens, genreSimilarity, libraryMean, centered, classifyPlay,
-  listeningStats, skipRate } = require("./listening-signals.cjs");
+  listeningStats, skipRate, notForMe } = require("./listening-signals.cjs");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_SEED_IDS = 2000;
@@ -110,7 +110,7 @@ function sampleSeeds(ids) {
 }
 
 async function loadSeeds(database, ids, statFile) {
-  const query = database.prepare(`SELECT s.id AS songId, s.filePath AS currentFilePath, s.genre, a.* FROM songs s
+  const query = database.prepare(`SELECT s.id AS songId, s.filePath AS currentFilePath, s.genre, s.artist, a.* FROM songs s
     LEFT JOIN song_analysis a ON a.songId = s.id WHERE s.id = ?`);
   const seeds = []; let missing = 0; let found = 0;
   for (const id of ids) {
@@ -132,7 +132,12 @@ async function findSimilarSongs(database, payload, { statFile = fs.promises.stat
   const result = { seedId: request.songId ?? request.seedKey, status: "ready", matches: [], compared: 0, seedCount: 0 };
   const requested = request.songId ? [request.songId] : request.recent ? recentSeedIds(database, now) : request.songIds;
   if (request.recent && !requested.length) return { ...result, status: "no-history" };
-  const { seeds, found, missing } = await loadSeeds(database, sampleSeeds(requested), statFile);
+  const hidden = notForMe(database);
+  const loaded = await loadSeeds(database, sampleSeeds(requested), statFile);
+  const { found, missing } = loaded;
+  // Recent listening, a playlist or radio history should not steer toward songs marked "not for me".
+  const kept = request.songId ? loaded.seeds : loaded.seeds.filter((seed) => !hidden(seed));
+  const seeds = kept.length ? kept : loaded.seeds;
   if (!found) return { ...result, status: "seed-unavailable" };
   if (!seeds.length) {
     if (request.songId) {
@@ -151,7 +156,7 @@ async function findSimilarSongs(database, payload, { statFile = fs.promises.stat
   const top = Math.min(3, seeds.length);
 
   const candidates = database.prepare(`
-    SELECT s.filePath AS currentFilePath, s.genre, a.* FROM song_analysis a JOIN songs s ON s.id = a.songId
+    SELECT s.filePath AS currentFilePath, s.genre, s.artist, a.* FROM song_analysis a JOIN songs s ON s.id = a.songId
     WHERE a.status = 'ready' AND a.modelId = ? AND a.analyzerVersion = ? AND a.filePath = s.filePath
   `).all(MODEL.id, ANALYZER_VERSION).flatMap((record) => {
     const vector = readNormalizedVector(record.vector);
@@ -193,7 +198,7 @@ async function findSimilarSongs(database, payload, { statFile = fs.promises.stat
   };
   let batch = [];
   for (const candidate of candidates) {
-    if (excluded.has(candidate.songId) || seedPaths.has(candidate.currentFilePath)) continue;
+    if (excluded.has(candidate.songId) || seedPaths.has(candidate.currentFilePath) || hidden(candidate)) continue;
     batch.push(candidate);
     if (batch.length === 32) { await rankBatch(batch); batch = []; }
   }
