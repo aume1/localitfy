@@ -92,6 +92,7 @@ export function useSongRadio({ enabled, isPlaying, currentSongId, queue, setQueu
   const queueTailRef = useRef("");
   const historyRef = useRef<string[]>([]);
   const requestedRef = useRef("");
+  const requestVersionRef = useRef(0);
   const recentPicksRef = useRef<string[]>([]);
   const onRefillRef = useRef(onRefill);
   onRefillRef.current = onRefill;
@@ -111,6 +112,11 @@ export function useSongRadio({ enabled, isPlaying, currentSongId, queue, setQueu
     if (queue.length) queueTailRef.current = queue[queue.length - 1];
   }, [queue]);
 
+  // Toggling radio off invalidates pending lookups; re-enabling may retry this song.
+  useEffect(() => {
+    if (!enabled) { requestedRef.current = ""; requestVersionRef.current += 1; }
+  }, [enabled]);
+
   useEffect(() => {
     if (!currentSongId || historyRef.current.at(-1) === currentSongId) return;
     historyRef.current = [...historyRef.current, currentSongId].slice(-RADIO_HISTORY);
@@ -123,12 +129,13 @@ export function useSongRadio({ enabled, isPlaying, currentSongId, queue, setQueu
   useEffect(() => {
     if (!start) return;
     requestedRef.current = currentSongId;
+    const requestVersion = ++requestVersionRef.current;
     const seeds = radioSeeds(historyRef.current);
     const songId = currentSongId;
     void window.localitfy.findSimilarSongs({ songIds: seeds, seedKey: `radio:${songId}`, limit: 50 }).then((result) => {
       // The song may have changed, or radio been switched off by repeat or shuffle, while the search ran.
       const live = liveRef.current;
-      if (!radioResultApplies(result, songId, { active: mountedRef.current && live.enabled, currentSongId: live.currentSongId })) return;
+      if (requestVersionRef.current !== requestVersion || !radioResultApplies(result, songId, { active: mountedRef.current && live.enabled, currentSongId: live.currentSongId })) return;
       const ids = pickRadioSongs(result.matches.map((match) => match.songId), new Set([...historyRef.current, ...recentPicksRef.current]), songsById);
       if (!ids.length) return;
       // Never replace something the user queued while the search ran.
