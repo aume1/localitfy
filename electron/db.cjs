@@ -2,6 +2,7 @@ const songAnalysis = require("./db/song-analysis.cjs");
 const dailyMixes = require("./db/daily-mixes.cjs");
 const playEvents = require("./db/play-events.cjs");
 const lyricsSelections = require("./db/lyrics-selections.cjs");
+const duplicateMerge = require("./db/duplicate-merge.cjs");
 const Database = require("better-sqlite3");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
@@ -1079,6 +1080,8 @@ function getDatabaseStatus() {
 }
 
 module.exports = {
+  mergeDuplicateSongs: (merges) => duplicateMerge.mergeDuplicateSongs(ensureDb(), merges),
+  getAudioProfiles: (modelId, analyzerVersion) => duplicateMerge.listAudioProfiles(ensureDb(), modelId, analyzerVersion),
   getLyricsSelection: (songId) => lyricsSelections.readLyricsSelection(ensureDb(), songId),
   saveLyricsSelection: (songId, id, result) => lyricsSelections.saveLyricsSelection(ensureDb(), songId, id, result),
   saveLyricsOffset: (songId, offsetMs) => lyricsSelections.saveLyricsOffset(ensureDb(), songId, offsetMs),

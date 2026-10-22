@@ -1,5 +1,6 @@
 import type { AnalysisStatus, SimilarSongsResult } from "./features/analysis/analysis.types";
 import type { SimilarSongsQuery } from "./features/analysis/similarSeed";
+import type { DuplicateMerge, DuplicateSet } from "./features/library/duplicates/duplicates.types";
 import type { PlayEvent } from "./features/player/listeningHistory";
 import type { Song } from "./features/library/song.types";
 import type { Settings } from "./features/settings/settings.types";
@@ -502,6 +503,8 @@ declare global {
       importSongs: () => Promise<Song[]>;
       repairMissingMetadata: (payload?: Record<string, unknown>) => Promise<LocalitfyMetadataRepairResult>;
       repairMovedSongs: () => Promise<{ ok: boolean; canceled?: boolean; changedCount: number; songs?: Song[]; message?: string; ambiguous?: number; missingCount?: number }>;
+      findDuplicates: () => Promise<{ ok: boolean; sets?: DuplicateSet[]; scanned?: number; analyzed?: number; message?: string }>;
+      mergeDuplicates: (payload: { merges: DuplicateMerge[]; moveToTrash?: boolean }) => Promise<{ ok: boolean; removedCount?: number; trashed?: number; trashFailed?: number; merges?: DuplicateMerge[]; songs?: Song[]; message?: string }>;
       scanAlbumFolder?: (payload?: { mode?: "single" | "library" }) => Promise<LocalitfyAlbumFolderScanResult>;
       importAlbumFolder?: (payload: { scanId: string }) => Promise<LocalitfyAlbumFolderImportResult>;
       clearLibrary: () => Promise<Song[]>;
