@@ -35,7 +35,7 @@ export default function NotForMeSettings({ settings, songs, updateSetting }: Not
   const label = tab === "artist" ? "artists" : "songs";
 
   return <div className="settingsPanelCard settingsFocusPanelV491">
-    <div className="settingsPanelHeader"><div><strong>Not for me</strong><span>Left out of daily mixes, similar songs and song radio. They still play everywhere else. Mark songs and artists from a song’s menu.</span></div></div>
+    <div className="settingsPanelHeader"><div><strong>Not for me</strong><span>Left out of daily mixes, similar songs, song radio and Discover. They still play everywhere else. Mark songs and artists from a song’s menu.</span></div></div>
     <div className="notForMeTools">
       <div className="notForMeTabs" role="group" aria-label="Show">
         {(["artist", "song"] as const).map((kind) => (

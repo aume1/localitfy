@@ -98,7 +98,7 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
       <fieldset disabled={busy} className="experimentalControls"><ToggleRow label="Save listening history" help="Turning this off stops new history writes. Existing history stays until cleared." checked={status.historyEnabled} onChange={(value) => void run(() => window.localitfy.setListeningHistoryEnabled(value))} /></fieldset>
       <div className="settingsActionRow settingsActionRowCleanV491"><button type="button" className="settingsActionButton" disabled={busy} onClick={() => setClearTarget("history")}>Clear listening history</button></div>
     </div>
-    {status.enabled ? <NotForMeSettings settings={settings} songs={songs} updateSetting={updateSetting} /> : null}
+    {status.enabled || settings.discoverEnabled ? <NotForMeSettings settings={settings} songs={songs} updateSetting={updateSetting} /> : null}
     <div className="settingsPanelCard settingsFocusPanelV491">
       <div className="settingsPanelHeader"><div><strong>Lyrics</strong><span>Shows time-synced lyrics for the playing song. Open them with the microphone button in the player. A matching .lrc file next to a song is always used first.</span></div></div>
       <fieldset className="experimentalControls">

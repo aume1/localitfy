@@ -77,6 +77,9 @@ export type Settings = {
   /** Song IDs and artist names left out of daily mixes, similar songs and song radio. */
   notForMeSongs: string[];
   notForMeArtists: string[];
+  /** Discover sends artist names and song titles to Last.fm, so it stays off until turned on. */
+  discoverEnabled: boolean;
+  lastfmApiKey: string;
   volumeNormalization: boolean;
   perSongVolumeMemory: boolean;
   sleepTimerMinutes: number;

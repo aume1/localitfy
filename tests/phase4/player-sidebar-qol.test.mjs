@@ -48,9 +48,9 @@ test("hidden tabs leave the visible list but keep their slot; settings cannot be
 });
 
 test("moving swaps with the next visible neighbour and stops at the edges", () => {
-  // Default library order: home, library, liked, artists, genres, albums, playlists.
+  // Default library order: home, library, liked, artists, genres, albums, playlists, discover.
   const order = layout.moveSidebarItem(undefined, ["genres"], "artists", 1);
-  assert.deepEqual(plain(order.library), ["home", "library", "liked", "albums", "genres", "artists", "playlists"]);
+  assert.deepEqual(plain(order.library), ["home", "library", "liked", "albums", "genres", "artists", "playlists", "discover"]);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "home", -1), false);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "analytics", 1), false);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "settings", 1), false);

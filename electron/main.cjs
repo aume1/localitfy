@@ -5,6 +5,7 @@ const { createIpcRouter } = require("./ipc/router.cjs");
 const { registerAnalysisIpc, preserveExperimentalSettings } = require("./ipc/analysis.cjs");
 const { registerDiscordIpc } = require("./ipc/discord.cjs");
 const { registerMovedSongRepairIpc } = require("./ipc/library-relink.cjs");
+const { registerDiscoverIpc } = require("./ipc/discover.cjs");
 const { LOCALTIFY_RENDERER_PROTOCOL, MEDIA_PROTOCOL, registerPrivilegedSchemes } = require("./runtime/protocols.cjs");
 const { DEFAULT_WINDOW_TRANSLUCENCY, normalizeWindowTranslucencySettings, createWindowsStartupRuntime } = require("./runtime/windows.cjs");
 const { createElectronServiceRuntime } = require("./runtime/services.cjs");
@@ -2475,6 +2476,7 @@ app.whenReady().then(async () => {
     } catch (error) { console.log("[localitfy import error]", error?.stack || error?.message); return listSongsShaped(); }
   });
   ipcRouter.handle("library:repair-missing-metadata", async (_event, payload = {}) => { try { return await repairMissingSongMetadata(payload); } catch (error) { console.log("[localtify metadata repair error]", error?.stack || error?.message || error); return { ok: false, error: error?.message || "metadata repair failed", songs: listSongsShaped() }; } });
+  registerDiscoverIpc(ipcRouter, { getSongs, getSettings, cacheFile: path.join(app.getPath("userData"), "discover-cache.json") });
   registerMovedSongRepairIpc(ipcRouter, {
     dialog, BrowserWindow, getWindow: () => mainWindow,
     getSongs, fileExists, isAudioFile, readMetadata: readLocalAudioMetadata,

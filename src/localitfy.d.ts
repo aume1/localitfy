@@ -3,6 +3,7 @@ import type { SimilarSongsQuery } from "./features/analysis/similarSeed";
 import type { PlayEvent } from "./features/player/listeningHistory";
 import type { Song } from "./features/library/song.types";
 import type { Settings } from "./features/settings/settings.types";
+import type { DiscoverResult } from "./features/discover/discover.types";
 
 export {};
 
@@ -501,6 +502,8 @@ declare global {
 
       importSongs: () => Promise<Song[]>;
       repairMissingMetadata: (payload?: Record<string, unknown>) => Promise<LocalitfyMetadataRepairResult>;
+      /** Music from outside the library, from Last.fm. Off until turned on in Discover. */
+      getDiscoveries: (payload?: { refresh?: boolean }) => Promise<DiscoverResult>;
       repairMovedSongs: () => Promise<{ ok: boolean; canceled?: boolean; changedCount: number; songs?: Song[]; message?: string; ambiguous?: number; missingCount?: number }>;
       scanAlbumFolder?: (payload?: { mode?: "single" | "library" }) => Promise<LocalitfyAlbumFolderScanResult>;
       importAlbumFolder?: (payload: { scanId: string }) => Promise<LocalitfyAlbumFolderImportResult>;
