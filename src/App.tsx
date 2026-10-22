@@ -6060,7 +6060,7 @@ function MainModeApp() {
     event.stopPropagation();
 
     const menuWidth = 236;
-    const menuHeight = 474;
+    const menuHeight = 600;
     const margin = 12;
     const x = Math.min(event.clientX, Math.max(margin, window.innerWidth - menuWidth - margin));
     const y = Math.min(event.clientY, Math.max(margin, window.innerHeight - menuHeight - margin));
