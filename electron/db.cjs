@@ -1096,6 +1096,7 @@ module.exports = {
     saveSettings({ listeningHistoryClearedAt: Date.now() });
     return ensureDb().prepare("DELETE FROM play_events").run().changes;
   })(),
+  listPlayEvents: (options) => playEvents.listPlayEvents(ensureDb(), options),
   recordPlayEvent: (payload) => {
     const settings = getSettings();
     if (settings.listeningHistoryEnabled === false || !(payload?.startedAt > Number(settings.listeningHistoryClearedAt || 0))) return false;
