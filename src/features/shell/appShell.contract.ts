@@ -7,6 +7,7 @@ import type { AlbumsViewProps } from "../albums/AlbumsView";
 import type { PlaylistsViewProps } from "../playlists/PlaylistsView";
 import type { CoversViewProps } from "../covers/CoversView";
 import type { AnalyticsViewProps } from "../analytics/AnalyticsView";
+import type { DiscoverViewProps } from "../discover/DiscoverView";
 import type { SettingsViewProps } from "../settings/SettingsView";
 import type { DownloadsViewProps } from "../downloads/DownloadsView";
 import type { PlayerBarProps } from "../player/components/PlayerBar";
@@ -74,7 +75,7 @@ export type AppShellProps = {
   frame: ShellFrameContract; updates: ShellUpdateContract; screensaver: ShellScreensaverContract;
   effects: ShellEffectsContract; onboarding: ShellOnboardingContract; navigation: ShellNavigationContract;
   home: HomeViewProps; library: LibraryViewProps; artists: ArtistsViewProps; genres: GenresViewProps; albums: AlbumsViewProps; playlists: PlaylistsViewProps;
-  covers: CoversViewProps; analytics: AnalyticsViewProps; settingsView: SettingsViewProps;
+  covers: CoversViewProps; analytics: AnalyticsViewProps; discover: DiscoverViewProps; settingsView: SettingsViewProps;
   downloads: DownloadsViewProps; playerBar: PlayerBarProps; modals: ShellModalContract;
   playbackAudio: PlaybackAudioElementProps;
 };

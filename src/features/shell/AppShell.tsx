@@ -37,6 +37,7 @@ const AlbumsView = lazy(() => import("../albums/AlbumsView"));
 const PlaylistsView = lazy(() => import("../playlists/PlaylistsView"));
 const CoversView = lazy(() => import("../covers/CoversView"));
 const AnalyticsView = lazy(() => import("../analytics/AnalyticsView"));
+const DiscoverView = lazy(() => import("../discover/DiscoverView"));
 const SettingsView = lazy(() => import("../settings/SettingsView"));
 const DownloadsView = lazy(() => import("../downloads/DownloadsView"));
 const SongEditorModal = lazy(() => import("../library/components/SongEditorModal"));
@@ -48,7 +49,7 @@ export type { AppShellProps } from "./appShell.contract";
 export default function AppShell(props: AppShellProps) {
   const {
     frame, updates, screensaver, effects, onboarding, navigation,
-    home, library, artists, genres, albums, playlists, covers, analytics, settingsView, downloads,
+    home, library, artists, genres, albums, playlists, covers, analytics, discover, settingsView, downloads,
     playerBar, modals, playbackAudio
   } = props;
 
@@ -346,6 +347,7 @@ export default function AppShell(props: AppShellProps) {
                 {view === "playlists" ? <PlaylistsView {...playlists} /> : null}
                 {view === "covers" ? <CoversView {...covers} /> : null}
                 {view === "analytics" ? <AnalyticsView {...analytics} /> : null}
+                {view === "discover" ? <DiscoverView {...discover} /> : null}
                 {view === "settings" ? <SettingsView {...settingsView} /> : null}
                 {view === "downloads" ? <DownloadsView {...downloads} /> : null}
               </Suspense>

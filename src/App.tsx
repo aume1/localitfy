@@ -8588,6 +8588,15 @@ function MainModeApp() {
       cleanupCoverCache: cleanupCoverCacheAction,
       randomizeMissingCovers: randomizeMissingCoversAction
     },
+    discover: {
+      settings, updateSetting, notForMe,
+      sendToDownloads: (tracks: SpotifyTrack[]) => {
+        setSpotifyTracks((current) => [...tracks, ...current.filter((track) => !tracks.some((next) => next.id === track.id))]);
+        setSpotifySelectedIds(new Set(tracks.map((track) => track.id)));
+        setDownloadsTab("spotify");
+        changeView("downloads");
+      }
+    },
     analytics: {
       analyticsRecapCards,
       analyticsStatCards,
