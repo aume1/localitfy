@@ -36,7 +36,8 @@
   padding: 5px;
   border: 1px solid var(--lt-border, rgba(255,255,255,.12));
   border-radius: 12px;
-  background: var(--lt-surface-raised, #15101d);
+  /* The raised surface is translucent; an opaque base keeps options readable over dialogs and text. */
+  background: linear-gradient(var(--lt-surface-raised, #15101d), var(--lt-surface-raised, #15101d)), var(--lt-bg, #0c0a14);
   color: var(--lt-text, #fff);
   box-shadow: 0 16px 40px rgba(0,0,0,.32);
   font-size: 12px;

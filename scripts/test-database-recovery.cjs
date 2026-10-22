@@ -60,6 +60,13 @@ try {
     if (db.recordPlayEvent({ ...event, updatedAt: now - 6000, msListened: 3000 })) throw new Error("stale checkpoint accepted");
     if (!db.recordPlayEvent({ ...event, updatedAt: now, endedAt: now, outcome: "ended", msListened: 8000 })) throw new Error("final event failed");
     if (db.recordPlayEvent(event)) throw new Error("final event reopened");
+    if (JSON.stringify(db.getListeningCounts()) !== JSON.stringify([["legacy-song", 1, 0]])) throw new Error("listening counts are wrong");
+    const rules = { match: "all", rules: [{ field: "liked", op: "is", value: "" }], sort: "random", limit: 50 };
+    db.savePlaylists([{ id: "smart", name: "Smart", songIds: ["legacy-song"], createdAt: now, rules },
+      { id: "plain", name: "Plain", songIds: [], createdAt: now, rules: "not json" }]);
+    const saved = db.getPlaylists();
+    if (JSON.stringify(saved.find((item) => item.id === "smart")?.rules) !== JSON.stringify(rules)) throw new Error("smart playlist rules were not persisted");
+    if ("rules" in saved.find((item) => item.id === "plain")) throw new Error("malformed playlist rules were persisted");
     const vector = new Float32Array(512); vector[0] = 1;
     const analysis = { songId: "legacy-song", filePath: "C:/Music/legacy.mp3", fileSize: 1234, fileMtime: 5678, vector, rms: 0.2 };
     if (!db.saveSongAnalysis(analysis)) throw new Error("analysis not persisted");

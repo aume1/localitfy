@@ -717,6 +717,8 @@ function MainModeApp() {
     renamingPlaylistName,
     setRenamingPlaylistName,
     createPlaylist,
+    saveSmartPlaylist,
+    listeningCounts,
     createPlaylistWithSong,
     createPlaylistFromSongs,
     removePlaylist,
@@ -8559,7 +8561,9 @@ function MainModeApp() {
       setSelectedPlaylistId,
       songs,
       startPlaylistSongDragAction,
-      startRenamePlaylist
+      startRenamePlaylist,
+      saveSmartPlaylist,
+      listeningCounts
     },
     covers: {
       applyCoverAssetToSelection,

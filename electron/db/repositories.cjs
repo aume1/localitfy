@@ -23,6 +23,7 @@ function createDatabaseRepositories(databaseModule) {
     }),
     listening: Object.freeze({
       record: requireFunction(databaseModule, "recordPlayEvent"),
+      counts: requireFunction(databaseModule, "getListeningCounts"),
       clear: requireFunction(databaseModule, "clearListeningHistory")
     }),
     analysis: Object.freeze({

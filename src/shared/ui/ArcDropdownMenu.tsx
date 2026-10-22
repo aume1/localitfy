@@ -29,7 +29,7 @@ export type ArcDropdownMenuProps<T extends string> = {
 const EDGE_GAP = 12;
 const ITEM_HEIGHT = 36;
 const MENU_PADDING = 5;
-const THEME_VARS = ["--lt-text", "--lt-muted", "--lt-accent", "--lt-surface", "--lt-surface-raised", "--lt-border"] as const;
+const THEME_VARS = ["--lt-text", "--lt-muted", "--lt-accent", "--lt-surface", "--lt-surface-raised", "--lt-border", "--lt-bg"] as const;
 
 export function ArcDropdownMenu<T extends string>({
   ariaLabel, value, items, onValueChange, className = "", disabled = false
