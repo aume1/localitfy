@@ -85,5 +85,23 @@ function skipRate(stats) {
   return skips ? skips / (skips + finishes + 1) : 0;
 }
 
+// Same split as splitArtistCredits in src/features/artists/artistCredits.ts.
+const ARTIST_CREDIT_SEPARATOR = /;|\s+feat\.?\s+/gi;
+function artistKeys(value) {
+  return String(value ?? "").split(ARTIST_CREDIT_SEPARATOR).map((name) => name.trim().replace(/\s+/g, " ").toLocaleLowerCase()).filter(Boolean);
+}
+function readStringList(database, key) {
+  try {
+    const value = JSON.parse(database.prepare("SELECT value FROM settings WHERE key = ?").get(key)?.value ?? "[]");
+    return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+  } catch { return []; }
+}
+/** Songs and artists marked "not for me" are never recommended. Returns a test for `{ songId, artist }` records. */
+function notForMe(database) {
+  const songs = new Set(readStringList(database, "notForMeSongs"));
+  const artists = new Set(readStringList(database, "notForMeArtists").flatMap(artistKeys));
+  return (record) => songs.has(record.songId) || (artists.size > 0 && artistKeys(record.artist).some((key) => artists.has(key)));
+}
+
 module.exports = { DAY_MS, AUDIO_WEIGHT, GENRE_WEIGHT, dot, normalize, genreKey, genreTags, genreTokens, genreSimilarity,
-  libraryMean, centered, classifyPlay, listeningStats, skipRate };
+  libraryMean, centered, classifyPlay, listeningStats, skipRate, notForMe };

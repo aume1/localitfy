@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { ToggleRow } from "../settings.shared";
 import type { AnalysisStatus } from "../../analysis/analysis.types";
 import type { Settings } from "../settings.types";
+import type { Song } from "../../library/song.types";
+import NotForMeSettings from "../../analysis/NotForMeSettings";
 
 const megabytes = (bytes: number) => `${(bytes / 1_000_000).toFixed(1)} MB`;
 
-type ExperimentalSettingsProps = { settings: Settings; updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => unknown };
+type ExperimentalSettingsProps = { settings: Settings; songs: readonly Song[]; updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => unknown };
 
-export default function ExperimentalSettings({ settings, updateSetting }: ExperimentalSettingsProps) {
+export default function ExperimentalSettings({ settings, songs, updateSetting }: ExperimentalSettingsProps) {
   const [status, setStatus] = useState<AnalysisStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -57,7 +59,11 @@ export default function ExperimentalSettings({ settings, updateSetting }: Experi
     <div className="settingsPanelCard settingsFocusPanelV491">
       <div className="settingsPanelHeader"><div><strong>Audio similarity analysis</strong><span>Analyze your tracks, then choose Similar songs from a song’s menu to find audio matches. Results may vary. Your music and analysis stay on this device.</span></div></div>
       <fieldset disabled={busy || !status.supported} className="experimentalControls">
-        <ToggleRow label="Enable music analysis" help="Off by default. Enabling does not download a model or start scanning your library." checked={status.enabled} onChange={(value) => void run(() => window.localitfy.setAnalysisEnabled(value))} />
+        <ToggleRow label="Enable music analysis" help="Off by default. Enabling does not download a model or start scanning your library." checked={status.enabled} onChange={(value) => void run(async () => {
+          const status = await window.localitfy.setAnalysisEnabled(value);
+          await updateSetting("experimentalMusicAnalysis", value);
+          return status;
+        })} />
       </fieldset>
       {!status.supported ? <p>Music analysis currently requires Apple silicon on macOS. Listening history is available on this device.</p> : null}
       <p>{status.model.name} · {megabytes(status.model.bytes)} download and installed model files</p>
@@ -92,6 +98,7 @@ export default function ExperimentalSettings({ settings, updateSetting }: Experi
       <fieldset disabled={busy} className="experimentalControls"><ToggleRow label="Save listening history" help="Turning this off stops new history writes. Existing history stays until cleared." checked={status.historyEnabled} onChange={(value) => void run(() => window.localitfy.setListeningHistoryEnabled(value))} /></fieldset>
       <div className="settingsActionRow settingsActionRowCleanV491"><button type="button" className="settingsActionButton" disabled={busy} onClick={() => setClearTarget("history")}>Clear listening history</button></div>
     </div>
+    {status.enabled ? <NotForMeSettings settings={settings} songs={songs} updateSetting={updateSetting} /> : null}
     <div className="settingsPanelCard settingsFocusPanelV491">
       <div className="settingsPanelHeader"><div><strong>Lyrics</strong><span>Shows time-synced lyrics for the playing song. Open them with the microphone button in the player. A matching .lrc file next to a song is always used first.</span></div></div>
       <fieldset className="experimentalControls">

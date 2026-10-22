@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const { createHash } = require("node:crypto");
 const { MODEL, ANALYZER_VERSION } = require("./model.cjs");
 const { readNormalizedVector } = require("./similarity.cjs");
-const { AUDIO_WEIGHT, GENRE_WEIGHT, dot, normalize, genreTags, genreTokens, libraryMean, centered, listeningStats } = require("./listening-signals.cjs");
+const { AUDIO_WEIGHT, GENRE_WEIGHT, dot, normalize, genreTags, genreTokens, libraryMean, centered, listeningStats, notForMe } = require("./listening-signals.cjs");
 const GENERATOR_VERSION = 2;
 const MIX_LENGTH = 25;
 function validateDailyMixRequest(payload = {}) {
@@ -242,11 +242,16 @@ async function getDailyMixes(database, request, { statFile = fs.promises.stat, n
   if (!refresh && cached?.fingerprint === fingerprint) {
     try { result = JSON.parse(cached.result); } catch { /* Rebuild a damaged cache. */ }
   }
+  // Marked songs leave today's mixes straight away, without rebuilding them; unmarking brings them back.
+  const hidden = notForMe(database);
+  const hiddenIds = new Set(tracks.filter(hidden).map((track) => track.songId));
+  const visible = (mixes) => ({ ...mixes, mixes: mixes.mixes.map((mix) => ({ ...mix, songIds: mix.songIds.filter((id) => !hiddenIds.has(id)) }))
+    .filter((mix) => mix.songIds.length) });
   if (!result) {
     const stats = listeningStats(database, now);
     for (const track of tracks) Object.assign(track, stats.get(track.songId));
     result = { day, edition, generatedAt: now.getTime(), eligible: tracks.length,
-      mixes: generateMixes(tracks, `${day}:${edition}`, { recent: recentAppearances(database, day, refresh ? cached : null) }) };
+      mixes: generateMixes(tracks.filter((track) => !hiddenIds.has(track.songId)), `${day}:${edition}`, { recent: recentAppearances(database, day, refresh ? cached : null) }) };
   }
   // Recheck the chosen files after clustering, before committing their IDs.
   const selected = new Set(result.mixes.flatMap((mix) => mix.songIds));
@@ -264,14 +269,14 @@ async function getDailyMixes(database, request, { statFile = fs.promises.stat, n
     if (identity(current) !== originalIdentity) throw new Error("Library analysis changed while building mixes. Please retry.");
     const latest = database.prepare("SELECT * FROM daily_mixes WHERE day = ?").get(day);
     if (latest && latest.edition !== cached?.edition) {
-      if (latest.fingerprint === fingerprint) return JSON.parse(latest.result);
+      if (latest.fingerprint === fingerprint) return visible(JSON.parse(latest.result));
       throw new Error("Library mixes changed while building. Please retry.");
     }
     database.prepare(`INSERT INTO daily_mixes (day, edition, fingerprint, result, generatedAt) VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(day) DO UPDATE SET edition=excluded.edition, fingerprint=excluded.fingerprint,
       result=excluded.result, generatedAt=excluded.generatedAt`).run(day, result.edition, fingerprint, JSON.stringify(result), result.generatedAt);
     database.prepare("DELETE FROM daily_mixes WHERE day NOT IN (SELECT day FROM daily_mixes ORDER BY day DESC LIMIT 7)").run();
-    return result;
+    return visible(result);
   }).immediate();
 }
 module.exports = { generateMixes, getDailyMixes, localDay, validateDailyMixRequest };

@@ -22,10 +22,10 @@ if (!process.argv.includes("--fixture")) {
   db.initDatabase(databasePath);
   const inspect = new Database(databasePath);
   const service = createSimilarityService({ getDatabasePath: () => databasePath });
-  function add(id, values, { analyzed = true, error, genre = "" } = {}) {
+  function add(id, values, { analyzed = true, error, genre = "", artist = "test" } = {}) {
     const filePath = path.join(root, `${id}.wav`);
     fs.writeFileSync(filePath, Buffer.alloc(64));
-    db.insertSongs([{ id, filePath, title: id, artist: "test", album: "fixture", genre }]);
+    db.insertSongs([{ id, filePath, title: id, artist, album: "fixture", genre }]);
     if (analyzed) {
       const stat = fs.statSync(filePath);
       const vector = new Float32Array(512);
@@ -124,6 +124,16 @@ if (!process.argv.includes("--fixture")) {
       for (let i = 0; i < 6; i++) play.run(`skip${i}`, "s5", "skipped-twin", now - i * 3_600_000, now - i * 3_600_000 + 4_000, now - i * 3_600_000 + 4_000, 4_000, "replaced");
       const tagged = (await service.find({ songId: "tagged-seed" })).matches.map((item) => item.songId);
       assert.deepEqual(tagged.slice(0, 4), ["same-genre", "untagged-twin", "skipped-twin", "other-genre"], tagged.join(", "));
+      // "Not for me": marked songs and artists (any credit) are never suggested, and don't steer group seeds.
+      for (const [id, artist] of [["nfm-seed"], ["nfm-song"], ["nfm-artist", "Band feat. Hated Act"], ["nfm-kept"]]) add(id, [0, 0, 0, 1], { artist });
+      db.saveSettings({ notForMeSongs: ["nfm-song"], notForMeArtists: ["hated act"] });
+      const kept = (await service.find({ songId: "nfm-seed" })).matches.map((item) => item.songId);
+      assert.ok(kept.includes("nfm-kept") && !kept.includes("nfm-song") && !kept.includes("nfm-artist"), kept.join(", "));
+      assert.equal((await service.find({ songId: "nfm-song" })).status, "ready", "a marked song can still be asked about directly");
+      assert.equal((await service.find({ songIds: ["seed", "nfm-song"], seedKey: "radio:x" })).seedCount, 1);
+      assert.equal((await service.find({ songIds: ["nfm-song"], seedKey: "radio:y" })).seedCount, 1, "unless every seed is marked");
+      db.saveSettings({ notForMeSongs: [], notForMeArtists: [] });
+      assert.ok((await service.find({ songId: "nfm-seed" })).matches.some((item) => item.songId === "nfm-song"));
       // A file changed while candidates were checked must invalidate the seed result too.
       let seedChecks = 0;
       const staleDuringRead = await findSimilarSongs(inspect, { songId: "seed" }, { statFile: async (file) => {
@@ -132,7 +142,7 @@ if (!process.argv.includes("--fixture")) {
       } });
       assert.equal(staleDuringRead.status, "seed-stale");
       assert.equal(staleDuringRead.matches.length, 0);
-      console.log("[similar-songs] real SQLite + worker: cosine ranking, limits, identity/version checks, missing/malformed/changed files and seed states, groups, recent listening and back-to-back plays passed");
+      console.log("[similar-songs] real SQLite + worker: cosine ranking, limits, identity/version checks, missing/malformed/changed files and seed states, groups, recent listening, back-to-back plays and not for me passed");
     } finally {
       service.dispose();
       inspect.close();

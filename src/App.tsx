@@ -23,6 +23,7 @@ import { useNativeMediaSession } from "./features/player/useNativeMediaSession";
 import type { ListeningOutcome } from "./features/player/listeningHistory";
 import { usePlayerRuntime } from "./features/player";
 import { useSongRadio } from "./features/player/useSongRadio";
+import { useNotForMe } from "./features/analysis/notForMe";
 import { devPerfStart, devPerfEnd, measureDevTime } from "./shared/perf/devPerf";
 import type { PlayerEngineSource } from "./features/player/engine/PlayerEngine";
 import {
@@ -6061,7 +6062,7 @@ function MainModeApp() {
     event.stopPropagation();
 
     const menuWidth = 236;
-    const menuHeight = 474;
+    const menuHeight = 600;
     const margin = 12;
     const x = Math.min(event.clientX, Math.max(margin, window.innerWidth - menuWidth - margin));
     const y = Math.min(event.clientY, Math.max(margin, window.innerHeight - menuHeight - margin));
@@ -8316,6 +8317,7 @@ function MainModeApp() {
     continues: songRadioEnabled && !playQueue.length ? Boolean(getAutoTransitionTarget()) : true,
     onRefill: (count) => setStatusText(`radio: queued ${count} similar song${count === 1 ? "" : "s"}`)
   });
+  const notForMe = useNotForMe({ settings, updateSettingsPatch, songsById, setQueue: setPlayQueue, radioSongIds, announce: setStatusText });
 
   const downloadPageState = getDownloadPageState({
     downloadBusy,
@@ -8732,7 +8734,8 @@ function MainModeApp() {
         askRemoveSong,
         goToArtist: pageFocus.openArtistPage,
         goToAlbum: goToSongAlbum,
-        openSimilarSongs: (song: Song) => setSimilarRequest({ kind: "song", songId: song.id })
+        openSimilarSongs: (song: Song) => setSimilarRequest({ kind: "song", songId: song.id }),
+        notForMe: settings.experimentalMusicAnalysis ? notForMe : undefined
       },
       similarSongs: {
         seed: similarSeed, songsById, currentId, returnFocusTo: similarRequest?.kind === "song" ? songContextAnchorRef.current : null,

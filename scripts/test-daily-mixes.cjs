@@ -41,6 +41,15 @@ if (!process.argv.includes("--fixture")) {
       const refresh = await service.dailyMixes({ refresh: true });
       assert.equal(refresh.edition, first.edition + 1); assert.notDeepEqual(refresh.mixes, first.mixes);
       assert.deepEqual(await service.dailyMixes(), refresh);
+      // "Not for me" leaves today's mixes straight away without rebuilding them, and undoing it brings the songs back.
+      const hiddenSong = refresh.mixes[0].songIds[0];
+      const shown = (id) => id !== hiddenSong && Number(id.split("-")[1]) % 6 !== 1;
+      db.saveSettings({ notForMeSongs: [hiddenSong], notForMeArtists: ["Artist-1"] });
+      const marked = await service.dailyMixes();
+      assert.equal(marked.edition, refresh.edition);
+      assert.deepEqual(marked.mixes.map((mix) => mix.songIds), refresh.mixes.map((mix) => mix.songIds.filter(shown)));
+      db.saveSettings({ notForMeSongs: [], notForMeArtists: [] });
+      assert.deepEqual(await service.dailyMixes(), refresh);
       fs.unlinkSync(files[0]); fs.appendFileSync(files[1], "change");
       inspect.prepare("UPDATE song_analysis SET modelId='old' WHERE songId='track-2'").run();
       inspect.prepare("UPDATE song_analysis SET vector=? WHERE songId='track-3'").run(Buffer.alloc(4));
@@ -60,8 +69,13 @@ if (!process.argv.includes("--fixture")) {
       assert.equal(Math.round(stats.get("track-10").finishes * 100), 200, "ended and 80%+ plays both count as finished");
       assert.equal(stats.get("track-11").skips > .99 && stats.get("track-11").finishes, 0);
       assert.equal(stats.has("track-12"), false, "interrupted and >90-day-old events are ignored");
+      db.saveSettings({ notForMeArtists: ["artist-1"] });
       const tomorrow = await getDailyMixes(inspect, {}, { now: new Date(2030, 0, 2) });
       assert.equal(tomorrow.day, "2030-01-02"); assert.equal(tomorrow.edition, 0);
+      const tomorrowIds = tomorrow.mixes.flatMap((mix) => mix.songIds);
+      assert.ok(tomorrowIds.every((id) => Number(id.split("-")[1]) % 6 !== 1), "new mixes are built without marked artists");
+      assert.ok(tomorrow.mixes.every((mix) => mix.songIds.length === 25), "so they still fill every slot");
+      db.saveSettings({ notForMeArtists: [] });
       const checks = new Map();
       await assert.rejects(() => getDailyMixes(inspect, { refresh: true }, { statFile: async (file) => {
         checks.set(file, (checks.get(file) || 0) + 1);
@@ -74,7 +88,7 @@ if (!process.argv.includes("--fixture")) {
       assert.equal(inspect.prepare("SELECT COUNT(*) AS count FROM daily_mixes").get().count, 0);
       assert.deepEqual(db.getPlaylists()[0].songIds, saved.songIds, "clearing profiles must preserve saved playlists");
       const empty = await service.dailyMixes(); assert.equal(empty.eligible, 0); assert.deepEqual(empty.mixes, []);
-      console.log("[daily-mixes] real worker, persistent cache, refresh, day rollover, listening stats, invalid files and cleared analysis passed");
+      console.log("[daily-mixes] real worker, persistent cache, refresh, day rollover, listening stats, not for me, invalid files and cleared analysis passed");
     } finally { service.dispose(); inspect.close(); }
   })().catch((error) => { console.error(error); process.exitCode = 1; });
 }
