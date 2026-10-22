@@ -54,6 +54,16 @@ export function pickRadioSongs(matchIds: readonly string[], exclude: ReadonlySet
   return picked;
 }
 
+/** A radio search only counts for the song it was started for, while radio is still on and the hook is mounted. */
+export function radioResultApplies(result: { status: string; seedId: string }, songId: string, live: { active: boolean; currentSongId: string }) {
+  return live.active && live.currentSongId === songId && result.status === "ready" && result.seedId === `radio:${songId}`;
+}
+
+/** Queue update for a refill: whatever the user queued while the search ran stays as it is. */
+export function fillEmptyQueue(ids: string[], songsById: Map<string, Song>) {
+  return (current: string[]) => current.some((id) => isPlayableSong(songsById.get(id))) ? current : ids;
+}
+
 /** The last few distinct songs heard, most recent last. */
 export function radioSeeds(history: readonly string[], count = RADIO_SEEDS) {
   const seeds: string[] = [];
@@ -87,7 +97,15 @@ export function useSongRadio({ enabled, isPlaying, currentSongId, queue, setQueu
   onRefillRef.current = onRefill;
   const queueRef = useRef(queue);
   queueRef.current = queue;
+  const mountedRef = useRef(false);
+  const liveRef = useRef({ enabled, currentSongId });
+  liveRef.current = { enabled, currentSongId };
   const [radioSongIds, setRadioSongIds] = useState<ReadonlySet<string>>(() => new Set());
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     if (queue.length) queueTailRef.current = queue[queue.length - 1];
@@ -106,13 +124,16 @@ export function useSongRadio({ enabled, isPlaying, currentSongId, queue, setQueu
     if (!start) return;
     requestedRef.current = currentSongId;
     const seeds = radioSeeds(historyRef.current);
-    void window.localitfy.findSimilarSongs({ songIds: seeds, seedKey: `radio:${currentSongId}`, limit: 50 }).then((result) => {
-      if (result.status !== "ready" || result.seedId !== `radio:${currentSongId}`) return;
+    const songId = currentSongId;
+    void window.localitfy.findSimilarSongs({ songIds: seeds, seedKey: `radio:${songId}`, limit: 50 }).then((result) => {
+      // The song may have changed, or radio been switched off by repeat or shuffle, while the search ran.
+      const live = liveRef.current;
+      if (!radioResultApplies(result, songId, { active: mountedRef.current && live.enabled, currentSongId: live.currentSongId })) return;
       const ids = pickRadioSongs(result.matches.map((match) => match.songId), new Set([...historyRef.current, ...recentPicksRef.current]), songsById);
       if (!ids.length) return;
       // Never replace something the user queued while the search ran.
       if (queueRef.current.some((id) => isPlayableSong(songsById.get(id)))) return;
-      setQueue(ids);
+      setQueue(fillEmptyQueue(ids, songsById));
       recentPicksRef.current = [...recentPicksRef.current, ...ids].slice(-RADIO_RECENT_PICKS);
       setRadioSongIds((previous) => new Set([...previous, ...ids].slice(-RADIO_TAGGED)));
       onRefillRef.current?.(ids.length);

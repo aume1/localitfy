@@ -39,9 +39,32 @@ test("radio picks unplayed, playable matches and seeds from the last distinct so
   assert.deepEqual([...radioSeeds([], 5)], []);
 });
 
+test("a radio search that finishes after the song changes or radio turns off is dropped", () => {
+  const { radioResultApplies } = loadRadio();
+  const result = { status: "ready", seedId: "radio:a" };
+  const live = { active: true, currentSongId: "a" };
+  assert.equal(radioResultApplies(result, "a", live), true);
+  assert.equal(radioResultApplies(result, "a", { ...live, currentSongId: "b" }), false, "the user skipped to another song");
+  assert.equal(radioResultApplies(result, "a", { ...live, active: false }), false, "repeat, shuffle or the setting turned radio off, or the player unmounted");
+  assert.equal(radioResultApplies({ ...result, seedId: "radio:b" }, "a", live), false, "an answer for another song");
+  assert.equal(radioResultApplies({ ...result, status: "seed-unanalyzed" }, "a", live), false);
+});
+
+test("a radio refill never overwrites songs the user queued while the search ran", () => {
+  const { fillEmptyQueue } = loadRadio();
+  const songs = new Map(["r1", "r2", "mine", "gone"].map((id) => [id, { id, filePath: `/${id}.mp3`, fileExists: id !== "gone" }]));
+  const update = fillEmptyQueue(["r1", "r2"], songs);
+  const userQueue = ["mine"];
+  assert.equal(update(userQueue), userQueue, "the user's queue is kept as it is");
+  assert.deepEqual([...update([])], ["r1", "r2"]);
+  assert.deepEqual([...update(["gone"])], ["r1", "r2"], "a queue of missing files counts as empty");
+});
+
 test("radio is wired into the queue and stays out of repeat and shuffle", () => {
   assert.match(app, /settings\.songRadio && settings\.experimentalMusicAnalysis && repeatMode === "off" && !repeatPlaylist && !isShuffle/);
   assert.match(app, /useSongRadio\(\{[\s\S]*setQueue: setPlayQueue/);
   assert.match(app, /radioSongIds,\s+repeatMode,/);
   assert.match(source, /Never replace something the user queued/);
+  assert.match(source, /setQueue\(fillEmptyQueue\(ids, songsById\)\)/);
+  assert.match(source, /radioResultApplies\(result, songId/);
 });
