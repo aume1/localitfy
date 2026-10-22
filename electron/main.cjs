@@ -5,9 +5,11 @@ const { createIpcRouter } = require("./ipc/router.cjs");
 const { registerAnalysisIpc, preserveExperimentalSettings } = require("./ipc/analysis.cjs");
 const { registerDiscordIpc } = require("./ipc/discord.cjs");
 const { registerMovedSongRepairIpc } = require("./ipc/library-relink.cjs");
+const { startLibraryWatch } = require("./library-watch.cjs");
+let libraryWatcher = null;
 const { registerDuplicateIpc } = require("./ipc/library-duplicates.cjs");
 const { registerDiscoverIpc } = require("./ipc/discover.cjs");
-const { LOCALTIFY_RENDERER_PROTOCOL, MEDIA_PROTOCOL, registerPrivilegedSchemes } = require("./runtime/protocols.cjs");
+const { LOCALTIFY_RENDERER_PROTOCOL, MEDIA_PROTOCOL, registerPrivilegedSchemes, getLocaltifyRendererMimeType } = require("./runtime/protocols.cjs");
 const { DEFAULT_WINDOW_TRANSLUCENCY, normalizeWindowTranslucencySettings, createWindowsStartupRuntime } = require("./runtime/windows.cjs");
 const { createElectronServiceRuntime } = require("./runtime/services.cjs");
 const { loadLocaltifyEnv } = require("./runtime/environment.cjs");
@@ -1466,22 +1468,25 @@ async function makeSongFromFileWithExactSpotifyTrack(filePath, track = {}, pixel
 async function importNewAudioFilesFromDirectory(directory, tracks = [], options = {}) {
   const includeSongs = options.includeSongs !== false;
   const shapeResult = () => includeSongs ? listSongsShaped() : undefined;
-  const audioFiles = listAudioFilesInDirectory(directory, options);
-  if (!audioFiles.length) return { changedCount: 0, importedCount: 0, songs: shapeResult(), files: [] };
+  const result = await importNewAudioFiles(listAudioFilesInDirectory(directory, options), tracks);
+  if (result.importedCount) console.log("[localtify library refresh] imported new audio files from folder", { folder: directory, changedCount: result.changedCount });
+  return { ...result, songs: shapeResult() };
+}
+/** Adds the files that are not in the library yet (matched by path). Shared by folder refreshes and watched folders. */
+async function importNewAudioFiles(audioFiles, tracks = []) {
   const existingPaths = new Set(getSongs().map((song) => path.normalize(String(song.filePath || "")).toLowerCase()).filter(Boolean));
   const newFiles = audioFiles.filter((filePath) => {
     const key = path.normalize(String(filePath || "")).toLowerCase();
     return key && !existingPaths.has(key);
   });
-  if (!newFiles.length) return { changedCount: 0, importedCount: 0, songs: shapeResult(), files: [] };
+  if (!newFiles.length) return { changedCount: 0, importedCount: 0, files: [] };
   const pixelArtFiles = getPixelArtFiles();
   const usedCovers = new Set();
   const importedSongs = [];
   for (const filePath of newFiles) importedSongs.push(await makeSongFromFileWithMetadata(filePath, tracks, pixelArtFiles, usedCovers));
   const changedCount = insertSongs(importedSongs);
   clearFileInfoCache();
-  console.log("[localtify library refresh] imported new audio files from folder", { folder: directory, found: audioFiles.length, newFiles: newFiles.length, changedCount });
-  return { changedCount, importedCount: importedSongs.length, songs: shapeResult(), files: newFiles };
+  return { changedCount, importedCount: importedSongs.length, files: newFiles };
 }
 
 const albumFolderScanCache = new Map();
@@ -1945,27 +1950,6 @@ function safeRendererProtocolPathname(requestUrl) {
 }
 function getRendererProtocolEntryUrl() { return `${LOCALTIFY_RENDERER_PROTOCOL}://app/index.html`; }
 function isPackagedLinuxAppImageRuntime() { return Boolean(app.isPackaged && process.platform === "linux"); }
-function getLocaltifyRendererMimeType(filePath) {
-  const ext = String(path.extname(filePath || "") || "").toLowerCase();
-  switch (ext) {
-    case ".html": return "text/html; charset=utf-8";
-    case ".js": case ".mjs": return "text/javascript; charset=utf-8";
-    case ".css": return "text/css; charset=utf-8";
-    case ".json": return "application/json; charset=utf-8";
-    case ".svg": return "image/svg+xml";
-    case ".png": return "image/png";
-    case ".jpg": case ".jpeg": return "image/jpeg";
-    case ".gif": return "image/gif";
-    case ".webp": return "image/webp";
-    case ".ico": return "image/x-icon";
-    case ".woff": return "font/woff";
-    case ".woff2": return "font/woff2";
-    case ".mp3": return "audio/mpeg";
-    case ".wav": return "audio/wav";
-    case ".ogg": return "audio/ogg";
-    default: return "application/octet-stream";
-  }
-}
 function readLocaltifyRendererFile(filePath) {
   return new Promise((resolve, reject) => fs.readFile(filePath, (error, data) => error ? reject(error) : resolve(data)));
 }
@@ -2477,6 +2461,8 @@ app.whenReady().then(async () => {
     } catch (error) { console.log("[localitfy import error]", error?.stack || error?.message); return listSongsShaped(); }
   });
   ipcRouter.handle("library:repair-missing-metadata", async (_event, payload = {}) => { try { return await repairMissingSongMetadata(payload); } catch (error) { console.log("[localtify metadata repair error]", error?.stack || error?.message || error); return { ok: false, error: error?.message || "metadata repair failed", songs: listSongsShaped() }; } });
+  libraryWatcher = startLibraryWatch(ipcRouter, { dialog, isAudioFile, getSongs, getSettings, listSongsShaped,
+    importFiles: (files) => importNewAudioFiles(files), getWindow: () => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null) });
   registerDiscoverIpc(ipcRouter, { getSongs, getSettings, cacheFile: path.join(app.getPath("userData"), "discover-cache.json") });
   registerMovedSongRepairIpc(ipcRouter, {
     dialog, BrowserWindow, getWindow: () => mainWindow,
@@ -2574,6 +2560,7 @@ app.whenReady().then(async () => {
   ipcRouter.handle("settings:save", async (_event, settings) => {
     try {
       if (!settings || typeof settings !== "object") return getSettings();
+      if (Array.isArray(settings.watchedFolders)) libraryWatcher?.setFolders(settings.watchedFolders);
       if (Object.prototype.hasOwnProperty.call(settings, "startWithWindows")) setStartWithWindows(Boolean(settings.startWithWindows));
       if (Object.prototype.hasOwnProperty.call(settings, "minimizeToTray")) {
         minimizeToTray = Boolean(settings.minimizeToTray);
@@ -2733,6 +2720,7 @@ app.whenReady().then(async () => {
 
 app.on("before-quit", async () => {
   allowQuit = true;
+  libraryWatcher?.dispose();
   if (serviceRuntime) await serviceRuntime.stop("app-before-quit");
   else {
     try { cleanupNativeWindowsMedia(); } catch {}
