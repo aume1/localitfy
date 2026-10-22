@@ -21,6 +21,8 @@ export default function PlaylistPickerModal({
   addSongToPlaylist, createPlaylistWithSong
 }: PlaylistPickerModalProps) {
   if (!song) return null;
+  // Smart playlists fill themselves, so songs can't be added to them by hand.
+  const manualPlaylists = playlists.filter((playlist) => !playlist.rules);
   return (
     <div className="modalWrap playlistPickerWrap" onClick={onClose}>
       <div className="playlistPickerModal playlistPickerModalV444" role="dialog" aria-modal="true" aria-label="Add song to playlist" onClick={(event) => event.stopPropagation()}>
@@ -33,7 +35,7 @@ export default function PlaylistPickerModal({
           <button className="closeModalButton" type="button" onClick={onClose} aria-label="close"><X size={18} strokeWidth={2.4} /></button>
         </div>
         <div className="playlistPickerList">
-          {playlists.length ? playlists.map((playlist) => {
+          {manualPlaylists.length ? manualPlaylists.map((playlist) => {
             const added = playlist.songIds.includes(song.id);
             const previewSongs = playlist.songIds.slice(0, 4).map((songId) => songsById.get(songId)).filter((item): item is Song => Boolean(item));
             return (

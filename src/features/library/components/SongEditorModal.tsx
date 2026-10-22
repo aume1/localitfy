@@ -80,9 +80,9 @@ export default function SongEditorModal(props: SongEditorModalProps) {
             </section>
             <section className="editorCard editorPlaylistCard">
               <div className="editorSectionTitle"><strong>playlists</strong><span>add this song to one of your mixes</span></div>
-              {playlists.length ? (
+              {playlists.some((playlist) => !playlist.rules) ? (
                 <div className="editorPlaylistChips">
-                  {playlists.map((playlist) => {
+                  {playlists.filter((playlist) => !playlist.rules).map((playlist) => {
                     const added = playlist.songIds.includes(song.id);
                     return <button key={playlist.id} className={`editorPlaylistChip ${added ? "active" : ""}`} type="button" onClick={() => toggleSongPlaylist(playlist.id, song.id)}>{playlist.name}</button>;
                   })}

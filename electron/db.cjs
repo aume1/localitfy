@@ -1,6 +1,7 @@
 const songAnalysis = require("./db/song-analysis.cjs");
 const dailyMixes = require("./db/daily-mixes.cjs");
 const playEvents = require("./db/play-events.cjs");
+const { listeningStats } = require("./analysis/listening-signals.cjs");
 const lyricsSelections = require("./db/lyrics-selections.cjs");
 const Database = require("better-sqlite3");
 const crypto = require("node:crypto");
@@ -9,7 +10,7 @@ const path = require("node:path");
 const packageMetadata = require("../package.json");
 
 const APP_VERSION = String(packageMetadata?.version || "0.0.0");
-const SCHEMA_VERSION = 18;
+const SCHEMA_VERSION = 19;
 const BACKUP_KEEP_LIMIT = 8;
 
 let db = null;
@@ -61,7 +62,8 @@ const PLAYLIST_COLUMNS = {
   id: "TEXT PRIMARY KEY",
   name: "TEXT NOT NULL DEFAULT 'playlist'",
   createdAt: "INTEGER NOT NULL DEFAULT 0",
-  sortOrder: "INTEGER NOT NULL DEFAULT 0"
+  sortOrder: "INTEGER NOT NULL DEFAULT 0",
+  rules: "TEXT"
 };
 
 const PLAYLIST_SONG_COLUMNS = {
@@ -212,7 +214,8 @@ function createPlaylistsTables(database) {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL DEFAULT 'playlist',
       createdAt INTEGER NOT NULL DEFAULT 0,
-      sortOrder INTEGER NOT NULL DEFAULT 0
+      sortOrder INTEGER NOT NULL DEFAULT 0,
+      rules TEXT
     );
 
     CREATE TABLE IF NOT EXISTS playlist_songs (
@@ -354,6 +357,15 @@ function normalizeOldSong(row) {
   };
 }
 
+// Smart playlist rules are stored as JSON and validated by the renderer, which owns their meaning.
+function playlistRulesJson(value) {
+  if (value == null || value === "") return null;
+  try {
+    const text = typeof value === "string" ? JSON.stringify(JSON.parse(value)) : JSON.stringify(value);
+    return text && text.length <= 20_000 && text.startsWith("{") ? text : null;
+  } catch { return null; }
+}
+
 function normalizePlaylist(input, fallbackIndex = 0) {
   if (!input || typeof input !== "object") return null;
 
@@ -379,7 +391,8 @@ function normalizePlaylist(input, fallbackIndex = 0) {
     name,
     songIds,
     createdAt,
-    sortOrder: Math.max(0, Math.floor(asNumber(input.sortOrder, fallbackIndex)))
+    sortOrder: Math.max(0, Math.floor(asNumber(input.sortOrder, fallbackIndex))),
+    rules: playlistRulesJson(input.rules)
   };
 }
 
@@ -390,6 +403,7 @@ function rowToPlaylist(row, songIds = []) {
       name: row?.name,
       createdAt: row?.createdAt,
       sortOrder: row?.sortOrder,
+      rules: row?.rules,
       songIds
     },
     Math.max(0, Math.floor(asNumber(row?.sortOrder, 0)))
@@ -401,7 +415,8 @@ function rowToPlaylist(row, songIds = []) {
     id: playlist.id,
     name: playlist.name,
     songIds: playlist.songIds,
-    createdAt: playlist.createdAt
+    createdAt: playlist.createdAt,
+    ...(playlist.rules ? { rules: JSON.parse(playlist.rules) } : {})
   };
 }
 
@@ -999,12 +1014,13 @@ function savePlaylists(playlists) {
     .filter(Boolean);
 
   const insertPlaylist = database.prepare(`
-    INSERT INTO playlists (id, name, createdAt, sortOrder)
-    VALUES (@id, @name, @createdAt, @sortOrder)
+    INSERT INTO playlists (id, name, createdAt, sortOrder, rules)
+    VALUES (@id, @name, @createdAt, @sortOrder, @rules)
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name,
       createdAt = excluded.createdAt,
-      sortOrder = excluded.sortOrder
+      sortOrder = excluded.sortOrder,
+      rules = excluded.rules
   `);
 
   const insertPlaylistSong = database.prepare(`
@@ -1024,7 +1040,8 @@ function savePlaylists(playlists) {
         id: playlist.id,
         name: playlist.name,
         createdAt: playlist.createdAt,
-        sortOrder: playlistIndex
+        sortOrder: playlistIndex,
+        rules: playlist.rules
       });
 
       playlist.songIds.forEach((songId, songIndex) => {
@@ -1096,6 +1113,9 @@ module.exports = {
     saveSettings({ listeningHistoryClearedAt: Date.now() });
     return ensureDb().prepare("DELETE FROM play_events").run().changes;
   })(),
+  // All-time finished and skipped plays per song, for smart playlist rules.
+  getListeningCounts: () => [...listeningStats(ensureDb(), Date.now(), { days: 0, halfLifeDays: 0 })]
+    .map(([songId, { finishes, skips }]) => [songId, Math.round(finishes), Math.round(skips)]),
   recordPlayEvent: (payload) => {
     const settings = getSettings();
     if (settings.listeningHistoryEnabled === false || !(payload?.startedAt > Number(settings.listeningHistoryClearedAt || 0))) return false;

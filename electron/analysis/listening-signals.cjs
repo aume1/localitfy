@@ -64,14 +64,15 @@ function classifyPlay(row) {
 }
 
 // Decayed per-song listening outcomes. Finished plays count for a song; leaving early counts against it.
-function listeningStats(database, now = Date.now()) {
+// `days: 0, halfLifeDays: 0` gives plain all-time counts.
+function listeningStats(database, now = Date.now(), { days = HISTORY_DAYS, halfLifeDays = HISTORY_HALF_LIFE_DAYS } = {}) {
   const time = now instanceof Date ? now.getTime() : now; const stats = new Map();
   const rows = database.prepare(`SELECT e.songId, e.startedAt, e.msListened, e.outcome, s.durationMs, s.duration
-    FROM play_events e JOIN songs s ON s.id = e.songId WHERE e.startedAt >= ? AND e.outcome <> 'active'`).iterate(time - HISTORY_DAYS * DAY_MS);
+    FROM play_events e JOIN songs s ON s.id = e.songId WHERE e.startedAt >= ? AND e.outcome <> 'active'`).iterate(days ? time - days * DAY_MS : 0);
   for (const row of rows) {
     const { finished, skipped } = classifyPlay(row);
     if (!finished && !skipped) continue;
-    const weight = Math.pow(.5, Math.max(0, time - row.startedAt) / (HISTORY_HALF_LIFE_DAYS * DAY_MS));
+    const weight = halfLifeDays ? Math.pow(.5, Math.max(0, time - row.startedAt) / (halfLifeDays * DAY_MS)) : 1;
     const entry = stats.get(row.songId) || { finishes: 0, skips: 0 };
     if (finished) entry.finishes += weight; else entry.skips += weight;
     stats.set(row.songId, entry);

@@ -21,6 +21,7 @@ function registerAnalysisIpc(router, { app, powerMonitor, repositories, ffmpegPa
   router.handle("analysis:clear", () => get().clearAnalysis());
   router.handle("listening:set-enabled", (_event, enabled) => get().setHistoryEnabled(enabled));
   router.handle("listening:clear", () => get().clearHistory());
+  router.handle("listening:counts", () => repositories.listening.counts());
   app.once("before-quit", () => { similarity.dispose(); void service?.dispose(); });
 }
 function preserveExperimentalSettings(settings, saved) {

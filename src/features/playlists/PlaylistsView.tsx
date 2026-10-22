@@ -1,7 +1,7 @@
 import "./playlists.css";
 import DailyMixesShelf, { type DailyMixesShelfProps } from "../analysis/DailyMixesShelf";
-import type { CSSProperties } from "react";
-import { Check, Copy, Pencil, Play, Plus, Radio, Shuffle, Trash2, X } from "lucide-react";
+import { lazy, Suspense, useState, type CSSProperties } from "react";
+import { Check, Copy, Pencil, Play, Plus, Radio, Shuffle, SlidersHorizontal, Sparkles, Trash2, X } from "lucide-react";
 import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
 import { PageHeader } from "../../shared/ui/PageHeader";
@@ -9,6 +9,10 @@ import { LocaltifyStateCard, MetaDividerDot } from "../../shared/ui/LocaltifyVie
 import { VirtualPlaylistTrackList } from "./components/VirtualPlaylistTrackList";
 import PlaylistCoverCollage from "./components/PlaylistCoverCollage";
 import { formatTime } from "../../shared/utils/format";
+import type { Playlist } from "./playlist.types";
+import { describeSmartRules, type ListeningCounts, type SmartRules } from "./smartPlaylist";
+
+const SmartPlaylistDialog = lazy(() => import("./components/SmartPlaylistDialog"));
 
 export type PlaylistsViewProps = {
   dailyMixes: DailyMixesShelfProps;
@@ -47,6 +51,8 @@ export type PlaylistsViewProps = {
   songs: any;
   startPlaylistSongDragAction: any;
   startRenamePlaylist: any;
+  saveSmartPlaylist: (playlistId: string | null, name: string, rules: SmartRules) => string | null;
+  listeningCounts: ListeningCounts;
 };
 
 export default function PlaylistsView(props: PlaylistsViewProps) {
@@ -86,6 +92,8 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
     startPlaylistSongDragAction,
     startRenamePlaylist
   } = props;
+  // undefined: closed; null: creating a new smart playlist.
+  const [smartEditing, setSmartEditing] = useState<Playlist | null | undefined>(undefined);
 
   return (
     <section data-page-section="playlists" className="playlistsPage playlistPageV029">
@@ -107,19 +115,24 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
             aria-label="New playlist name"
           />
           <button className="mainAction" type="submit"><ActionLabel icon={Plus}>new playlist</ActionLabel></button>
+          <button className="softButton" type="button" onClick={() => setSmartEditing(null)} disabled={!songs.length}
+            title="A playlist that fills itself from rules, like liked songs you haven't played lately">
+            <ActionLabel icon={Sparkles}>smart playlist</ActionLabel>
+          </button>
         </form>
       </PageHeader>
 
       {selectedPlaylist ? (
         <section className="panel playlistHeroPanel">
           <div className="playlistHeroCopy">
-            <p className="eyebrow">playlist</p>
+            <p className="eyebrow">{selectedPlaylist.rules ? "smart playlist" : "playlist"}</p>
             <h3>{selectedPlaylist.name}</h3>
             <p>
               {selectedPlaylistSongs.length} song{selectedPlaylistSongs.length === 1 ? "" : "s"}
               <MetaDividerDot />
               {formatTime(selectedPlaylistDuration)} total
             </p>
+            {selectedPlaylist.rules ? <p className="smartPlaylistSummary">{describeSmartRules(selectedPlaylist.rules)}</p> : null}
           </div>
 
           <PlaylistCoverCollage songs={selectedPlaylistSongs} className="playlistHeroCollage playlistCoverCollage" />
@@ -150,6 +163,11 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
             >
               <ActionLabel icon={Radio}>more like this</ActionLabel>
             </button>
+            {selectedPlaylist.rules ? (
+              <button className="softButton" type="button" onClick={() => setSmartEditing(selectedPlaylist)}>
+                <ActionLabel icon={SlidersHorizontal}>edit rules</ActionLabel>
+              </button>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -180,7 +198,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
                 <PlaylistCoverCollage songs={previewSongs} />
                 <span className="playlistShelfMeta">
                   <strong>{playlist.name}</strong>
-                  <small>{songCount} song{songCount === 1 ? "" : "s"}<MetaDividerDot />{formatTime(duration)}</small>
+                  <small>{playlist.rules ? <>smart<MetaDividerDot /></> : null}{songCount} song{songCount === 1 ? "" : "s"}<MetaDividerDot />{formatTime(duration)}</small>
                 </span>
                 <span className="playlistShelfDropHint">{activePlaylistId === playlist.id ? "playing" : "drop song"}</span>
               </button>
@@ -264,6 +282,12 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           </section>
         ) : null}
       </div>
+      {smartEditing !== undefined ? (
+        <Suspense fallback={null}>
+          <SmartPlaylistDialog playlist={smartEditing} songs={songs} listeningCounts={props.listeningCounts}
+            onSave={props.saveSmartPlaylist} onClose={() => setSmartEditing(undefined)} />
+        </Suspense>
+      ) : null}
     </section>
   );
 }

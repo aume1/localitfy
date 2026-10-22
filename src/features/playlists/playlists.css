@@ -31,13 +31,13 @@
 .playlistsPage :is(.heroMain,.softButton,.mainAction,.settingsTinyButton):focus-visible { outline: 2px solid rgba(var(--lt-accent-rgb), .58); outline-offset: 2px; }
 .playlistsPage button:disabled { cursor: not-allowed; opacity: .48; }
 .playlistCreateForm { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-.playlistRenameForm input {
+:is(.playlistRenameForm, .smartPlaylistModal) input {
   flex: 1 1 170px; min-height: 40px; padding: 8px 12px;
   border: 1px solid rgba(var(--lt-accent-rgb), .17); border-radius: 9px;
-  background: var(--lt-bg); color: var(--playlist-text); font: inherit; font-size: 13px;
+  background: var(--lt-bg); color: var(--lt-text); font: inherit; font-size: 13px;
 }
-.playlistRenameForm input::placeholder { color: var(--lt-faint); }
-.playlistRenameForm input:focus-visible { outline: 2px solid rgba(var(--lt-accent-rgb), .58); outline-offset: 2px; }
+:is(.playlistRenameForm, .smartPlaylistModal) input::placeholder { color: var(--lt-faint); }
+:is(.playlistRenameForm, .smartPlaylistModal) input:focus-visible { outline: 2px solid rgba(var(--lt-accent-rgb), .58); outline-offset: 2px; }
 .playlistContentGrid { min-width: 0; display: grid; grid-template-columns: minmax(260px,.8fr) minmax(0,1.7fr); align-items: start; gap: 16px; }
 .playlistContentGrid.isEmpty { grid-template-columns: minmax(0,1fr); }
 .playlistShelfPanel,.playlistTracksPanel { min-width: 0; }
@@ -116,3 +116,26 @@
   .playlistTrackDuration { display: none; }
   .playlistTrackMain { grid-template-columns: 16px 40px minmax(0,1fr); gap: 6px; }
 }
+
+/* Smart playlist rules editor (reuses the app modal frame and playlist inputs). */
+.smartPlaylistModal {
+  width: min(640px, calc(100vw - 36px)); max-height: min(760px, calc(100vh - 150px)); overflow: auto;
+  display: grid; gap: 14px; padding: 22px; color: var(--lt-text);
+  border: 1px solid rgba(var(--lt-accent-rgb), .14); border-radius: 18px; background: var(--lt-surface);
+}
+.smartPlaylistModal .modalHead { margin-bottom: 0; }
+.app .smartPlaylistModal h3 { margin: 0; font-size: 22px !important; font-weight: 700; letter-spacing: -.02em !important; line-height: 1.2; }
+.app .smartPlaylistModal :is(.settingsTinyButton, .heroMain) { min-height: 36px; padding: 0 14px; font-size: 12px !important; font-weight: 700; }
+.smartPlaylistModal > .settingsTinyButton { justify-self: start; }
+.smartPlaylistModal .editorHeadSub { display: block; margin-top: 4px; color: var(--lt-muted); font-size: 13px; }
+.smartPlaylistPresets { display: flex; flex-wrap: wrap; gap: 8px; }
+.smartPlaylistField { display: grid; gap: 6px; color: var(--lt-muted); font-size: 12px; font-weight: 700; }
+.smartPlaylistMatch { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--lt-muted); font-size: 12px; font-weight: 700; }
+.smartPlaylistRules { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.smartPlaylistRule { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) minmax(110px, 1.2fr) auto; align-items: center; gap: 8px; }
+.smartPlaylistNumber { display: inline-flex; align-items: center; gap: 6px; }
+.smartPlaylistNumber input { width: 86px; }
+.smartPlaylistModal small { color: var(--lt-faint); font-size: 12px; }
+.smartPlaylistFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 4px; }
+.smartPlaylistFooter p { margin: 0; color: var(--lt-muted); font-size: 12px; }
+.playlistHeroCopy .smartPlaylistSummary { margin-top: 6px; color: var(--lt-faint); font-size: 12px; }

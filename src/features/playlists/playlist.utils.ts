@@ -2,6 +2,7 @@ import type { Song } from "../library/song.types";
 import { makeLocalId } from "../../shared/storage/localStorage";
 import { cleanSongOrderIds } from "../library/library.utils";
 import type { Playlist, PlaylistSummary } from "./playlist.types";
+import { cleanSmartRules } from "./smartPlaylist";
 
 export function buildPlaylistSummary(playlist: Playlist, songsById: ReadonlyMap<string, Song>): PlaylistSummary {
   const songs = playlist.songIds.map((id) => songsById.get(id)).filter((song): song is Song => Boolean(song));
@@ -24,13 +25,15 @@ export function cleanPlaylistList(value: unknown, validIds?: Set<string>): Playl
     const name = String(source.name || `playlist ${index + 1}`).trim().slice(0, 120) || `playlist ${index + 1}`;
     if (!id || seen.has(id)) return;
     seen.add(id);
+    const rules = cleanSmartRules(source.rules);
     output.push({
       id,
       name,
       songIds: cleanSongOrderIds(source.songIds, validIds),
       createdAt: Number.isFinite(Number(source.createdAt)) && Number(source.createdAt) > 0
         ? Number(source.createdAt)
-        : Date.now()
+        : Date.now(),
+      ...(rules ? { rules } : {})
     });
   });
 
