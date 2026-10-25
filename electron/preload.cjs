@@ -20,6 +20,10 @@ contextBridge.exposeInMainWorld("localitfy", {
     ipcRenderer.on("library:watched-change", handler);
     return () => ipcRenderer.removeListener("library:watched-change", handler);
   },
+  auditMusicBrainzTags: () => ipcRenderer.invoke("tagging:audit"),
+  getPendingMusicBrainzTags: () => ipcRenderer.invoke("tagging:pending"),
+  lookUpMusicBrainzTags: (songIds) => ipcRenderer.invoke("tagging:lookup", { songIds }),
+  applyMusicBrainzTags: (songIds) => ipcRenderer.invoke("tagging:apply", { songIds }),
   findDuplicates: () => ipcRenderer.invoke("library:find-duplicates"),
   mergeDuplicates: (payload) => ipcRenderer.invoke("library:merge-duplicates", payload),
   getDiscoveries: (payload) => ipcRenderer.invoke("discover:get", payload),
