@@ -202,6 +202,23 @@ test("a hand-typed search lists each release once, and a picked release becomes 
   await assert.rejects(lookup.proposalFor(song, { recordingId: "rec-d", releaseId: "rel-5" }), /no longer lists/);
 });
 
+test("an album search scores releases on title, artist and track count, and a picked release tags every track", async (t) => {
+  const dir = tempDir();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const { fetchImpl } = fakeMusicBrainz();
+  const lookup = createTaggingLookup({ client: createMusicBrainzClient({ userAgent: "t", fetchImpl, minIntervalMs: 0 }), coverDir: dir, userAgent: "t", fetchImpl });
+  const songs = [
+    { id: "a", title: "Track 1", artist: "Someone", album: "Wrong Album", durationMs: 150000, filePath: "/m/x/1.mp3" },
+    { id: "b", title: "death rolL", artist: "Someone", album: "Wrong Album", durationMs: 200000, filePath: "/m/x/2.mp3" },
+    { id: "c", title: "not on it", artist: "Someone", album: "Wrong Album", durationMs: 90000, filePath: "/m/x/3.mp3" }
+  ];
+  const rows = await lookup.searchAlbumCandidates(songs.slice(0, 2), { album: "marroW", artist: "brakence" });
+  assert.deepEqual(rows.map((row) => [row.releaseId, row.title, row.trackCount, row.score]), [["rel-marrow", "marroW", 2, 1]]);
+  const { proposals, missed } = await lookup.albumProposalsFor(songs, "rel-marrow");
+  assert.deepEqual(proposals.map((proposal) => [proposal.songId, proposal.ids.recordingId, proposal.tags.album]), [["b", "rec-2", "marroW"]]);
+  assert.deepEqual(missed, ["a", "c"], "songs that pair with no track are reported, not forced onto one");
+});
+
 test("an unreachable MusicBrainz is an error, not \"no match\"", async (t) => {
   const dir = tempDir();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -367,6 +384,22 @@ test("IPC: gated by the setting, proposals stay native, and library-only apply u
   assert.deepEqual((await router.invoke("tagging:pending")).map((proposal) => proposal.songId), [], "a hand-picked match stays with its dialog");
   assert.deepEqual(await router.invoke("tagging:apply", { songIds: ["b"] }), { applied: 1, written: 0, failed: [] });
   await assert.rejects(router.invoke("tagging:search", { songId: "missing", title: "x" }), /could not be found/);
+
+  const releases = await router.invoke("tagging:search-album", { songIds: ["a", "b"], album: "marroW", artist: "brakence" });
+  assert.equal(releases[0].releaseId, "rel-marrow");
+  const album = await router.invoke("tagging:choose-album", { songIds: ["a", "b"], releaseId: "rel-marrow" });
+  assert.deepEqual(album.proposals.map((proposal) => proposal.songId), ["a", "b"]);
+  assert.deepEqual((await router.invoke("tagging:pending")).map((proposal) => proposal.songId), [], "album picks stay with their dialog too");
+  await assert.rejects(router.invoke("tagging:search-album", { songIds: ["missing"], album: "x" }), /could be found/);
+});
+
+test("songs and albums get a find on musicbrainz menu item only while tagging is on", () => {
+  const shell = fs.readFileSync(path.join(root, "src", "features", "shell", "AppShell.tsx"), "utf8");
+  assert.match(shell, /findOnMusicBrainz=\{settings\.musicbrainzTagging \? setTagSearchSong : undefined\}/);
+  assert.match(shell, /findAlbumOnMusicBrainz=\{settings\.musicbrainzTagging \? setTagSearchAlbum : undefined\}/);
+  const albums = fs.readFileSync(path.join(root, "src", "features", "albums", "AlbumsView.tsx"), "utf8");
+  assert.match(albums, /onContextMenu=\{\(event\) => openAlbumMenu\(event, album\)\}/);
+  assert.match(albums, /<AlbumContextMenu/);
 });
 
 test("main registers tagging IPC and Experimental settings shows the panel", () => {

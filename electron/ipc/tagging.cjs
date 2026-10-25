@@ -78,6 +78,23 @@ function registerTaggingIpc(router, deps) {
     return view(proposal);
   });
 
+  // Album right-click → "find on MusicBrainz": the whole album is matched to the release the user picks.
+  router.handle("tagging:search-album", async (_event, payload = {}) => {
+    requireEnabled();
+    const songs = songsFor(payload.songIds);
+    if (!songs.length) throw new Error("None of this album's files could be found");
+    return lookup.searchAlbumCandidates(songs, { album: String(payload.album || songs[0].album || ""), artist: String(payload.artist ?? songs[0].artist ?? "") });
+  });
+
+  router.handle("tagging:choose-album", async (_event, payload = {}) => {
+    requireEnabled();
+    const songs = songsFor(payload.songIds);
+    if (!songs.length) throw new Error("None of this album's files could be found");
+    const result = await lookup.albumProposalsFor(songs, String(payload.releaseId || ""));
+    for (const proposal of result.proposals) proposals.set(proposal.songId, Object.assign(proposal, { manual: true }));
+    return { proposals: result.proposals.map(view), missed: result.missed };
+  });
+
   router.handle("tagging:apply", async (_event, payload = {}) => {
     requireEnabled();
     const writeFiles = getSettings()?.musicbrainzWriteFiles !== false;

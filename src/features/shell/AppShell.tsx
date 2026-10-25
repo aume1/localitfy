@@ -18,6 +18,7 @@ import { clamp } from "../../shared/utils/format";
 import { prettyTitle } from "../search";
 import type { AppShellProps } from "./appShell.contract";
 import type { Song } from "../library/song.types";
+import type { TagSearchAlbum } from "../tagging/AlbumTagSearchDialog";
 import SidebarNav from "./SidebarNav";
 import {
   APP_VERSION, defaultUpdatePrompt, updateRibbonChildSpring, updateRibbonEnterSpring
@@ -45,6 +46,7 @@ const SongEditorModal = lazy(() => import("../library/components/SongEditorModal
 const DeleteSongModal = lazy(() => import("../library/components/DeleteSongModal"));
 const PlaylistPickerModal = lazy(() => import("../playlists/components/PlaylistPickerModal"));
 const TagSearchDialog = lazy(() => import("../tagging/TagSearchDialog"));
+const AlbumTagSearchDialog = lazy(() => import("../tagging/AlbumTagSearchDialog"));
 
 export type { AppShellProps } from "./appShell.contract";
 
@@ -79,6 +81,7 @@ export default function AppShell(props: AppShellProps) {
   const { isSeeking, isVolumeDragging, draggedSongId, isPlaying } = playerBar;
   const { isThreeAm } = home;
   const [tagSearchSong, setTagSearchSong] = useState<Song | null>(null);
+  const [tagSearchAlbum, setTagSearchAlbum] = useState<TagSearchAlbum | null>(null);
 
   const homeHeroCoverBrightness = clamp(Number(settings.homeHeroCoverBrightness ?? 1), 0.65, 1.55);
   const homeHeroCoverContrast = clamp(1.02 + (homeHeroCoverBrightness - 1) * 0.08, 0.98, 1.08);
@@ -346,7 +349,7 @@ export default function AppShell(props: AppShellProps) {
                 {(view === "library" || view === "liked") ? <LibraryView {...library} /> : null}
                 {view === "artists" ? <ArtistsView {...artists} /> : null}
                 {view === "genres" ? <GenresView {...genres} /> : null}
-                {view === "albums" ? <AlbumsView {...albums} /> : null}
+                {view === "albums" ? <AlbumsView {...albums} goToArtist={modals.songContextMenu.goToArtist} findAlbumOnMusicBrainz={settings.musicbrainzTagging ? setTagSearchAlbum : undefined} /> : null}
                 {view === "playlists" ? <PlaylistsView {...playlists} /> : null}
                 {view === "covers" ? <CoversView {...covers} /> : null}
                 {view === "analytics" ? <AnalyticsView {...analytics} /> : null}
@@ -365,6 +368,7 @@ export default function AppShell(props: AppShellProps) {
 
       <SongContextMenu {...modals.songContextMenu} findOnMusicBrainz={settings.musicbrainzTagging ? setTagSearchSong : undefined} />
       {tagSearchSong ? <Suspense fallback={null}><TagSearchDialog key={tagSearchSong.id} song={tagSearchSong} onClose={() => setTagSearchSong(null)} /></Suspense> : null}
+      {tagSearchAlbum ? <Suspense fallback={null}><AlbumTagSearchDialog album={tagSearchAlbum} onClose={() => setTagSearchAlbum(null)} /></Suspense> : null}
       {modals.similarSongs.seed ? <Suspense fallback={null}><SimilarSongsDialog key={modals.similarSongs.seed.key} {...modals.similarSongs} /></Suspense> : null}
 
       <WhatsNewModal {...modals.whatsNew} />

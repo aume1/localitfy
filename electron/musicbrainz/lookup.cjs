@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { fetchCoverArt } = require("./client.cjs");
-const { normalize, similarity, creditText, primaryArtist, recordingScore, releaseRank, formatGenres, buildProposal, pickRecording, matchReleaseTracks } = require("./match.cjs");
+const { normalize, similarity, creditText, primaryArtist, artistScore, recordingScore, releaseRank, formatGenres, buildProposal, pickRecording, matchReleaseTracks } = require("./match.cjs");
 
 const DEFAULT_ALBUM = "local files";
 const NOISE = /\s*[([](?:&|(?:feat\.?|ft\.?|with|prod\.?|official|audio|video|lyrics?|visuali[sz]er|explicit|hq|hd)\b)[^)\]]*[)\]]/gi;
@@ -188,7 +188,39 @@ function createTaggingLookup({ client, coverDir, userAgent, fetchImpl = fetch })
     return finish(buildProposal(song, picked));
   }
 
-  return { lookupSong, lookupAlbum, lookupGroup, unifyEditions, searchCandidates, proposalFor };
+  /** Releases matching a hand-typed album search, scored on title, artist and how many tracks the album has. */
+  async function searchAlbumCandidates(songs, { album, artist }) {
+    const query = searchTitle(album);
+    let releases = await client.searchReleases(query, String(artist || "").trim());
+    if (!releases.length && String(artist || "").trim()) releases = await client.searchReleases(query, "");
+    const rows = releases.map((release) => {
+      const group = release["release-group"] || {};
+      const trackCount = Number(release["track-count"] || 0);
+      const fit = !trackCount ? 0.5 : trackCount < songs.length ? 0 : Math.max(0, 1 - (trackCount - songs.length) / Math.max(4, songs.length));
+      const score = 0.6 * similarity(release.title, query) + 0.25 * (artist ? artistScore(artist, release["artist-credit"] || []) : 1) + 0.15 * fit;
+      return {
+        releaseId: release.id, score: Math.round(score * 100) / 100, rank: releaseRank(release),
+        title: release.title, artist: creditText(release["artist-credit"] || []), year: String(release.date || "").slice(0, 4), country: String(release.country || ""),
+        releaseType: [group["primary-type"], ...(group["secondary-types"] || [])].filter(Boolean).join(" + "),
+        format: [...new Set((release.media || []).map((medium) => medium.format).filter(Boolean))].join(" + "), trackCount,
+        // Pressings that look alike differ by label, catalog number or MusicBrainz's own note ("explicit", "deluxe").
+        label: [...new Set((release["label-info"] || []).map((info) => [info.label?.name, info["catalog-number"]].filter(Boolean).join(" ")).filter(Boolean))].join(", "),
+        note: String(release.disambiguation || ""), status: String(release.status || "")
+      };
+    });
+    return rows.sort((a, b) => b.score - a.score || b.rank - a.rank).map(({ rank, ...row }) => row);
+  }
+
+  /** Proposals for every album song found on a release the user picked by hand. */
+  async function albumProposalsFor(songs, releaseId) {
+    const release = await client.getRelease(releaseId);
+    const proposals = [];
+    for (const match of matchReleaseTracks(songs, release)) proposals.push(await finish(buildProposal(match.song, onTrack(match.song, release, match, match.score))));
+    const matched = new Set(proposals.map((proposal) => proposal.songId));
+    return { proposals, missed: songs.filter((song) => !matched.has(song.id)).map((song) => song.id) };
+  }
+
+  return { lookupSong, lookupAlbum, lookupGroup, unifyEditions, searchCandidates, proposalFor, searchAlbumCandidates, albumProposalsFor };
 }
 
 module.exports = { createTaggingLookup, searchTitle };

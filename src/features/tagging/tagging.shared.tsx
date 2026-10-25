@@ -15,3 +15,25 @@ export function describeChanges(proposal: TagProposal) {
   if (!proposal.writable) changes.push("library only (this file type can’t be tagged)");
   return changes.length ? changes.join(" · ") : "adds track number and MusicBrainz IDs";
 }
+
+// Matches below this are shown but not ticked, so they need a deliberate choice.
+export const AUTO_SELECT = 0.8;
+
+export function ProposalRow({ proposal, checked, onToggle }: { proposal: TagProposal; checked: boolean; onToggle: () => void }) {
+  const { tags } = proposal;
+  const details = [tags.album + (tags.year ? ` (${tags.year})` : ""), tags.trackNumber ? `track ${tags.trackNumber}${tags.trackTotal ? ` of ${tags.trackTotal}` : ""}` : "", tags.genre].filter(Boolean).join(" · ");
+  return <li className={checked ? "taggingProposal" : "taggingProposal unselected"}>
+    <label>
+      <input type="checkbox" checked={checked} onChange={onToggle} />
+      {proposal.coverUrl ? <img src={proposal.coverUrl} alt="" loading="lazy" /> : <span className="taggingNoCover" aria-hidden="true" />}
+      <span className="taggingProposalText">
+        <strong>{tags.title} <small>{tags.artist}</small></strong>
+        <small>{details}</small>
+        <small className="taggingChanges">{describeChanges(proposal)}</small>
+      </span>
+    </label>
+    <span className={proposal.confidence >= AUTO_SELECT ? "taggingScore" : "taggingScore low"} title="How closely title, artist and length match">{Math.round(proposal.confidence * 100)}%</span>
+  </li>;
+}
+
+export const byTrack = (a: TagProposal, b: TagProposal) => a.tags.discNumber - b.tags.discNumber || a.tags.trackNumber - b.tags.trackNumber;

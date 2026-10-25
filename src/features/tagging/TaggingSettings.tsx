@@ -3,8 +3,8 @@ import { Check, RefreshCw, Search } from "lucide-react";
 import { ToggleRow } from "../settings/settings.shared";
 import type { Settings } from "../settings/settings.types";
 import type { Song } from "../library/song.types";
-import type { TagAlbumGroup, TagAudit, TagLookupResult, TagProposal } from "./tagging.types";
-import { Spinner, describeChanges, errorText, plural } from "./tagging.shared";
+import type { TagAlbumGroup, TagAudit, TagLookupResult } from "./tagging.types";
+import { AUTO_SELECT, ProposalRow, Spinner, byTrack, errorText, plural } from "./tagging.shared";
 import "./tagging.css";
 
 type TaggingSettingsProps = {
@@ -14,28 +14,6 @@ type TaggingSettingsProps = {
 };
 
 const groupName = (group: TagAlbumGroup) => group.album ? `${group.album} · ${group.artist}` : `${group.artist} · singles`;
-// Matches below this are shown but not ticked, so they need a deliberate choice.
-const AUTO_SELECT = 0.8;
-
-function ProposalRow({ proposal, checked, onToggle }: { proposal: TagProposal; checked: boolean; onToggle: () => void }) {
-  const { tags } = proposal;
-  const details = [tags.album + (tags.year ? ` (${tags.year})` : ""), tags.trackNumber ? `track ${tags.trackNumber}${tags.trackTotal ? ` of ${tags.trackTotal}` : ""}` : "", tags.genre].filter(Boolean).join(" · ");
-  return <li className={checked ? "taggingProposal" : "taggingProposal unselected"}>
-    <label>
-      <input type="checkbox" checked={checked} onChange={onToggle} />
-      {proposal.coverUrl ? <img src={proposal.coverUrl} alt="" loading="lazy" /> : <span className="taggingNoCover" aria-hidden="true" />}
-      <span className="taggingProposalText">
-        <strong>{tags.title} <small>{tags.artist}</small></strong>
-        <small>{details}</small>
-        <small className="taggingChanges">{describeChanges(proposal)}</small>
-      </span>
-    </label>
-    <span className={proposal.confidence >= AUTO_SELECT ? "taggingScore" : "taggingScore low"} title="How closely title, artist and length match">{Math.round(proposal.confidence * 100)}%</span>
-  </li>;
-}
-
-const byTrack = (a: TagProposal, b: TagProposal) => a.tags.discNumber - b.tags.discNumber || a.tags.trackNumber - b.tags.trackNumber;
-
 /** Looks songs up on MusicBrainz, shows the proposed tags and writes the accepted ones. */
 export default function TaggingSettings({ settings, songs, updateSetting }: TaggingSettingsProps) {
   const enabled = settings.musicbrainzTagging === true;

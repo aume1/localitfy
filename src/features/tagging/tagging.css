@@ -399,3 +399,13 @@
   .tagSearchForm { grid-template-columns: 1fr; }
   .tagSearchLength { display: none; }
 }
+
+.tagSearchChosen > strong {
+  overflow-wrap: anywhere;
+}
+
+.tagSearchChosenMeta {
+  margin-left: 6px;
+  font-weight: 500;
+  opacity: .62;
+}

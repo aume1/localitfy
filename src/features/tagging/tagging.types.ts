@@ -32,3 +32,9 @@ export type TagSearchResult = {
   recordingId: string; releaseId: string; score: number; title: string; artist: string; album: string;
   year: string; country: string; releaseType: string; trackCount: number; durationMs: number;
 };
+
+/** One release from a hand-typed MusicBrainz album search. */
+export type TagAlbumSearchResult = {
+  releaseId: string; score: number; title: string; artist: string; year: string; country: string;
+  releaseType: string; format: string; trackCount: number; label: string; note: string; status: string;
+};
