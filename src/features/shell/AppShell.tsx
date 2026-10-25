@@ -20,6 +20,7 @@ import type { AppShellProps } from "./appShell.contract";
 import type { Song } from "../library/song.types";
 import type { TagSearchAlbum } from "../tagging/AlbumTagSearchDialog";
 import type { AlbumTracksDialogProps } from "../tagging/AlbumTracksDialog";
+import { useDownloadTagPrompt } from "../tagging/useDownloadTagPrompt";
 import SidebarNav from "./SidebarNav";
 import {
   APP_VERSION, defaultUpdatePrompt, updateRibbonChildSpring, updateRibbonEnterSpring
@@ -49,6 +50,7 @@ const PlaylistPickerModal = lazy(() => import("../playlists/components/PlaylistP
 const TagSearchDialog = lazy(() => import("../tagging/TagSearchDialog"));
 const AlbumTagSearchDialog = lazy(() => import("../tagging/AlbumTagSearchDialog"));
 const AlbumTracksDialog = lazy(() => import("../tagging/AlbumTracksDialog"));
+const DownloadTagDialog = lazy(() => import("../tagging/DownloadTagDialog"));
 
 export type { AppShellProps } from "./appShell.contract";
 
@@ -85,6 +87,8 @@ export default function AppShell(props: AppShellProps) {
   const [tagSearchSong, setTagSearchSong] = useState<Song | null>(null);
   const [tagSearchAlbum, setTagSearchAlbum] = useState<TagSearchAlbum | null>(null);
   const [albumTracksRequest, setAlbumTracksRequest] = useState<AlbumTracksDialogProps["request"] | null>(null);
+  // When a download batch finishes, offer to tag the songs it added.
+  const downloadTagPrompt = useDownloadTagPrompt(settings.musicbrainzTagging === true, Boolean(downloads.downloadBusy || downloads.spotifyDownloadBusy), downloads.spotifyTracks, downloads.visibleDownloadResults);
 
   const homeHeroCoverBrightness = clamp(Number(settings.homeHeroCoverBrightness ?? 1), 0.65, 1.55);
   const homeHeroCoverContrast = clamp(1.02 + (homeHeroCoverBrightness - 1) * 0.08, 0.98, 1.08);
@@ -373,6 +377,8 @@ export default function AppShell(props: AppShellProps) {
       <SongContextMenu {...modals.songContextMenu} findOnMusicBrainz={settings.musicbrainzTagging ? setTagSearchSong : undefined} />
       {tagSearchSong ? <Suspense fallback={null}><TagSearchDialog key={tagSearchSong.id} song={tagSearchSong} onClose={() => setTagSearchSong(null)} /></Suspense> : null}
       {tagSearchAlbum ? <Suspense fallback={null}><AlbumTagSearchDialog album={tagSearchAlbum} onClose={() => setTagSearchAlbum(null)} /></Suspense> : null}
+      {downloadTagPrompt.songIds.length ? <Suspense fallback={null}><DownloadTagDialog songIds={downloadTagPrompt.songIds}
+        titleOf={(id) => modals.songContextMenu.songsById.get(id)?.title || "Unknown song"} onClose={downloadTagPrompt.dismiss} /></Suspense> : null}
       {albumTracksRequest ? <Suspense fallback={null}><AlbumTracksDialog request={albumTracksRequest} sendToDownloads={discover.sendToDownloads} onClose={() => setAlbumTracksRequest(null)} /></Suspense> : null}
       {modals.similarSongs.seed ? <Suspense fallback={null}><SimilarSongsDialog key={modals.similarSongs.seed.key} {...modals.similarSongs} /></Suspense> : null}
 

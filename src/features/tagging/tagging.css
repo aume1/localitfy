@@ -502,3 +502,13 @@
   text-align: right;
   opacity: .55;
 }
+
+/* Downloads finished → get tags from MusicBrainz? */
+.downloadTagSongs {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: 13px;
+  opacity: .8;
+}

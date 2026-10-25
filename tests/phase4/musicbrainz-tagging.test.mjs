@@ -428,6 +428,35 @@ test("songs and albums get a find on musicbrainz menu item only while tagging is
   assert.match(albums, /<AlbumContextMenu/);
 });
 
+test("downloads offer tagging once per finished batch, only for the songs that batch added", async () => {
+  const ts = (await import("typescript")).default;
+  const { runInNewContext } = await import("node:vm");
+  const { outputText } = ts.transpileModule(fs.readFileSync(path.join(root, "src", "features", "tagging", "useDownloadTagPrompt.ts"), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } });
+  // Just enough of React's hooks to render the hook repeatedly: state, refs, and effects that run when their deps change.
+  const slots = [];
+  let index = 0;
+  const react = {
+    useState: (initial) => { const i = index++; slots[i] ??= { value: initial }; return [slots[i].value, (next) => { slots[i].value = next; }]; },
+    useRef: (initial) => { const i = index++; slots[i] ??= { current: initial }; return slots[i]; },
+    useEffect: (effect, deps) => { const i = index++; if (!slots[i] || deps.some((dep, k) => dep !== slots[i].deps[k])) { slots[i] = { deps }; effect(); } }
+  };
+  const exports = {};
+  runInNewContext(outputText, { exports, require: (name) => { assert.equal(name, "react"); return react; } });
+  // Rendered twice, so effects' state updates show up; the arrays are copied out of the sandbox's realm.
+  const render = (...args) => { index = 0; exports.useDownloadTagPrompt(...args); index = 0; const result = exports.useDownloadTagPrompt(...args); return { ...result, songIds: [...result.songIds] }; };
+
+  const earlier = [{ librarySongId: "old", downloadStatus: "done" }];
+  render(true, false, earlier, []);
+  render(true, true, earlier, []);
+  const after = [...earlier, { librarySongId: "new-1", downloadStatus: "done" }, { librarySongId: "", downloadStatus: "failed" }, { librarySongId: "new-2", downloadStatus: "failed" }];
+  const finished = render(true, false, after, [{ librarySongId: "yt-1", ok: true }]);
+  assert.deepEqual(finished.songIds, ["new-1", "yt-1"], "only songs this batch imported, failed ones left out");
+  finished.dismiss();
+  assert.deepEqual(render(true, false, after, [{ librarySongId: "yt-1", ok: true }]).songIds, [], "asked once per batch");
+  render(false, true, after, []);
+  assert.deepEqual(render(false, false, [...after, { librarySongId: "new-3", downloadStatus: "done" }], []).songIds, [], "never asks while tagging is off");
+});
+
 test("main registers tagging IPC and Experimental settings shows the panel", () => {
   assert.match(fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8"), /registerTaggingIpc\(ipcRouter/);
   assert.match(fs.readFileSync(path.join(root, "src", "features", "settings", "categories", "ExperimentalSettings.tsx"), "utf8"), /<TaggingSettings /);
