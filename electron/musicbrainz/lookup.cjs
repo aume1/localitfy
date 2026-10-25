@@ -165,7 +165,7 @@ function createTaggingLookup({ client, coverDir, userAgent, fetchImpl = fetch })
         const row = {
           recordingId: recording.id, releaseId: release.id, score: Math.round(score * 100) / 100, rank: releaseRank(release),
           title: recording.title, artist: creditText(recording["artist-credit"] || []), album: release.title,
-          year: String(release.date || "").slice(0, 4), country: String(release.country || ""),
+          year: String(release.date || recording["first-release-date"] || "").slice(0, 4), country: String(release.country || ""),
           releaseType: [group["primary-type"], ...(group["secondary-types"] || [])].filter(Boolean).join(" + "),
           trackCount: Number(release["track-count"] || 0), durationMs: Number(recording.length || 0)
         };

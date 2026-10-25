@@ -269,25 +269,33 @@ test("writeMusicBrainzTags tags a real MP3 and FLAC, keeps the audio and sends t
   }
 });
 
-test("re-tagging a file matched before clears the old match's ISRC, label and copyright", { skip: !hasFfmpeg && "ffmpeg-static binary not installed" }, async (t) => {
+test("re-matching a file Picard got wrong clears the wrong match's tags but keeps the downloader's", { skip: !hasFfmpeg && "ffmpeg-static binary not installed" }, async (t) => {
   const dir = tempDir();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const tags = { title: "Lil Bit", artist: "Nelly & Florida Georgia Line", album: "Lil Bit", albumArtist: "Nelly & Florida Georgia Line", date: "2020-10-23", genre: "Country", trackNumber: 1, trackTotal: 1, discNumber: 1, discTotal: 1, releaseType: "single", releaseStatus: "official", releaseCountry: "XW", isrc: "USQX92003533" };
-  const ids = { recordingId: "fd76fba3-295d-4589-a6e2-979269b6e436", releaseTrackId: "", releaseId: "rel", releaseGroupId: "rg", artistIds: ["nelly"], albumArtistIds: ["nelly"] };
-  const trashItem = async (target) => fs.renameSync(target, path.join(dir, `trashed-${Date.now()}-${path.basename(target)}`));
+  // Picard tagged WHO SHOT SCOTT's "LIL BIT OF HOT" as Nelly's "Lil Bit".
+  const wrong = { title: "Lil Bit", artist: "Nelly & Florida Georgia Line", album: "Lil Bit", albumArtist: "Nelly & Florida Georgia Line", date: "2020-10-23", genre: "", trackNumber: 1, trackTotal: 1, discNumber: 1, discTotal: 1, releaseType: "single", releaseStatus: "official", releaseCountry: "XW", isrc: "USQX92003533" };
+  const right = { ...wrong, title: "LIL BIT OF HOT", artist: "WHO SHOT SCOTT", album: "BRAIN (SIDE B)", albumArtist: "WHO SHOT SCOTT", date: "2025-02-28", releaseType: "ep", isrc: "" };
+  const ids = (recordingId) => ({ recordingId, releaseTrackId: "", releaseId: "rel", releaseGroupId: "rg", artistIds: ["a"], albumArtistIds: ["a"] });
+  const trashItem = async (target) => fs.renameSync(target, path.join(dir, `trashed-${Math.random()}-${path.basename(target)}`));
   for (const ext of [".mp3", ".flac"]) {
-    const file = path.join(dir, `lil-bit${ext}`);
-    spawnSync(ffmpegPath, ["-v", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-metadata", "title=Little Bit of Hot", "-metadata", "copyright=(P) 2024 Tenfold Records", "-metadata", "publisher=Tenfold", "-metadata", "comment=keep me", file]);
-    // The wrong match first, as an earlier Picard run would have left it.
-    await writeMusicBrainzTags({ filePath: file, tags: { ...tags, title: "Little Bit of Hot", isrc: "QMBZ92410276" }, ids: { ...ids, recordingId: "wrong-recording" }, ffmpegPath, parseFile, trashItem });
-    assert.equal((await parseFile(file)).common.copyright, "(P) 2024 Tenfold Records", "a first tagging keeps the file's own tags");
-    await writeMusicBrainzTags({ filePath: file, tags, ids, ffmpegPath, parseFile, trashItem });
+    const file = path.join(dir, `song${ext}`);
+    const downloaded = ext === ".mp3" ? ["-metadata", "ISRC=QMBZ92410276"] : [];
+    spawnSync(ffmpegPath, ["-v", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-metadata", "title=LIL BIT OF HOT", "-metadata", "copyright=(P) 2024 Tenfold Records", ...downloaded, "-metadata", "comment=keep me", file]);
+    await writeMusicBrainzTags({ filePath: file, tags: wrong, ids: ids("nelly-recording"), ffmpegPath, parseFile, trashItem });
+    if (ext === ".mp3") spawnSync(ffmpegPath, ["-v", "error", "-i", file, "-c", "copy", "-map_metadata", "0", "-metadata", "BARCODE=886448676805", "-metadata", "publisher=Columbia", "-id3v2_version", "4", path.join(dir, "picard.mp3")]);
+    if (ext === ".mp3") fs.writeFileSync(file, withMusicBrainzUfid(fs.readFileSync(path.join(dir, "picard.mp3")), "nelly-recording"));
+    await writeMusicBrainzTags({ filePath: file, tags: right, ids: ids("wss-recording"), ffmpegPath, parseFile, trashItem });
     const { common, native } = await parseFile(file);
-    assert.equal(common.musicbrainz_recordingid, ids.recordingId);
-    assert.deepEqual(common.isrc, ["USQX92003533"], `${ext}: the new ISRC replaces the old one`);
-    assert.equal(common.copyright, undefined, `${ext}: the old copyright is gone`);
-    assert.equal(common.label, undefined, `${ext}: the old label is gone`);
-    assert.ok(Object.values(native).flat().some((item) => item.value === "keep me"), `${ext}: unrelated tags are kept`);
+    const values = Object.values(native).flat().map((item) => item.value);
+    assert.equal(common.musicbrainz_recordingid, "wss-recording");
+    assert.equal(common.title, "LIL BIT OF HOT");
+    assert.ok(!values.includes("USQX92003533"), `${ext}: the wrong song's ISRC is gone`);
+    assert.equal(common.copyright, "(P) 2024 Tenfold Records", `${ext}: the downloader's copyright is kept`);
+    assert.ok(values.includes("keep me"), `${ext}: unrelated tags are kept`);
+    if (ext === ".mp3") {
+      assert.ok(values.includes("QMBZ92410276"), "the downloader's own ISRC is kept");
+      assert.ok(!values.includes("886448676805") && !values.includes("Columbia"), "Picard's barcode and label for the wrong release are gone");
+    }
   }
 });
 

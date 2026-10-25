@@ -7,11 +7,13 @@ const { spawn } = require("node:child_process");
 const WRITABLE = new Set([".mp3", ".flac"]);
 const MUSICBRAINZ_OWNER = "http://musicbrainz.org";
 
-// Release-specific tags an earlier match may have written (Picard writes all of these). Re-tagging
-// clears them so a wrong match's ISRC, label or barcode can't contradict the new one.
-const STALE_KEYS = ["TSRC", "ISRC", "BARCODE", "CATALOGNUMBER", "ASIN", "LABEL", "ORGANIZATION", "publisher", "copyright", "Acoustid Id", "ACOUSTID_ID",
-  "MusicBrainz Work Id", "MUSICBRAINZ_WORKID", "MusicBrainz Disc Id", "MUSICBRAINZ_DISCID", "ARTISTS", "ALBUMARTISTS", "originalyear", "ORIGINALDATE", "TDOR",
-  "SCRIPT", "TMED", "MEDIA", "artist-sort", "album_artist-sort", "TSO2", "ARTISTSORT", "ALBUMARTISTSORT"];
+// Tags Picard fills in from the MusicBrainz match. When a file is re-matched to a different
+// recording they describe the old (wrong) one, so they are cleared. Tags other tools wrote, like a
+// downloader's TXXX:ISRC or copyright, are kept: they may be the only correct ones in the file.
+const PICARD_KEYS = ["BARCODE", "CATALOGNUMBER", "ASIN", "Acoustid Id", "ACOUSTID_ID", "MusicBrainz Work Id", "MUSICBRAINZ_WORKID",
+  "MusicBrainz Disc Id", "MUSICBRAINZ_DISCID", "ARTISTS", "ALBUMARTISTS", "originalyear", "ORIGINALDATE", "TDOR", "SCRIPT", "TMED", "MEDIA",
+  "artist-sort", "album_artist-sort", "TSO2", "ARTISTSORT", "ALBUMARTISTSORT"];
+const staleKeys = (flac) => [...PICARD_KEYS, ...(flac ? ["ISRC", "LABEL", "ORGANIZATION"] : ["TSRC", "publisher"])];
 
 const canWriteTags = (filePath) => WRITABLE.has(path.extname(String(filePath || "")).toLowerCase());
 
@@ -61,7 +63,7 @@ function ffmpegArgs({ input, output, cover, tags, ids, clearStale = false }) {
     // Audio is copied as-is; a new cover replaces the old one, otherwise any existing cover is kept.
     "-map", "0:a", "-map", cover ? "1:v" : "0:v?", "-c", "copy", "-map_metadata", "0",
     // An empty value deletes the tag; the new values below are set afterwards.
-    ...(clearStale ? STALE_KEYS.flatMap((key) => ["-metadata", `${key}=`]) : []),
+    ...(clearStale ? staleKeys(flac).flatMap((key) => ["-metadata", `${key}=`]) : []),
     ...metadataPairs(tags, ids, flac).flatMap(([key, value]) => ["-metadata", `${key}=${value}`]),
     ...(cover ? ["-disposition:v", "attached_pic", "-metadata:s:v", "title=Album cover", "-metadata:s:v", "comment=Cover (front)"] : []),
     ...(flac ? [] : ["-id3v2_version", "4", "-write_id3v1", "1"]),
@@ -111,8 +113,9 @@ async function writeMusicBrainzTags({ filePath, tags, ids, cover = "", ffmpegPat
   let trashed = false;
   try {
     const before = await parseFile(filePath, { duration: true, skipCovers: true });
-    // A file that already has MusicBrainz IDs was matched before, possibly wrongly.
-    const clearStale = Boolean(before.common?.musicbrainz_recordingid);
+    // A file matched to another recording before was matched wrongly.
+    const previous = before.common?.musicbrainz_recordingid;
+    const clearStale = Boolean(previous && previous !== ids.recordingId);
     await runFfmpeg(ffmpegPath, ffmpegArgs({ input: filePath, output: temp, cover, tags, ids, clearStale }), spawnImpl);
     if (ext.toLowerCase() === ".mp3") fs.writeFileSync(temp, withMusicBrainzUfid(fs.readFileSync(temp), ids.recordingId));
     const after = await parseFile(temp, { duration: true, skipCovers: true });
@@ -127,4 +130,4 @@ async function writeMusicBrainzTags({ filePath, tags, ids, cover = "", ffmpegPat
   }
 }
 
-module.exports = { STALE_KEYS, canWriteTags, metadataPairs, ffmpegArgs, withMusicBrainzUfid, writeMusicBrainzTags };
+module.exports = { staleKeys, canWriteTags, metadataPairs, ffmpegArgs, withMusicBrainzUfid, writeMusicBrainzTags };
