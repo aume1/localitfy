@@ -721,7 +721,7 @@ function safeAll(database, sql, params = []) {
     return database.prepare(sql).all(...params);
   } catch (error) {
     lastMigrationReport.errors.push(`query failed: ${error?.message || error}`);
-    return [];
+    throw error;
   }
 }
 
@@ -920,6 +920,7 @@ function patchSong(id, patch) {
     database.prepare(`UPDATE songs SET ${sets.join(", ")} WHERE id = ?`).run(...values);
   } catch (error) {
     lastMigrationReport.errors.push(`patch failed: ${error?.message || error}`);
+    throw error;
   }
 
   return getSong(id);

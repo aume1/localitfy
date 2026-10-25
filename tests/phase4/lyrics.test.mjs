@@ -253,3 +253,14 @@ test("title cleaner drops common edit noise without mangling the underlying titl
   assert.equal(cleanTitle("Miss Papaya - slowed / reverb"), "Miss Papaya");
   assert.equal(cleanTitle("Hunter Eyes [Nightcore]"), "Hunter Eyes");
 });
+
+test("exact artist takes priority over a wrong-artist fallback with synced lyrics", () => {
+  const result = chooseLyricsResult([
+    { trackName: "Mayonaka No Door Stay With Me", artistName: "Unrelated Artist", duration: 300,
+      syncedLyrics: "[00:03.00]Wrong artist's lyrics" },
+    { trackName: "Mayonaka No Door Stay With Me", artistName: "Miki Matsubara", duration: 301,
+      plainLyrics: "Correct artist's lyrics" }
+  ], { track: "Mayonaka No Door Stay With Me", artist: "Miki Matsubara", duration: 300 });
+  assert.equal(result.status, "plain");
+  assert.equal(result.lines[0].text, "Correct artist's lyrics");
+});

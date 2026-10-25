@@ -58,7 +58,7 @@ function chooseLyricsResult(records, { track, artist, duration }) {
     const hasLyrics = synced || Boolean(item.plainLyrics) || item.instrumental === true;
     if (!hasLyrics) return [];
     const sameLength = gap <= DURATION_TOLERANCE_S;
-    return [{ item, gap, sameLength, synced, artistMatched: Boolean(targetArtist && actualArtist) }];
+    return [{ item, gap, sameLength, synced, artistMatched: Boolean(targetArtist && actualArtist && matchingArtist) }];
   });
   candidates.sort((a, b) =>
     Number(b.artistMatched) - Number(a.artistMatched) ||
