@@ -6,7 +6,7 @@ export type TagAudit = { total: number; tagged: number; missing: number; untagge
 export type ProposedTags = {
   title: string; artist: string; album: string; albumArtist: string; date: string; year: string;
   trackNumber: number; trackTotal: number; discNumber: number; discTotal: number; genre: string;
-  releaseType: string; releaseStatus: string; releaseCountry: string;
+  releaseType: string; releaseStatus: string; releaseCountry: string; isrc: string;
 };
 
 export type TagProposal = {
@@ -26,3 +26,9 @@ export type TagProposal = {
 export type TagLookupResult = { proposals: TagProposal[]; missed: string[] };
 
 export type TagApplyResult = { applied: number; written: number; failed: { songId: string; title: string; error: string }[] };
+
+/** One recording on one release, from a hand-typed MusicBrainz search. */
+export type TagSearchResult = {
+  recordingId: string; releaseId: string; score: number; title: string; artist: string; album: string;
+  year: string; country: string; releaseType: string; trackCount: number; durationMs: number;
+};

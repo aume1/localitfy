@@ -143,6 +143,65 @@ test("an album lookup matches every track to one release and downloads its cover
   assert.equal(coverRequests.length, 1, "the cover is downloaded once per release");
 });
 
+function fakeEditions() {
+  const nin = [{ name: "Nine Inch Nails", joinphrase: "", artist: { id: "nin" } }];
+  const group = { id: "rg-slip", "primary-type": "Album", "secondary-types": [] };
+  const track = (id, position, title, recording, length) => ({ id, position, title, length, "artist-credit": nin, recording: { id: recording, title, length, "artist-credit": nin } });
+  // The 5-track edition lists Echoplex under its own recording ID; the 10-track one holds both songs.
+  const releases = {
+    "rel-10": { id: "rel-10", title: "The Slip", status: "Official", date: "2008-05-05", "artist-credit": nin, "release-group": group,
+      media: [{ position: 1, "track-count": 10, tracks: [track("t10-1", 1, "Discipline", "rec-d", 260000), track("t10-2", 2, "Echoplex", "rec-e10", 280000)] }] },
+    "rel-5": { id: "rel-5", title: "The Slip (Bonus Edition)", status: "Official", date: "2008-05-05", "artist-credit": nin, "release-group": group,
+      media: [{ position: 1, "track-count": 5, tracks: [track("t5-1", 1, "Echoplex", "rec-e", 280000)] }] }
+  };
+  const searchEntry = (release, trackId, title) => ({ ...release, "track-count": release.media[0]["track-count"], media: [{ position: 1, "track-count": release.media[0]["track-count"], track: [{ id: trackId, number: "1", title }] }] });
+  const recordings = {
+    Discipline: { id: "rec-d", title: "Discipline", length: 260000, "artist-credit": nin, releases: [searchEntry(releases["rel-10"], "t10-1", "Discipline")] },
+    Echoplex: { id: "rec-e", title: "Echoplex", length: 280000, "artist-credit": nin, releases: [searchEntry(releases["rel-5"], "t5-1", "Echoplex")] }
+  };
+  const fetchImpl = async (url) => {
+    if (url.startsWith("https://coverartarchive.org/")) return { ok: false, status: 404 };
+    const { pathname, searchParams } = new URL(url);
+    const title = /recording:"([^"]+)"/.exec(searchParams.get("query") || "")?.[1];
+    const id = pathname.split("/").pop();
+    const body = pathname.endsWith("/recording") ? { recordings: recordings[title] ? [recordings[title]] : [] } : releases[id] || {};
+    return { ok: true, status: 200, json: async () => body };
+  };
+  return { fetchImpl, recordings, releases };
+}
+
+test("singles matched to different editions of one album are moved onto the edition that has them all", async (t) => {
+  const dir = tempDir();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const { fetchImpl } = fakeEditions();
+  const lookup = createTaggingLookup({ client: createMusicBrainzClient({ userAgent: "t", fetchImpl, minIntervalMs: 0 }), coverDir: dir, userAgent: "t", fetchImpl });
+  const { proposals, missed } = await lookup.lookupGroup([
+    { id: "d", title: "Discipline (Official Audio)", artist: "Nine Inch Nails", album: "local files", durationMs: 260000, filePath: "/d/1.mp3" },
+    { id: "e", title: "Echoplex", artist: "Nine Inch Nails", album: "local files", durationMs: 280000, filePath: "/d/2.mp3" }
+  ]);
+  assert.deepEqual(missed, []);
+  assert.deepEqual(proposals.map((proposal) => [proposal.songId, proposal.ids.releaseId, proposal.ids.recordingId, proposal.tags.trackNumber, proposal.tags.trackTotal]),
+    [["d", "rel-10", "rec-d", 1, 10], ["e", "rel-10", "rec-e10", 2, 10]], "Echoplex follows Discipline onto the 10-track edition, found by title and length");
+  assert.ok(proposals[1].confidence > 0.9, "the move keeps the original match confidence");
+});
+
+test("a hand-typed search lists each release once, and a picked release becomes the proposal", async (t) => {
+  const dir = tempDir();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const { fetchImpl, recordings, releases } = fakeEditions();
+  const echoplex = recordings.Echoplex;
+  // A second, identical pressing of the same edition only differs by ID.
+  echoplex.releases.push({ ...echoplex.releases[0], id: "rel-5-cd", status: "Bootleg" });
+  const lookup = createTaggingLookup({ client: createMusicBrainzClient({ userAgent: "t", fetchImpl, minIntervalMs: 0 }), coverDir: dir, userAgent: "t", fetchImpl });
+  const song = { id: "x", title: "Lil Bit", artist: "Somebody Else", album: "Wrong", durationMs: 281000, filePath: "/d/x.mp3" };
+  const rows = await lookup.searchCandidates(song, { title: "Echoplex", artist: "Nine Inch Nails" });
+  assert.deepEqual(rows.map((row) => [row.releaseId, row.album, row.trackCount]), [["rel-5", "The Slip (Bonus Edition)", 5]]);
+  assert.ok(rows[0].score > 0.9, "scored against the search, not the file's wrong tags");
+  const proposal = await lookup.proposalFor(song, { recordingId: "rec-e10", releaseId: "rel-10" });
+  assert.deepEqual([proposal.tags.title, proposal.tags.album, proposal.tags.trackNumber, proposal.ids.recordingId], ["Echoplex", releases["rel-10"].title, 2, "rec-e10"]);
+  await assert.rejects(lookup.proposalFor(song, { recordingId: "rec-d", releaseId: "rel-5" }), /no longer lists/);
+});
+
 test("an unreachable MusicBrainz is an error, not \"no match\"", async (t) => {
   const dir = tempDir();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -210,6 +269,28 @@ test("writeMusicBrainzTags tags a real MP3 and FLAC, keeps the audio and sends t
   }
 });
 
+test("re-tagging a file matched before clears the old match's ISRC, label and copyright", { skip: !hasFfmpeg && "ffmpeg-static binary not installed" }, async (t) => {
+  const dir = tempDir();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const tags = { title: "Lil Bit", artist: "Nelly & Florida Georgia Line", album: "Lil Bit", albumArtist: "Nelly & Florida Georgia Line", date: "2020-10-23", genre: "Country", trackNumber: 1, trackTotal: 1, discNumber: 1, discTotal: 1, releaseType: "single", releaseStatus: "official", releaseCountry: "XW", isrc: "USQX92003533" };
+  const ids = { recordingId: "fd76fba3-295d-4589-a6e2-979269b6e436", releaseTrackId: "", releaseId: "rel", releaseGroupId: "rg", artistIds: ["nelly"], albumArtistIds: ["nelly"] };
+  const trashItem = async (target) => fs.renameSync(target, path.join(dir, `trashed-${Date.now()}-${path.basename(target)}`));
+  for (const ext of [".mp3", ".flac"]) {
+    const file = path.join(dir, `lil-bit${ext}`);
+    spawnSync(ffmpegPath, ["-v", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-metadata", "title=Little Bit of Hot", "-metadata", "copyright=(P) 2024 Tenfold Records", "-metadata", "publisher=Tenfold", "-metadata", "comment=keep me", file]);
+    // The wrong match first, as an earlier Picard run would have left it.
+    await writeMusicBrainzTags({ filePath: file, tags: { ...tags, title: "Little Bit of Hot", isrc: "QMBZ92410276" }, ids: { ...ids, recordingId: "wrong-recording" }, ffmpegPath, parseFile, trashItem });
+    assert.equal((await parseFile(file)).common.copyright, "(P) 2024 Tenfold Records", "a first tagging keeps the file's own tags");
+    await writeMusicBrainzTags({ filePath: file, tags, ids, ffmpegPath, parseFile, trashItem });
+    const { common, native } = await parseFile(file);
+    assert.equal(common.musicbrainz_recordingid, ids.recordingId);
+    assert.deepEqual(common.isrc, ["USQX92003533"], `${ext}: the new ISRC replaces the old one`);
+    assert.equal(common.copyright, undefined, `${ext}: the old copyright is gone`);
+    assert.equal(common.label, undefined, `${ext}: the old label is gone`);
+    assert.ok(Object.values(native).flat().some((item) => item.value === "keep me"), `${ext}: unrelated tags are kept`);
+  }
+});
+
 test("a failed write leaves the original untouched and out of the Trash", { skip: !hasFfmpeg && "ffmpeg-static binary not installed" }, async (t) => {
   const dir = tempDir();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -271,6 +352,13 @@ test("IPC: gated by the setting, proposals stay native, and library-only apply u
   assert.equal(songs.get("b").genre, "", "unselected songs are untouched");
   assert.equal(sent[0][0], "library:watched-change");
   assert.deepEqual(await router.invoke("tagging:apply", { songIds: ["a"] }), { applied: 0, written: 0, failed: [] }, "a proposal is used once");
+
+  assert.deepEqual(await router.invoke("tagging:search", { songId: "b", title: "death rolL", artist: "" }), [], "the fake has no recordings to search");
+  const chosen = await router.invoke("tagging:choose", { songId: "b", recordingId: "rec-2", releaseId: "rel-marrow" });
+  assert.deepEqual([chosen.songId, chosen.tags.trackNumber, chosen.coverUrl], ["b", 2, "localtify-media://rel-marrow.jpg"]);
+  assert.deepEqual((await router.invoke("tagging:pending")).map((proposal) => proposal.songId), [], "a hand-picked match stays with its dialog");
+  assert.deepEqual(await router.invoke("tagging:apply", { songIds: ["b"] }), { applied: 1, written: 0, failed: [] });
+  await assert.rejects(router.invoke("tagging:search", { songId: "missing", title: "x" }), /could not be found/);
 });
 
 test("main registers tagging IPC and Experimental settings shows the panel", () => {

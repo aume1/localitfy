@@ -530,6 +530,8 @@ declare global {
       getPendingMusicBrainzTags: () => Promise<import("./features/tagging/tagging.types").TagProposal[]>;
       lookUpMusicBrainzTags: (songIds: string[]) => Promise<import("./features/tagging/tagging.types").TagLookupResult>;
       applyMusicBrainzTags: (songIds: string[]) => Promise<import("./features/tagging/tagging.types").TagApplyResult>;
+      searchMusicBrainz: (songId: string, title: string, artist: string) => Promise<import("./features/tagging/tagging.types").TagSearchResult[]>;
+      chooseMusicBrainzMatch: (songId: string, recordingId: string, releaseId: string) => Promise<import("./features/tagging/tagging.types").TagProposal>;
       findDuplicates: () => Promise<{ ok: boolean; sets?: DuplicateSet[]; scanned?: number; analyzed?: number; message?: string }>;
       mergeDuplicates: (payload: { merges: DuplicateMerge[]; moveToTrash?: boolean }) => Promise<{ ok: boolean; removedCount?: number; trashed?: number; trashFailed?: number; skippedShared?: number; merges?: DuplicateMerge[]; songs?: Song[]; message?: string }>;
       scanAlbumFolder?: (payload?: { mode?: "single" | "library" }) => Promise<LocalitfyAlbumFolderScanResult>;

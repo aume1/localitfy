@@ -7,6 +7,12 @@ const { spawn } = require("node:child_process");
 const WRITABLE = new Set([".mp3", ".flac"]);
 const MUSICBRAINZ_OWNER = "http://musicbrainz.org";
 
+// Release-specific tags an earlier match may have written (Picard writes all of these). Re-tagging
+// clears them so a wrong match's ISRC, label or barcode can't contradict the new one.
+const STALE_KEYS = ["TSRC", "ISRC", "BARCODE", "CATALOGNUMBER", "ASIN", "LABEL", "ORGANIZATION", "publisher", "copyright", "Acoustid Id", "ACOUSTID_ID",
+  "MusicBrainz Work Id", "MUSICBRAINZ_WORKID", "MusicBrainz Disc Id", "MUSICBRAINZ_DISCID", "ARTISTS", "ALBUMARTISTS", "originalyear", "ORIGINALDATE", "TDOR",
+  "SCRIPT", "TMED", "MEDIA", "artist-sort", "album_artist-sort", "TSO2", "ARTISTSORT", "ALBUMARTISTSORT"];
+
 const canWriteTags = (filePath) => WRITABLE.has(path.extname(String(filePath || "")).toLowerCase());
 
 /** Picard-compatible tag names: ID3 TXXX descriptions for MP3, Vorbis comments for FLAC. */
@@ -19,7 +25,8 @@ function metadataPairs(tags, ids, flac) {
     date: tags.date,
     genre: tags.genre,
     track: tags.trackNumber ? (flac ? String(tags.trackNumber) : `${tags.trackNumber}${tags.trackTotal ? `/${tags.trackTotal}` : ""}`) : "",
-    disc: tags.discNumber ? (flac ? String(tags.discNumber) : `${tags.discNumber}${tags.discTotal ? `/${tags.discTotal}` : ""}`) : ""
+    disc: tags.discNumber ? (flac ? String(tags.discNumber) : `${tags.discNumber}${tags.discTotal ? `/${tags.discTotal}` : ""}`) : "",
+    [flac ? "ISRC" : "TSRC"]: tags.isrc
   };
   const extra = flac ? {
     TRACKTOTAL: tags.trackTotal ? String(tags.trackTotal) : "",
@@ -47,12 +54,14 @@ function metadataPairs(tags, ids, flac) {
   return Object.entries({ ...pairs, ...extra }).filter(([, value]) => value);
 }
 
-function ffmpegArgs({ input, output, cover, tags, ids }) {
+function ffmpegArgs({ input, output, cover, tags, ids, clearStale = false }) {
   const flac = path.extname(input).toLowerCase() === ".flac";
   return [
     "-hide_banner", "-loglevel", "error", "-y", "-i", input, ...(cover ? ["-i", cover] : []),
     // Audio is copied as-is; a new cover replaces the old one, otherwise any existing cover is kept.
     "-map", "0:a", "-map", cover ? "1:v" : "0:v?", "-c", "copy", "-map_metadata", "0",
+    // An empty value deletes the tag; the new values below are set afterwards.
+    ...(clearStale ? STALE_KEYS.flatMap((key) => ["-metadata", `${key}=`]) : []),
     ...metadataPairs(tags, ids, flac).flatMap(([key, value]) => ["-metadata", `${key}=${value}`]),
     ...(cover ? ["-disposition:v", "attached_pic", "-metadata:s:v", "title=Album cover", "-metadata:s:v", "comment=Cover (front)"] : []),
     ...(flac ? [] : ["-id3v2_version", "4", "-write_id3v1", "1"]),
@@ -101,9 +110,12 @@ async function writeMusicBrainzTags({ filePath, tags, ids, cover = "", ffmpegPat
   const temp = path.join(path.dirname(filePath), `.${path.basename(filePath, ext)}.localtify-tagging${ext}`);
   let trashed = false;
   try {
-    await runFfmpeg(ffmpegPath, ffmpegArgs({ input: filePath, output: temp, cover, tags, ids }), spawnImpl);
+    const before = await parseFile(filePath, { duration: true, skipCovers: true });
+    // A file that already has MusicBrainz IDs was matched before, possibly wrongly.
+    const clearStale = Boolean(before.common?.musicbrainz_recordingid);
+    await runFfmpeg(ffmpegPath, ffmpegArgs({ input: filePath, output: temp, cover, tags, ids, clearStale }), spawnImpl);
     if (ext.toLowerCase() === ".mp3") fs.writeFileSync(temp, withMusicBrainzUfid(fs.readFileSync(temp), ids.recordingId));
-    const [before, after] = await Promise.all([parseFile(filePath, { duration: true, skipCovers: true }), parseFile(temp, { duration: true, skipCovers: true })]);
+    const after = await parseFile(temp, { duration: true, skipCovers: true });
     if (after.common?.musicbrainz_recordingid !== ids.recordingId || after.common?.title !== tags.title) throw new Error("tags did not verify after writing");
     if (Math.abs(Number(after.format?.duration || 0) - Number(before.format?.duration || 0)) > 1) throw new Error("audio length changed while tagging");
     await trashItem(filePath);
@@ -115,4 +127,4 @@ async function writeMusicBrainzTags({ filePath, tags, ids, cover = "", ffmpegPat
   }
 }
 
-module.exports = { canWriteTags, metadataPairs, ffmpegArgs, withMusicBrainzUfid, writeMusicBrainzTags };
+module.exports = { STALE_KEYS, canWriteTags, metadataPairs, ffmpegArgs, withMusicBrainzUfid, writeMusicBrainzTags };

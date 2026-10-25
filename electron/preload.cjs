@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld("localitfy", {
   getPendingMusicBrainzTags: () => ipcRenderer.invoke("tagging:pending"),
   lookUpMusicBrainzTags: (songIds) => ipcRenderer.invoke("tagging:lookup", { songIds }),
   applyMusicBrainzTags: (songIds) => ipcRenderer.invoke("tagging:apply", { songIds }),
+  searchMusicBrainz: (songId, title, artist) => ipcRenderer.invoke("tagging:search", { songId, title, artist }),
+  chooseMusicBrainzMatch: (songId, recordingId, releaseId) => ipcRenderer.invoke("tagging:choose", { songId, recordingId, releaseId }),
   findDuplicates: () => ipcRenderer.invoke("library:find-duplicates"),
   mergeDuplicates: (payload) => ipcRenderer.invoke("library:merge-duplicates", payload),
   getDiscoveries: (payload) => ipcRenderer.invoke("discover:get", payload),

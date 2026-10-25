@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Check, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { Check, RefreshCw, Search } from "lucide-react";
 import { ToggleRow } from "../settings/settings.shared";
 import type { Settings } from "../settings/settings.types";
 import type { Song } from "../library/song.types";
 import type { TagAlbumGroup, TagAudit, TagLookupResult, TagProposal } from "./tagging.types";
+import { Spinner, describeChanges, errorText, plural } from "./tagging.shared";
 import "./tagging.css";
 
 type TaggingSettingsProps = {
@@ -12,23 +13,9 @@ type TaggingSettingsProps = {
   updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => unknown;
 };
 
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 const groupName = (group: TagAlbumGroup) => group.album ? `${group.album} · ${group.artist}` : `${group.artist} · singles`;
-const errorText = (reason: unknown) => reason instanceof Error ? reason.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, "") : "Something went wrong. Please try again.";
 // Matches below this are shown but not ticked, so they need a deliberate choice.
 const AUTO_SELECT = 0.8;
-
-const Spinner = () => <LoaderCircle size={14} className="taggingSpinner" aria-hidden="true" />;
-
-/** Plain-language summary of what saving this match changes. */
-function describeChanges(proposal: TagProposal) {
-  const { tags, current } = proposal;
-  const changes = (["title", "artist", "album", "genre"] as const).filter((key) => tags[key] && tags[key] !== current[key])
-    .map((key) => !current[key] || (key === "album" && current.album === "local files") ? `adds ${key}` : `${key} was “${current[key]}”`);
-  if (proposal.coverUrl) changes.push("adds cover");
-  if (!proposal.writable) changes.push("library only (this file type can’t be tagged)");
-  return changes.length ? changes.join(" · ") : "adds track number and MusicBrainz IDs";
-}
 
 function ProposalRow({ proposal, checked, onToggle }: { proposal: TagProposal; checked: boolean; onToggle: () => void }) {
   const { tags } = proposal;

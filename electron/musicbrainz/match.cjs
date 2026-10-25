@@ -88,7 +88,8 @@ function buildProposal(song, { recording, release, track, medium, score, genre }
       genre,
       releaseType: String(group["primary-type"] || "").toLowerCase(),
       releaseStatus: String(release.status || "").toLowerCase(),
-      releaseCountry: String(release.country || "")
+      releaseCountry: String(release.country || ""),
+      isrc: String((recording.isrcs || [])[0] || "")
     },
     // Compilation and soundtrack genres describe the collection, not the song.
     genreFromArtist: (group["secondary-types"] || []).length > 0,

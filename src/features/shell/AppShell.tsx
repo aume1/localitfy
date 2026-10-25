@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { AnimatePresence, motion as Motion } from "motion/react";
 import type { CSSProperties } from "react";
 import { FolderPlus } from "lucide-react";
@@ -17,6 +17,7 @@ import WhatsNewModal from "../updates/WhatsNewModal";
 import { clamp } from "../../shared/utils/format";
 import { prettyTitle } from "../search";
 import type { AppShellProps } from "./appShell.contract";
+import type { Song } from "../library/song.types";
 import SidebarNav from "./SidebarNav";
 import {
   APP_VERSION, defaultUpdatePrompt, updateRibbonChildSpring, updateRibbonEnterSpring
@@ -43,6 +44,7 @@ const DownloadsView = lazy(() => import("../downloads/DownloadsView"));
 const SongEditorModal = lazy(() => import("../library/components/SongEditorModal"));
 const DeleteSongModal = lazy(() => import("../library/components/DeleteSongModal"));
 const PlaylistPickerModal = lazy(() => import("../playlists/components/PlaylistPickerModal"));
+const TagSearchDialog = lazy(() => import("../tagging/TagSearchDialog"));
 
 export type { AppShellProps } from "./appShell.contract";
 
@@ -76,6 +78,7 @@ export default function AppShell(props: AppShellProps) {
   } = navigation;
   const { isSeeking, isVolumeDragging, draggedSongId, isPlaying } = playerBar;
   const { isThreeAm } = home;
+  const [tagSearchSong, setTagSearchSong] = useState<Song | null>(null);
 
   const homeHeroCoverBrightness = clamp(Number(settings.homeHeroCoverBrightness ?? 1), 0.65, 1.55);
   const homeHeroCoverContrast = clamp(1.02 + (homeHeroCoverBrightness - 1) * 0.08, 0.98, 1.08);
@@ -360,7 +363,8 @@ export default function AppShell(props: AppShellProps) {
         </div>
       )}
 
-      <SongContextMenu {...modals.songContextMenu} />
+      <SongContextMenu {...modals.songContextMenu} findOnMusicBrainz={settings.musicbrainzTagging ? setTagSearchSong : undefined} />
+      {tagSearchSong ? <Suspense fallback={null}><TagSearchDialog key={tagSearchSong.id} song={tagSearchSong} onClose={() => setTagSearchSong(null)} /></Suspense> : null}
       {modals.similarSongs.seed ? <Suspense fallback={null}><SimilarSongsDialog key={modals.similarSongs.seed.key} {...modals.similarSongs} /></Suspense> : null}
 
       <WhatsNewModal {...modals.whatsNew} />

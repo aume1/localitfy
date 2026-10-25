@@ -3,11 +3,20 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { fetchCoverArt } = require("./client.cjs");
-const { similarity, primaryArtist, releaseRank, formatGenres, buildProposal, pickRecording, matchReleaseTracks } = require("./match.cjs");
+const { normalize, similarity, creditText, primaryArtist, recordingScore, releaseRank, formatGenres, buildProposal, pickRecording, matchReleaseTracks } = require("./match.cjs");
 
 const DEFAULT_ALBUM = "local files";
 const NOISE = /\s*[([](?:&|(?:feat\.?|ft\.?|with|prod\.?|official|audio|video|lyrics?|visuali[sz]er|explicit|hq|hd)\b)[^)\]]*[)\]]/gi;
 const searchTitle = (title) => String(title || "").replace(NOISE, "").trim() || String(title || "");
+const unreachableOnly = (error) => { if (error?.code === "MUSICBRAINZ_UNREACHABLE") throw error; return null; };
+
+/** One album across its editions: "Queen of the Clouds" and "Queen of the Clouds (Blueprint Edition)" share a key. */
+const editionKey = (proposal) => `${proposal.ids.albumArtistIds[0] || normalize(proposal.tags.albumArtist)}|${normalize(proposal.tags.album.replace(/(?:\s*[([][^)\]]*[)\]])+$/, ""))}`;
+
+/** A track of a full release, with the track's own title and credit (they can differ from the recording's). */
+const onTrack = (song, release, { track, medium, recording }, score) => ({
+  recording: { ...recording, title: track.title || recording.title, "artist-credit": track["artist-credit"] || recording["artist-credit"] }, release, track, medium, score
+});
 
 /**
  * Looks songs up on MusicBrainz and downloads each release's front cover once into coverDir,
@@ -71,7 +80,7 @@ function createTaggingLookup({ client, coverDir, userAgent, fetchImpl = fetch })
       .slice(0, 3);
     let best = null;
     for (const { release } of candidates) {
-      const full = await client.getRelease(release.id).catch((error) => { if (error?.code === "MUSICBRAINZ_UNREACHABLE") throw error; return null; });
+      const full = await client.getRelease(release.id).catch(unreachableOnly);
       if (!full) continue;
       const matches = matchReleaseTracks(songs, full);
       const quality = matches.length + matches.reduce((sum, match) => sum + match.score, 0) / Math.max(1, matches.length);
@@ -80,10 +89,7 @@ function createTaggingLookup({ client, coverDir, userAgent, fetchImpl = fetch })
     }
     if (!best) return { proposals: [], unmatched: songs };
     const proposals = [];
-    for (const match of best.matches) {
-      const recording = { ...match.recording, title: match.track.title || match.recording.title, "artist-credit": match.track["artist-credit"] || match.recording["artist-credit"] };
-      proposals.push(await finish(buildProposal(match.song, { recording, release: best.full, track: match.track, medium: match.medium, score: match.score })));
-    }
+    for (const match of best.matches) proposals.push(await finish(buildProposal(match.song, onTrack(match.song, best.full, match, match.score))));
     const matched = new Set(proposals.map((proposal) => proposal.songId));
     return { proposals, unmatched: songs.filter((song) => !matched.has(song.id)) };
   }
@@ -94,13 +100,95 @@ function createTaggingLookup({ client, coverDir, userAgent, fetchImpl = fetch })
     const { proposals, unmatched } = isAlbum ? await lookupAlbum(songs) : { proposals: [], unmatched: songs };
     const missed = [];
     for (const song of unmatched) {
-      const proposal = await lookupSong(song).catch((error) => { if (error?.code === "MUSICBRAINZ_UNREACHABLE") throw error; return null; });
+      const proposal = await lookupSong(song).catch(unreachableOnly);
       if (proposal) proposals.push(proposal); else missed.push(song.id);
     }
-    return { proposals, missed };
+    return { proposals: await unifyEditions(proposals, new Map(songs.map((song) => [song.id, song]))), missed };
   }
 
-  return { lookupSong, lookupAlbum, lookupGroup };
+  /** Where each proposal's song sits on a full release: by recording ID first, then by title and length. */
+  function placeOnRelease(proposals, release, songsById) {
+    const tracks = (release.media || []).flatMap((medium) => (medium.tracks || medium.track || []).map((track) => ({ medium, track, recording: track.recording || {} })));
+    const placed = new Map();
+    const used = new Set();
+    for (const proposal of proposals) {
+      const entry = tracks.find((candidate) => candidate.recording.id === proposal.ids.recordingId && !used.has(candidate.track.id));
+      if (entry) { placed.set(proposal.songId, { ...entry, score: proposal.confidence }); used.add(entry.track.id); }
+    }
+    const rest = proposals.filter((proposal) => !placed.has(proposal.songId)).map((proposal) => songsById.get(proposal.songId)).filter(Boolean);
+    const free = { media: (release.media || []).map((medium) => ({ ...medium, tracks: (medium.tracks || medium.track || []).filter((track) => !used.has(track.id)), track: undefined })) };
+    for (const match of rest.length ? matchReleaseTracks(rest, free) : []) placed.set(match.song.id, { ...match, medium: (release.media || []).find((medium) => medium.position === match.medium.position) || match.medium });
+    return placed;
+  }
+
+  /**
+   * Songs matched one at a time can land on different editions of the same album (a 5-track
+   * and a 10-track release, say). Moves them onto the one edition that holds the most of them.
+   */
+  async function unifyEditions(proposals, songsById) {
+    const clusters = new Map();
+    for (const proposal of proposals) clusters.set(editionKey(proposal), [...(clusters.get(editionKey(proposal)) || []), proposal]);
+    const replaced = new Map();
+    for (const cluster of clusters.values()) {
+      const releaseIds = [...new Set(cluster.map((proposal) => proposal.ids.releaseId))];
+      if (releaseIds.length < 2) continue;
+      let best = null;
+      for (const releaseId of releaseIds) {
+        const release = await client.getRelease(releaseId).catch(unreachableOnly);
+        if (!release) continue;
+        const placed = placeOnRelease(cluster, release, songsById);
+        const rank = releaseRank(release);
+        if (!best || placed.size > best.placed.size || (placed.size === best.placed.size && rank > best.rank)) best = { release, placed, rank };
+      }
+      if (!best) continue;
+      for (const proposal of cluster) {
+        const entry = best.placed.get(proposal.songId);
+        const song = songsById.get(proposal.songId);
+        if (!entry || !song || proposal.ids.releaseId === best.release.id) continue;
+        replaced.set(proposal.songId, await finish(buildProposal(song, onTrack(song, best.release, entry, proposal.confidence))));
+      }
+    }
+    return proposals.map((proposal) => replaced.get(proposal.songId) || proposal);
+  }
+
+  /** Recordings matching a hand-typed search, one row per distinct release, best matches first. */
+  async function searchCandidates(song, { title, artist }) {
+    const query = searchTitle(title);
+    let recordings = await client.searchRecordings(query, String(artist || "").trim());
+    if (!recordings.length && String(artist || "").trim()) recordings = await client.searchRecordings(query, "");
+    const target = { title: query, artist, durationMs: song.durationMs };
+    const rows = new Map();
+    for (const recording of recordings) {
+      const score = recordingScore(target, recording);
+      for (const release of recording.releases || []) {
+        const group = release["release-group"] || {};
+        const row = {
+          recordingId: recording.id, releaseId: release.id, score: Math.round(score * 100) / 100, rank: releaseRank(release),
+          title: recording.title, artist: creditText(recording["artist-credit"] || []), album: release.title,
+          year: String(release.date || "").slice(0, 4), country: String(release.country || ""),
+          releaseType: [group["primary-type"], ...(group["secondary-types"] || [])].filter(Boolean).join(" + "),
+          trackCount: Number(release["track-count"] || 0), durationMs: Number(recording.length || 0)
+        };
+        // The same song on several near-identical pressings shows once, as its strongest release.
+        const key = [row.title, row.artist, row.album, row.year, row.releaseType].join("|").toLocaleLowerCase();
+        if (!rows.has(key) || rows.get(key).rank < row.rank) rows.set(key, row);
+      }
+    }
+    return [...rows.values()].sort((a, b) => b.score - a.score || b.rank - a.rank).slice(0, 40).map(({ rank, ...row }) => row);
+  }
+
+  /** A proposal for a release the user picked by hand. */
+  async function proposalFor(song, { recordingId, releaseId }) {
+    const release = await client.getRelease(releaseId);
+    const tracks = (release.media || []).flatMap((medium) => (medium.tracks || medium.track || []).map((track) => ({ medium, track, recording: track.recording || {} })));
+    const entry = tracks.find((candidate) => candidate.recording.id === recordingId);
+    if (!entry) throw new Error("That release no longer lists this song on MusicBrainz");
+    const picked = onTrack(song, release, entry, 0);
+    picked.score = recordingScore(song, picked.recording);
+    return finish(buildProposal(song, picked));
+  }
+
+  return { lookupSong, lookupAlbum, lookupGroup, unifyEditions, searchCandidates, proposalFor };
 }
 
 module.exports = { createTaggingLookup, searchTitle };

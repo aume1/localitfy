@@ -39,7 +39,8 @@ function registerTaggingIpc(router, deps) {
   };
 
   // Lookups finished while the panel was closed are still waiting here.
-  router.handle("tagging:pending", () => { requireEnabled(); return [...proposals.values()].filter((proposal) => repository.get(proposal.songId)).map(view); });
+  // Hand-picked matches belong to their dialog, so they never reappear in the settings panel.
+  router.handle("tagging:pending", () => { requireEnabled(); return [...proposals.values()].filter((proposal) => !proposal.manual && repository.get(proposal.songId)).map(view); });
 
   router.handle("tagging:audit", async () => { requireEnabled(); return auditor.audit(repository.list()); });
 
@@ -58,6 +59,23 @@ function registerTaggingIpc(router, deps) {
       missed.push(...result.missed);
     }
     return { proposals: found, missed };
+  });
+
+  // Right-click → "find on MusicBrainz": the user types the search and picks the release.
+  router.handle("tagging:search", async (_event, payload = {}) => {
+    requireEnabled();
+    const [song] = songsFor([payload.songId]);
+    if (!song) throw new Error("This song's file could not be found");
+    return lookup.searchCandidates(song, { title: String(payload.title || song.title || ""), artist: String(payload.artist ?? song.artist ?? "") });
+  });
+
+  router.handle("tagging:choose", async (_event, payload = {}) => {
+    requireEnabled();
+    const [song] = songsFor([payload.songId]);
+    if (!song) throw new Error("This song's file could not be found");
+    const proposal = await lookup.proposalFor(song, { recordingId: String(payload.recordingId || ""), releaseId: String(payload.releaseId || "") });
+    proposals.set(song.id, Object.assign(proposal, { manual: true }));
+    return view(proposal);
   });
 
   router.handle("tagging:apply", async (_event, payload = {}) => {
