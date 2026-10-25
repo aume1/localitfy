@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld("localitfy", {
   chooseMusicBrainzMatch: (songId, recordingId, releaseId) => ipcRenderer.invoke("tagging:choose", { songId, recordingId, releaseId }),
   searchMusicBrainzAlbum: (songIds, album, artist) => ipcRenderer.invoke("tagging:search-album", { songIds, album, artist }),
   chooseMusicBrainzAlbum: (songIds, releaseId) => ipcRenderer.invoke("tagging:choose-album", { songIds, releaseId }),
+  getMusicBrainzAlbumTracks: (request) => ipcRenderer.invoke("tagging:album-tracks", request),
   findDuplicates: () => ipcRenderer.invoke("library:find-duplicates"),
   mergeDuplicates: (payload) => ipcRenderer.invoke("library:merge-duplicates", payload),
   getDiscoveries: (payload) => ipcRenderer.invoke("discover:get", payload),

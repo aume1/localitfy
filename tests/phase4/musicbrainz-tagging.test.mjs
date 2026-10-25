@@ -164,7 +164,9 @@ function fakeEditions() {
     const { pathname, searchParams } = new URL(url);
     const title = /recording:"([^"]+)"/.exec(searchParams.get("query") || "")?.[1];
     const id = pathname.split("/").pop();
-    const body = pathname.endsWith("/recording") ? { recordings: recordings[title] ? [recordings[title]] : [] } : releases[id] || {};
+    const body = pathname.endsWith("/recording") ? { recordings: recordings[title] ? [recordings[title]] : [] }
+      : pathname.endsWith("/release") ? { releases: Object.values(releases).map((release) => ({ ...release, media: [{ format: "Digital Media", "track-count": release.media[0]["track-count"] }] })) }
+      : releases[id] || {};
     return { ok: true, status: 200, json: async () => body };
   };
   return { fetchImpl, recordings, releases };
@@ -217,6 +219,24 @@ test("an album search scores releases on title, artist and track count, and a pi
   const { proposals, missed } = await lookup.albumProposalsFor(songs, "rel-marrow");
   assert.deepEqual(proposals.map((proposal) => [proposal.songId, proposal.ids.recordingId, proposal.tags.album]), [["b", "rec-2", "marroW"]]);
   assert.deepEqual(missed, ["a", "c"], "songs that pair with no track are reported, not forced onto one");
+});
+
+test("complete album lists every track, marks the ones already in the library and offers the other editions", async (t) => {
+  const dir = tempDir();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const { fetchImpl } = fakeEditions();
+  const lookup = createTaggingLookup({ client: createMusicBrainzClient({ userAgent: "t", fetchImpl, minIntervalMs: 0 }), coverDir: dir, userAgent: "t", fetchImpl });
+  // A Discover song not in the library yet: its album is found through the recording.
+  assert.equal(await lookup.releaseForSong({ title: "Echoplex", artist: "Nine Inch Nails" }), "rel-5");
+  assert.equal(await lookup.releaseForSongs([{ id: "d", title: "Discipline", album: "The Slip" }], ["rel-10", "rel-10", ""]), "rel-10", "the release the files name wins");
+  const discipline = { id: "d", title: "Discipline", artist: "Nine Inch Nails", album: "The Slip", durationMs: 260000, filePath: "/m/1.mp3" };
+  const echoplexSingle = { id: "e", title: "Echoplex", artist: "Nine Inch Nails", album: "local files", durationMs: 281000, filePath: "/d/2.mp3" };
+  const other = { id: "x", title: "Echoplex", artist: "Someone Else", album: "local files", durationMs: 280000, filePath: "/d/3.mp3" };
+  const result = await lookup.albumTracks({ releaseId: "rel-10", songs: [discipline], library: [other, discipline, echoplexSingle] });
+  assert.equal(result.release.title, "The Slip");
+  assert.deepEqual(result.tracks.map((track) => [track.position, track.title, track.songId]), [[1, "Discipline", "d"], [2, "Echoplex", "e"]],
+    "a song filed elsewhere still counts, but not a same-named song by another artist");
+  assert.deepEqual(result.editions.map((edition) => [edition.id, edition.trackCount]), [["rel-10", 10], ["rel-5", 5]]);
 });
 
 test("an unreachable MusicBrainz is an error, not \"no match\"", async (t) => {
@@ -391,6 +411,12 @@ test("IPC: gated by the setting, proposals stay native, and library-only apply u
   assert.deepEqual(album.proposals.map((proposal) => proposal.songId), ["a", "b"]);
   assert.deepEqual((await router.invoke("tagging:pending")).map((proposal) => proposal.songId), [], "album picks stay with their dialog too");
   await assert.rejects(router.invoke("tagging:search-album", { songIds: ["missing"], album: "x" }), /could be found/);
+
+  const tracks = await router.invoke("tagging:album-tracks", { songIds: ["a", "b"] });
+  assert.deepEqual(tracks.tracks.map((track) => track.songId), ["a", "b"], "the album's own songs are marked as owned");
+  assert.equal(tracks.coverUrl, "localtify-media://rel-marrow.jpg");
+  assert.equal(tracks.coverPath, undefined, "file paths stay in the main process");
+  assert.equal(await router.invoke("tagging:album-tracks", { title: "unknown song", artist: "nobody" }), null);
 });
 
 test("songs and albums get a find on musicbrainz menu item only while tagging is on", () => {

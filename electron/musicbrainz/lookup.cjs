@@ -220,7 +220,62 @@ function createTaggingLookup({ client, coverDir, userAgent, fetchImpl = fetch })
     return { proposals, missed: songs.filter((song) => !matched.has(song.id)).map((song) => song.id) };
   }
 
-  return { lookupSong, lookupAlbum, lookupGroup, unifyEditions, searchCandidates, proposalFor, searchAlbumCandidates, albumProposalsFor };
+  /** The release an album's songs belong to: the one their files name most, else the best search match. */
+  async function releaseForSongs(songs, fileReleaseIds = []) {
+    const counts = new Map();
+    for (const id of fileReleaseIds.filter(Boolean)) counts.set(id, (counts.get(id) || 0) + 1);
+    const named = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (named) return named;
+    const album = songs[0]?.album || "";
+    if (!album || album.toLocaleLowerCase() === DEFAULT_ALBUM) return songs.length === 1 ? releaseForSong(songs[0]) : "";
+    const releases = await client.searchReleases(searchTitle(album), primaryArtist(songs[0].artist));
+    // An edition with fewer tracks than the songs you already have can't be the right one.
+    const rank = (release) => releaseRank(release) - (Number(release["track-count"] || 0) < songs.length ? 3 : 0);
+    return releases.filter((release) => similarity(release.title, album) >= 0.8).sort((a, b) => rank(b) - rank(a))[0]?.id || "";
+  }
+
+  /** The album a single song comes from (its original album when there is one). */
+  async function releaseForSong({ title, artist, durationMs }) {
+    const query = searchTitle(title);
+    let recordings = await client.searchRecordings(query, primaryArtist(artist));
+    if (!recordings.length && artist) recordings = await client.searchRecordings(query, "");
+    return pickRecording({ title: query, artist, durationMs }, recordings)?.release?.id || "";
+  }
+
+  /**
+   * Every track of a release, marked with the library song that already has it, so the rest can
+   * be downloaded. Album songs are paired with tracks first; other tracks are looked for in the
+   * whole library by title, artist and length (they may sit under a single or "local files").
+   */
+  async function albumTracks({ releaseId, songs = [], library = [] }) {
+    const release = await client.getRelease(releaseId);
+    const group = release["release-group"] || {};
+    const owned = new Map(matchReleaseTracks(songs, release).map((match) => [match.track.id, match.song.id]));
+    const tracks = (release.media || []).flatMap((medium) => (medium.tracks || medium.track || []).map((track) => {
+      const recording = track.recording || {};
+      const credit = track["artist-credit"] || recording["artist-credit"] || release["artist-credit"] || [];
+      const row = { id: track.id, recordingId: recording.id || "", disc: Number(medium.position || 1), position: Number(track.position || 0), title: track.title || recording.title || "", artist: creditText(credit), durationMs: Number(track.length || recording.length || 0), songId: owned.get(track.id) || "" };
+      if (!row.songId) {
+        const found = library.find((song) => similarity(song.title, row.title) >= 0.9 && artistScore(song.artist, credit) >= 0.7 && (!song.durationMs || !row.durationMs || Math.abs(song.durationMs - row.durationMs) <= 10000));
+        row.songId = found?.id || "";
+      }
+      return row;
+    }));
+    const editions = group.id ? (await client.getReleaseGroupReleases(group.id).catch(unreachableOnly) || []) : [];
+    const seen = new Set();
+    return {
+      release: { id: release.id, title: release.title, artist: creditText(release["artist-credit"] || []), year: String(release.date || "").slice(0, 4), note: String(release.disambiguation || ""), releaseType: String(group["primary-type"] || "").toLowerCase() },
+      coverPath: await coverFor(release.id, group.id),
+      tracks,
+      // Other editions to switch to; pressings with the same name, year and track count show once.
+      editions: editions.map((edition) => ({ edition, rank: releaseRank({ ...edition, "release-group": group }) }))
+        .sort((a, b) => b.rank - a.rank)
+        .map(({ edition }) => ({ id: edition.id, title: edition.title, note: String(edition.disambiguation || ""), year: String(edition.date || "").slice(0, 4), country: String(edition.country || ""), format: [...new Set((edition.media || []).map((medium) => medium.format).filter(Boolean))].join(" + "), trackCount: (edition.media || []).reduce((sum, medium) => sum + Number(medium["track-count"] || 0), 0) }))
+        .filter((edition) => { const key = [edition.title, edition.note, edition.year, edition.trackCount].join("|").toLocaleLowerCase(); if (edition.id !== release.id && seen.has(key)) return false; seen.add(key); return true; })
+    };
+  }
+
+  return { lookupSong, lookupAlbum, lookupGroup, unifyEditions, searchCandidates, proposalFor, searchAlbumCandidates, albumProposalsFor, releaseForSongs, releaseForSong, albumTracks };
 }
 
 module.exports = { createTaggingLookup, searchTitle };

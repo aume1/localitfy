@@ -49,6 +49,8 @@ function createMusicBrainzClient({ userAgent, fetchImpl = fetch, minIntervalMs =
   return {
     searchRecordings: (title, artist) => request("recording", { query: `recording:${phrase(title)}${artist ? ` AND artist:${phrase(artist)}` : ""}`, limit: "25" }).then((body) => body.recordings || []),
     searchReleases: (album, artist) => request("release", { query: `release:${phrase(album)}${artist ? ` AND artist:${phrase(artist)}` : ""}`, limit: "15" }).then((body) => body.releases || []),
+    // Every edition of an album (standard, deluxe, regional…), with track counts.
+    getReleaseGroupReleases: (id) => request("release", { "release-group": id, inc: "media", limit: "50" }).then((body) => body.releases || []),
     getRelease: (id) => request(`release/${encodeURIComponent(id)}`, { inc: "recordings artist-credits release-groups isrcs" }),
     getReleaseGroupGenres: (id) => request(`release-group/${encodeURIComponent(id)}`, { inc: "genres" }).then((body) => body.genres || []),
     getArtistGenres: (id) => request(`artist/${encodeURIComponent(id)}`, { inc: "genres" }).then((body) => body.genres || [])

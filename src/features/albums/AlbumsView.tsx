@@ -81,6 +81,8 @@ export type AlbumsViewProps = {
   goToArtist?: (artistName: string) => unknown;
   /** Present while MusicBrainz tagging is on. */
   findAlbumOnMusicBrainz?: (album: LocalAlbumEntry) => unknown;
+  /** Lists an album's missing songs to download. Present while MusicBrainz tagging is on. */
+  completeAlbum?: (album: LocalAlbumEntry) => unknown;
   /** Opens an album's drawer from outside the page, e.g. the player bar. */
   focusAlbumRequest?: { albumId: string; nonce: number } | null;
   onFocusAlbumHandled?: () => void;
@@ -97,6 +99,7 @@ export default function AlbumsView(props: AlbumsViewProps) {
     onFocusAlbumHandled,
     goToArtist,
     findAlbumOnMusicBrainz,
+    completeAlbum,
     albumBuilderOpen,
     albumBuilderMode,
     albumDeleteConfirmArmed,
@@ -570,6 +573,7 @@ export default function AlbumsView(props: AlbumsViewProps) {
                 goToArtist={goToArtist}
                 editAlbum={albumMenu && (albumMenu.album as any).source === "manual" ? openEditAlbumBuilder : undefined}
                 findOnMusicBrainz={findAlbumOnMusicBrainz}
+                completeAlbum={completeAlbum}
               />
             </>
   );

@@ -38,3 +38,14 @@ export type TagAlbumSearchResult = {
   releaseId: string; score: number; title: string; artist: string; year: string; country: string;
   releaseType: string; format: string; trackCount: number; label: string; note: string; status: string;
 };
+
+/** Which album to list: an album's songs, a song not in the library yet, or a specific edition. */
+export type AlbumTracksRequest = { songIds?: string[]; title?: string; artist?: string; durationMs?: number; releaseId?: string };
+
+/** A release's full track list; songId is the library song that already has the track, or "". */
+export type AlbumTracks = {
+  release: { id: string; title: string; artist: string; year: string; note: string; releaseType: string };
+  coverUrl: string;
+  tracks: { id: string; recordingId: string; disc: number; position: number; title: string; artist: string; durationMs: number; songId: string }[];
+  editions: { id: string; title: string; note: string; year: string; country: string; format: string; trackCount: number }[];
+};

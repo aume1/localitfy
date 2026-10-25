@@ -23,6 +23,8 @@ test("rare library/playlist modal modules are requested only when open", () => {
   assert.ok(shell.includes("tagSearchSong ? <Suspense fallback={null}><TagSearchDialog"), "TagSearchDialog open guard");
   assert.ok(shell.includes('const AlbumTagSearchDialog = lazy(() => import("../tagging/AlbumTagSearchDialog"))'), "AlbumTagSearchDialog lazy");
   assert.ok(shell.includes("tagSearchAlbum ? <Suspense fallback={null}><AlbumTagSearchDialog"), "AlbumTagSearchDialog open guard");
+  assert.ok(shell.includes('const AlbumTracksDialog = lazy(() => import("../tagging/AlbumTracksDialog"))'), "AlbumTracksDialog lazy");
+  assert.ok(shell.includes("albumTracksRequest ? <Suspense fallback={null}><AlbumTracksDialog"), "AlbumTracksDialog open guard");
 });
 
 test("high-frequency context menu remains eagerly loaded and shell modal props stay typed", () => {

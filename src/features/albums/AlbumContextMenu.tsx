@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Disc3, ListEnd, Pencil, Play, Shuffle, Tags, UserRound } from "lucide-react";
+import { Disc3, ListEnd, ListPlus, Pencil, Play, Shuffle, Tags, UserRound } from "lucide-react";
 import { Cover } from "../covers/Cover";
 import { prettyMeta, prettyTitle } from "../search/search.utils";
 import { splitArtistCredits } from "../artists/artistCredits";
@@ -22,10 +22,12 @@ export type AlbumContextMenuProps = {
   editAlbum?: (album: LocalAlbumEntry) => unknown;
   /** Present while MusicBrainz tagging is on. */
   findOnMusicBrainz?: (album: LocalAlbumEntry) => unknown;
+  /** Lists the album's songs you don't have yet, to download. Present while MusicBrainz tagging is on. */
+  completeAlbum?: (album: LocalAlbumEntry) => unknown;
 };
 
 /** Right-click menu for an album card; the same look and layer as the song menu. */
-export default function AlbumContextMenu({ state, onClose, openAlbum, playSongs, shuffleSongs, queueSongs, goToArtist, editAlbum, findOnMusicBrainz }: AlbumContextMenuProps) {
+export default function AlbumContextMenu({ state, onClose, openAlbum, playSongs, shuffleSongs, queueSongs, goToArtist, editAlbum, findOnMusicBrainz, completeAlbum }: AlbumContextMenuProps) {
   const open = Boolean(state);
   useEffect(() => {
     if (!open) return;
@@ -76,9 +78,13 @@ export default function AlbumContextMenu({ state, onClose, openAlbum, playSongs,
             <span className="songContextMenuIcon"><UserRound size={13} strokeWidth={3} /></span> go to {artistNames.length > 1 ? prettyMeta(artistName) : "artist"}
           </button>
         ))}
-        {editAlbum || findOnMusicBrainz ? <div className="songContextMenuDivider" aria-hidden="true" /> : null}
+        {editAlbum || findOnMusicBrainz || completeAlbum ? <div className="songContextMenuDivider" aria-hidden="true" /> : null}
         {editAlbum ? <button type="button" role="menuitem" onClick={run(() => editAlbum(album))}>
           <span className="songContextMenuIcon"><Pencil size={13} strokeWidth={3} /></span> edit album
+        </button> : null}
+        {completeAlbum ? <button type="button" role="menuitem" title="Find this album's other songs and download the ones you don't have"
+          onClick={run(() => completeAlbum(album))}>
+          <span className="songContextMenuIcon"><ListPlus size={13} strokeWidth={3} /></span> complete album
         </button> : null}
         {findOnMusicBrainz ? <button type="button" role="menuitem" disabled={!album.songs.some((song) => song.filePath)} title="Search MusicBrainz and match the whole album to one release"
           onClick={run(() => findOnMusicBrainz(album))}>

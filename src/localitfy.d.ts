@@ -534,6 +534,7 @@ declare global {
       chooseMusicBrainzMatch: (songId: string, recordingId: string, releaseId: string) => Promise<import("./features/tagging/tagging.types").TagProposal>;
       searchMusicBrainzAlbum: (songIds: string[], album: string, artist: string) => Promise<import("./features/tagging/tagging.types").TagAlbumSearchResult[]>;
       chooseMusicBrainzAlbum: (songIds: string[], releaseId: string) => Promise<import("./features/tagging/tagging.types").TagLookupResult>;
+      getMusicBrainzAlbumTracks: (request: import("./features/tagging/tagging.types").AlbumTracksRequest) => Promise<import("./features/tagging/tagging.types").AlbumTracks | null>;
       findDuplicates: () => Promise<{ ok: boolean; sets?: DuplicateSet[]; scanned?: number; analyzed?: number; message?: string }>;
       mergeDuplicates: (payload: { merges: DuplicateMerge[]; moveToTrash?: boolean }) => Promise<{ ok: boolean; removedCount?: number; trashed?: number; trashFailed?: number; skippedShared?: number; merges?: DuplicateMerge[]; songs?: Song[]; message?: string }>;
       scanAlbumFolder?: (payload?: { mode?: "single" | "library" }) => Promise<LocalitfyAlbumFolderScanResult>;

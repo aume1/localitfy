@@ -95,6 +95,19 @@ function registerTaggingIpc(router, deps) {
     return { proposals: result.proposals.map(view), missed: result.missed };
   });
 
+  // "Complete album": the release's whole track list, with what's already in the library marked.
+  // From an album ({ songIds }), a Discover song ({ title, artist }), or another edition ({ releaseId }).
+  router.handle("tagging:album-tracks", async (_event, payload = {}) => {
+    requireEnabled();
+    const songs = songsFor(payload.songIds);
+    let releaseId = String(payload.releaseId || "");
+    if (!releaseId && songs.length) releaseId = await lookup.releaseForSongs(songs, await Promise.all(songs.map(async (song) => (await auditor.idsFor(song.filePath))?.releaseId)));
+    if (!releaseId && payload.title) releaseId = await lookup.releaseForSong({ title: String(payload.title), artist: String(payload.artist || ""), durationMs: Number(payload.durationMs || 0) });
+    if (!releaseId) return null;
+    const result = await lookup.albumTracks({ releaseId, songs, library: repository.list() });
+    return { ...result, coverUrl: result.coverPath ? safeMediaUrl(result.coverPath) : "", coverPath: undefined };
+  });
+
   router.handle("tagging:apply", async (_event, payload = {}) => {
     requireEnabled();
     const writeFiles = getSettings()?.musicbrainzWriteFiles !== false;
