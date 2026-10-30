@@ -8589,7 +8589,7 @@ function MainModeApp() {
       startPlaylistSongDragAction,
       startRenamePlaylist,
       saveSmartPlaylist,
-      listeningCounts
+      listeningCounts, addSongToPlaylist, notForMe
     },
     covers: {
       applyCoverAssetToSelection,
