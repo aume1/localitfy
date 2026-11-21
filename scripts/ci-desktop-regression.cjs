@@ -386,6 +386,22 @@ server.listen(5173,async()=>{
       await win.webContents.executeJavaScript("[...document.querySelectorAll('.libraryPageLiked button')].find(b=>b.textContent==='clear search').click()");
       await win.webContents.executeJavaScript("document.querySelector('.sidebar [data-nav-id=playlists]').click()");
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('button[aria-label=\"open qa playlist\"]')").catch(()=>false),"fixture playlist "+mode);
+       // Verify both real playlist editors render and close on desktop.
+       const smartOpened=await win.webContents.executeJavaScript("(()=>{const b=[...document.querySelectorAll('.playlistSecondaryActions button')].find(b=>b.textContent.includes('Smart playlist'));if(!b)return false;b.click();return true})()");
+       assert.equal(smartOpened,true,"Smart playlist action must be accessible");
+       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.localtifyPlaylistDialog[aria-modal=true]')").catch(()=>false),"OLED smart playlist "+mode);
+       const oledDialog=await win.webContents.executeJavaScript("(()=>{const d=document.querySelector('.localtifyPlaylistDialog');const c=getComputedStyle(d);const r=d.getBoundingClientRect();return {fill:c.backgroundColor,top:r.top,bottom:r.bottom,visible:r.width>0&&r.height>0}})()");
+       assert.equal(oledDialog.fill,"rgb(13, 14, 17)","Smart editor must use OLED surface");
+       assert.ok(oledDialog.visible&&oledDialog.top>=0&&oledDialog.bottom<=win.getBounds().height+1,"Smart editor stays within the viewport");
+       await screenshot(win,"smart-playlist-oled-"+mode);
+       await win.webContents.executeJavaScript("document.querySelector('.localtifyPlaylistDialog .closeModalButton').click()");
+       await until(()=>win.webContents.executeJavaScript("!document.querySelector('.localtifyPlaylistDialog')").catch(()=>false),"Smart editor closes "+mode);
+       const promptOpened=await win.webContents.executeJavaScript("(()=>{const b=[...document.querySelectorAll('.playlistSecondaryActions button')].find(b=>b.textContent.includes('From a prompt'));if(!b)return false;b.click();return true})()");
+       assert.equal(promptOpened,true,"Prompt playlist action must be accessible");
+       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.promptPlaylistModal.localtifyPlaylistDialog')").catch(()=>false),"OLED prompt playlist "+mode);
+       await screenshot(win,"prompt-playlist-oled-"+mode);
+       await win.webContents.executeJavaScript("document.querySelector('.promptPlaylistModal .closeModalButton').click()");
+       await until(()=>win.webContents.executeJavaScript("!document.querySelector('.localtifyPlaylistDialog')").catch(()=>false),"Prompt editor closes "+mode);
       await win.webContents.executeJavaScript("document.querySelector('button[aria-label=\"open qa playlist\"]').click()");
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.playlistDetailPage .collectionHero') && document.querySelector('.app').dataset.workspaceArtwork==='on'").catch(()=>false),"playlist contextual shell artwork "+mode);
       await screenshot(win,"playlist-atmosphere-"+mode);
@@ -398,6 +414,12 @@ server.listen(5173,async()=>{
       await win.webContents.executeJavaScript("document.querySelector('.sidebar [data-nav-id=discover]').click()");
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.discoverPage') && !document.querySelector('.appCrashBoundary') && document.querySelector('.app').dataset.workspaceArtwork==='on'").catch(()=>false),"Discover "+mode);
       await screenshot(win,"discover-"+mode);
+       // Discover's configuration lives in Settings, never an inline provider form.
+       assert.equal(await win.webContents.executeJavaScript("document.querySelectorAll('.discoverSetup, .discoverKey').length"),0,"Provider form must not clutter Discover");
+       await win.webContents.executeJavaScript("document.querySelector('.discoverPage button[aria-label=\\\"Open Discover settings\\\"]').click()");
+       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.discoverProviderSettings')").catch(()=>false),"Discover Settings "+mode);
+       assert.equal(await win.webContents.executeJavaScript("!!document.querySelector('.discoverProviderStatus')"),true,"Provider configuration status must render");
+       await screenshot(win,"settings-discover-"+mode);
       // Keep full 860/1280 coverage; exercise original wide-desktop layout
       // only for the player and the two recently redesigned pages.
       for (const width of [1280,860,1920]) {

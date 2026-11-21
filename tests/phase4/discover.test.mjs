@@ -118,6 +118,11 @@ test("Discover stays off until turned on, needs a valid key, and reuses today's 
   registerDiscoverIpc(router, { getSongs: () => songs, getSettings: () => settings, cacheFile: "", fetch, now: () => clock });
   const get = (payload) => handlers.get("discover:get")({}, payload);
   assert.equal((await get()).status, "off");
+  assert.deepEqual(await get({ configuration: true }), { status: "configuration", lastfmSource: "missing" },
+    "the renderer receives only presence, not an API key");
+  settings.lastfmApiKey = KEY;
+  assert.deepEqual(await get({ configuration: true }), { status: "configuration", lastfmSource: "override" });
+  settings.lastfmApiKey = "";
   settings.discoverEnabled = true;
   assert.equal((await get()).status, "needs-key");
   settings.lastfmApiKey = "not a key";

@@ -24,3 +24,13 @@ test("song editor and delete dialog use clean, readable copy", () => {
   assert.match(confirm, /remove <span/);
   assert.match(confirm, /<\/span> from localtify/);
 });
+test("both playlist composers use the same OLED surface and focus trap", () => {
+  const prompt = read("src/features/playlists/components/PromptPlaylistDialog.tsx");
+  const smart = read("src/features/playlists/components/SmartPlaylistDialog.tsx");
+  const palette = read("src/features/playlists/playlist-oled.css");
+  assert.match(prompt, /localtifyPlaylistDialog/);
+  assert.match(smart, /useModalFocus<HTMLFormElement>\(true\)/);
+  assert.match(smart, /localtifyPlaylistDialog/);
+  assert.match(palette, /background: #0d0e11/);
+  assert.match(palette, /:focus-visible/);
+});
