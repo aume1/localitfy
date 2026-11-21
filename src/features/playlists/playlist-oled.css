@@ -1,0 +1,196 @@
+/* Localtify playlist workspace and shared OLED composer.
+   Both editors use this one surface; no separate theme state is persisted. */
+.playlistToolbar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  min-width: 0; margin-top: -6px;
+}
+.playlistToolbar .playlistCreateForm { flex: 1 1 340px; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.playlistToolbar .playlistNameInput {
+  flex: 1 1 185px; min-width: min(185px,100%); max-width: none;
+  min-height: 42px; padding: 0 13px; border: 1px solid var(--lt-border);
+  border-radius: 10px; background: var(--lt-surface-soft); color: var(--lt-text);
+  box-shadow: none;
+}
+.playlistToolbar .playlistSecondaryActions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.playlistsPage .playlistAction,
+.playlistsPage .dailyMixesRefresh {
+  display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+  min-height: 42px; border-radius: 10px; padding: 0 15px; font-size: 13px;
+  font-weight: 650; line-height: 1.2; white-space: nowrap; box-shadow: none;
+  transition: background-color .14s ease, border-color .14s ease, color .14s ease;
+}
+.playlistsPage .playlistActionPrimary {
+  border: 1px solid var(--lt-accent); background: var(--lt-accent); color: var(--lt-bg);
+}
+.playlistsPage .playlistActionPrimary:hover:not(:disabled) { filter: brightness(1.06); }
+.playlistsPage .playlistActionSecondary,
+.playlistsPage .dailyMixesRefresh {
+  border: 1px solid var(--lt-border); background: var(--lt-surface-soft); color: var(--lt-text);
+}
+.playlistsPage .playlistActionSecondary:hover:not(:disabled),
+.playlistsPage .dailyMixesRefresh:hover:not(:disabled) {
+  border-color: var(--lt-border-strong); background: var(--lt-fill-hover);
+}
+.playlistsPage .dailyMixesRefresh { min-height: 36px; padding-inline: 12px; }
+.playlistsPage .playlistManageActions .settingsTinyButton {
+  border: 1px solid var(--lt-border); background: var(--lt-surface-soft); color: var(--lt-text);
+  border-radius: 9px; box-shadow: none;
+}
+.playlistsPage .playlistManageActions .settingsTinyButton:hover:not(:disabled) { background: var(--lt-fill-hover); }
+
+.localtifyPlaylistBackdrop.modalWrap {
+  position: fixed; inset: 0; z-index: 250;
+  display: flex; justify-content: center; align-items: center;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(0, 0, 0, .83);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.app .localtifyPlaylistDialog.smartPlaylistModal {
+  --lt-bg: #08090b;
+  --lt-bg-elevated: #101115;
+  --lt-surface: #0d0e11;
+  --lt-surface-soft: #15171b;
+  --lt-surface-raised: #191b20;
+  --lt-fill-hover: #22252b;
+  --lt-fill-selected: #24282f;
+  --lt-text: #f3f4f5;
+  --lt-muted: #a3a5ae;
+  --lt-faint: #797d87;
+  --lt-border: #2b2e35;
+  --lt-border-strong: #4a4e56;
+  --lt-radius-item: 10px;
+  width: min(660px, calc(100vw - 32px));
+  max-height: min(780px, calc(100dvh - 36px));
+  padding: clamp(18px, 2.2vw, 28px);
+  display: grid; align-content: start; gap: 20px; overflow: auto;
+  color: var(--lt-text); background: var(--lt-surface);
+  border: 1px solid var(--lt-border); border-radius: 20px;
+  box-shadow: 0 28px 94px rgba(0,0,0,.6);
+  color-scheme: dark;
+  scrollbar-width: thin; scrollbar-color: #383b43 transparent;
+}
+.app .localtifyPlaylistDialog.promptPlaylistModal { width: min(740px, calc(100vw - 32px)); }
+.app .localtifyPlaylistDialog .modalHead {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; padding: 0 0 19px; border-bottom: 1px solid var(--lt-border);
+}
+.app .localtifyPlaylistDialog .playlistDialogHeading { display: flex; min-width: 0; align-items: flex-start; gap: 14px; }
+.app .localtifyPlaylistDialog .playlistDialogHeading > div { min-width: 0; display: grid; gap: 5px; }
+.app .localtifyPlaylistDialog .playlistDialogGlyph {
+  width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center;
+  border: 1px solid #373b43; border-radius: 12px; background: #1b1e24; color: var(--lt-accent);
+}
+.app .localtifyPlaylistDialog .eyebrow {
+  margin: 0; color: var(--lt-accent); font-size: 10px; font-weight: 760;
+  letter-spacing: .11em; line-height: 1.5; text-transform: uppercase;
+}
+.app .localtifyPlaylistDialog h3 {
+  margin: 0; color: var(--lt-text); font-size: clamp(20px,2.3vw,25px) !important;
+  font-weight: 690; line-height: 1.2; letter-spacing: -.03em;
+}
+.app .localtifyPlaylistDialog .editorHeadSub { margin-top: 2px; font-size: 12px; line-height: 1.6; color: var(--lt-muted); }
+.app .localtifyPlaylistDialog .closeModalButton {
+  flex: 0 0 auto; width: 34px; height: 34px; padding: 0;
+  display: grid; place-items: center;
+  border: 1px solid var(--lt-border); border-radius: 10px;
+  background: var(--lt-surface-raised); color: var(--lt-muted); box-shadow: none;
+}
+.app .localtifyPlaylistDialog .closeModalButton:hover { color: var(--lt-text); background: var(--lt-fill-hover); }
+.app .localtifyPlaylistDialog :is(input:not([type="checkbox"]),textarea) {
+  min-width: 0; min-height: 43px; padding: 10px 13px;
+  border: 1px solid var(--lt-border); border-radius: 10px;
+  background: #17191d; color: var(--lt-text); font: inherit; font-size: 13px;
+  box-shadow: none;
+}
+.app .localtifyPlaylistDialog :is(input,textarea)::placeholder { color: #777b83; }
+.app .localtifyPlaylistDialog :is(input,textarea,button):focus-visible {
+  outline: 2px solid var(--lt-accent); outline-offset: 2px;
+}
+.app .localtifyPlaylistDialog :is(.settingsTinyButton, .heroMain) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 38px; padding: 8px 13px; border-radius: 10px;
+  font-size: 12px !important; font-weight: 620; line-height: 1.3;
+  text-decoration: none; box-shadow: none; white-space: normal;
+}
+.app .localtifyPlaylistDialog .settingsTinyButton {
+  border: 1px solid var(--lt-border); background: #1b1d22; color: var(--lt-text);
+}
+.app .localtifyPlaylistDialog .settingsTinyButton:hover:not(:disabled) {
+  border-color: var(--lt-border-strong); background: var(--lt-fill-hover);
+}
+.app .localtifyPlaylistDialog .heroMain {
+  border: 1px solid var(--lt-accent); background: var(--lt-accent);
+  color: #08090b; text-shadow: none;
+}
+.app .localtifyPlaylistDialog .heroMain:hover:not(:disabled) { filter: brightness(1.07); }
+.app .localtifyPlaylistDialog button:disabled { opacity: .42; cursor: not-allowed; }
+.app .localtifyPlaylistDialog .smartPlaylistPresets { gap: 8px; }
+.app .localtifyPlaylistDialog .smartPlaylistPresets .settingsTinyButton { border-radius: 9px; background: #191b20; }
+.app .localtifyPlaylistDialog .smartPlaylistPresets .settingsTinyButton:focus-visible { border-color: var(--lt-accent); }
+.app .localtifyPlaylistDialog .smartPlaylistField { gap: 9px; color: var(--lt-muted); font-weight: 620; }
+.app .localtifyPlaylistDialog .smartPlaylistField > span { font-size: 11px; text-transform: uppercase; letter-spacing: .055em; }
+.app .localtifyPlaylistDialog .smartPlaylistMatch {
+  min-width: 0; gap: 11px; padding: 12px 0; border-block: 1px solid var(--lt-border);
+  color: var(--lt-muted);
+}
+.app .localtifyPlaylistDialog .smartPlaylistRules { gap: 10px; }
+.app .localtifyPlaylistDialog .smartPlaylistRule {
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(90px,1fr) 40px;
+  gap: 9px; padding: 10px; background: #131519;
+  border: 1px solid #262a30; border-radius: 12px;
+}
+.app .localtifyPlaylistDialog .smartPlaylistRule > .settingsTinyButton {
+  width: 38px; height: 38px; min-height: 38px; padding: 0; color: #d5a0a1;
+}
+.app .localtifyPlaylistDialog .smartPlaylistNumber { min-width: 0; }
+.app .localtifyPlaylistDialog .smartPlaylistNumber input { min-width: 0; width: 90px; }
+.app .localtifyPlaylistDialog .arcDropdownTrigger {
+  min-width: 0; max-width: 100%; height: 42px; min-height: 42px;
+  padding-inline: 12px; border: 1px solid var(--lt-border);
+  border-radius: 10px; background: #191b20; color: var(--lt-text); box-shadow: none;
+}
+.app .localtifyPlaylistDialog .arcDropdownTrigger:hover:not(:disabled) { background: var(--lt-fill-hover); }
+.app .localtifyPlaylistDialog .smartPlaylistFooter {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 14px; padding: 17px 0 0;
+  border-top: 1px solid var(--lt-border); background: var(--lt-surface);
+}
+.app .localtifyPlaylistDialog .smartPlaylistFooter p { min-width: 0; line-height: 1.5; color: var(--lt-muted); }
+.app .localtifyPlaylistDialog .promptPlaylistForm { gap: 10px; align-items: stretch; }
+.app .localtifyPlaylistDialog .promptPlaylistForm input { flex: 1 1 auto; }
+.app .localtifyPlaylistDialog .promptPlaylistForm .heroMain { flex: 0 0 auto; }
+.app .localtifyPlaylistDialog .promptPlaylistUnderstood li {
+  border: 1px solid #39433d; border-radius: 8px; padding: 7px 11px;
+  color: var(--lt-text); background: #1b2420;
+}
+.app .localtifyPlaylistDialog .promptPlaylistNotice {
+  border: 1px solid var(--lt-border); border-radius: 10px; background: #17191d; color: var(--lt-muted);
+}
+.app .localtifyPlaylistDialog .promptPlaylistRow { border-radius: 10px; }
+.app .localtifyPlaylistDialog .promptPlaylistRow:hover { background: var(--lt-fill-hover); }
+.app .localtifyPlaylistDialog .promptPlaylistList { max-height: min(38vh,340px); }
+.app .localtifyPlaylistDialog .promptPlaylistActions { gap: 9px; }
+.app .localtifyPlaylistDialog .playlistTrackText { min-width: 0; }
+.app .localtifyPlaylistDialog .playlistTrackText :is(strong,small) {
+  display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .playlistToolbar .playlistCreateForm { flex-basis: 100%; }
+  .playlistToolbar .playlistSecondaryActions { width: 100%; }
+  .playlistToolbar .playlistAction { flex: 1 1 auto; }
+}
+@media (max-width: 560px) {
+  .app .localtifyPlaylistDialog.smartPlaylistModal { padding: 17px; gap: 16px; border-radius: 15px; }
+  .app .localtifyPlaylistDialog .smartPlaylistRule { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 38px; }
+  .app .localtifyPlaylistDialog .smartPlaylistRule > :nth-child(3):not(button) { grid-column: 1 / 3; }
+  .app .localtifyPlaylistDialog .smartPlaylistRule > .settingsTinyButton { grid-column: 3; grid-row: 1; }
+  .app .localtifyPlaylistDialog .promptPlaylistForm { flex-wrap: wrap; }
+  .app .localtifyPlaylistDialog .promptPlaylistForm input { flex-basis: 100%; }
+  .app .localtifyPlaylistDialog .smartPlaylistFooter > .heroMain { margin-left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playlistToolbar .playlistAction, .app .localtifyPlaylistDialog :is(button, input) { transition: none; }
+  .localtifyPlaylistBackdrop.modalWrap { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}

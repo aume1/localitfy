@@ -1,6 +1,7 @@
 import { PageHeader } from "../../shared/ui/PageHeader";
 import "./settings.css";
 import "./settings-premium.css";
+import "./settings-finish.css";
 import type { ReactNode } from "react";
 import SettingsRail from "./SettingsRail";
 import type { SettingsRailProps } from "./SettingsRail";
