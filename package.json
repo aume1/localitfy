@@ -161,8 +161,11 @@
         "to": "build/icon.png"
       },
       {
-        "from": "build/provider-defaults.json",
-        "to": "provider-defaults.json"
+        "from": "build",
+        "to": ".",
+        "filter": [
+          "provider-defaults.json"
+        ]
       }
     ],
     "asar": true,
