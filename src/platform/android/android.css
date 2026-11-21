@@ -265,35 +265,19 @@ html.platformAndroid .homeEmptyState span{
 }
 
 
-html.platformAndroid .smartPlaylistModal{
+/* Keep the shared playlist composer inside the Android safe-area viewport. */
+html.platformAndroid .playlistComposerBackdrop{
+  inset: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  padding: 12px;
+}
+html.platformAndroid .playlistComposer{
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr);
-  padding: 16px;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
 }
-
-html.platformAndroid .smartPlaylistModal > *,
-html.platformAndroid .smartPlaylistModal .smartPlaylistField{
-  min-width: 0;
-}
-
-html.platformAndroid .promptPlaylistForm,
-html.platformAndroid .smartPlaylistFooter{
-  flex-direction: column;
-  align-items: stretch;
-}
-
-html.platformAndroid .smartPlaylistRule{
-  grid-template-columns: minmax(0, 1fr);
-}
-
-html.platformAndroid .smartPlaylistPresets button{
+html.platformAndroid .playlistComposerChips button{
   max-width: 100%;
   white-space: normal;
   text-align: left;
-}
-
-html.platformAndroid .smartPlaylistModal .modalHead > div{
-  min-width: 0;
 }
 
 html.platformAndroid :is(.phoneTab, .phoneMoreItem, .phoneIconButton, .phoneChip):focus-visible{
