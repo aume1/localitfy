@@ -1,4 +1,5 @@
 import "./playlists.css";
+import "./playlist-oled.css";
 import { isAndroidApp } from "../../app/platform";
 import DailyMixesShelf, { type DailyMixesShelfProps } from "../analysis/DailyMixesShelf";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -271,9 +272,8 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
 
   return (
     <section data-page-section="playlists" className="playlistsPage playlistPageV029">
-      <PageHeader
-        title="Playlists"
-      >
+      <PageHeader title="Playlists" description="Build a collection for every mood." />
+      <div className="playlistToolbar" aria-label="Playlist actions">
         <form
           className="playlistCreateForm"
           onSubmit={(event) => {
@@ -283,23 +283,26 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           }}
         >
           <input
-            className="pageHeaderSearch"
+            className="pageHeaderSearch playlistNameInput"
             value={newPlaylistName}
             onChange={(event) => setNewPlaylistName(event.currentTarget.value)}
-            placeholder="new playlist name"
+            placeholder="Name your playlist"
             aria-label="New playlist name"
+            maxLength={120}
           />
-          <button className="mainAction" type="submit"><ActionLabel icon={Plus}>new playlist</ActionLabel></button>
-          <button className="softButton" type="button" onClick={() => setSmartEditing(null)} disabled={!songs.length}
-            title="A playlist that fills itself from rules, like liked songs you haven't played lately">
-            <ActionLabel icon={Sparkles}>smart playlist</ActionLabel>
-          </button>
-          <button className="softButton" type="button" onClick={() => setPrompting(true)} disabled={!songs.length}
-            title="Describe a playlist, then choose the songs to keep">
-            <ActionLabel icon={WandSparkles}>from a prompt</ActionLabel>
-          </button>
+          <button className="playlistAction playlistActionPrimary" type="submit"><ActionLabel icon={Plus}>Create playlist</ActionLabel></button>
         </form>
-      </PageHeader>
+        <div className="playlistSecondaryActions">
+          <button className="playlistAction playlistActionSecondary" type="button" onClick={() => setSmartEditing(null)} disabled={!songs.length}
+            title="A playlist that fills itself from rules and your listening history">
+            <ActionLabel icon={Sparkles}>Smart playlist</ActionLabel>
+          </button>
+          <button className="playlistAction playlistActionSecondary" type="button" onClick={() => setPrompting(true)} disabled={!songs.length}
+            title="Describe a playlist, then choose the songs to keep">
+            <ActionLabel icon={WandSparkles}>From a prompt</ActionLabel>
+          </button>
+        </div>
+      </div>
 
       <DailyMixesShelf {...props.dailyMixes} />
       <div className="playlistContentGrid isEmpty">

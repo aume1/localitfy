@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { useModalFocus } from "../../../shared/hooks/useModalFocus";
 import { createPortal } from "react-dom";
-import { Plus, Save, Trash2, X } from "lucide-react";
+import { Plus, Save, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { ArcDropdownMenu } from "../../../shared/ui/ArcDropdownMenu";
 import type { Song } from "../../library/song.types";
 import type { Playlist } from "../playlist.types";
@@ -25,6 +26,7 @@ const MATCH_ITEMS = [{ value: "all", label: "all of these" }, { value: "any", la
 const EMPTY_RULES: SmartRules = { match: "all", rules: [defaultSmartRule("liked")], sort: "library", limit: null };
 
 export default function SmartPlaylistDialog({ playlist, songs, listeningCounts, onSave, onClose }: SmartPlaylistDialogProps) {
+  const dialogRef = useModalFocus(true);
   const [name, setName] = useState(playlist?.name || "");
   const [rules, setRules] = useState<SmartRules>(() => playlist?.rules || EMPTY_RULES);
   // Preview exactly what will be saved: blank text rules are dropped.
@@ -35,17 +37,20 @@ export default function SmartPlaylistDialog({ playlist, songs, listeningCounts, 
 
   // Portaled to the app root: the playlists page is a transformed container, which would trap a fixed overlay.
   return createPortal(
-    <div className="modalWrap smartPlaylistWrap" onClick={onClose}>
-      <form className="smartPlaylistModal" role="dialog" aria-modal="true" aria-labelledby="smart-playlist-title"
+    <div className="modalWrap smartPlaylistWrap localtifyPlaylistBackdrop" onClick={onClose}>
+      <form ref={dialogRef} tabIndex={-1} className="smartPlaylistModal localtifyPlaylistDialog" role="dialog" aria-modal="true" aria-labelledby="smart-playlist-title"
         onClick={(event) => event.stopPropagation()}
         // An open dropdown handles (and prevents) its own Escape.
         onKeyDown={(event) => { if (event.key === "Escape" && !event.defaultPrevented) onClose(); }}
         onSubmit={(event) => { event.preventDefault(); if (onSave(playlist?.id || null, name, rules)) onClose(); }}>
         <div className="modalHead">
-          <div>
-            <p className="eyebrow">smart playlist</p>
-            <h3 id="smart-playlist-title">{playlist ? "edit rules" : "new smart playlist"}</h3>
-            <span className="editorHeadSub">Fills itself from your library and keeps up as you listen and import.</span>
+          <div className="playlistDialogHeading">
+            <span className="playlistDialogGlyph" aria-hidden="true"><SlidersHorizontal size={19} /></span>
+            <div>
+              <p className="eyebrow">Smart playlist</p>
+              <h3 id="smart-playlist-title">{playlist ? "Edit smart playlist" : "New smart playlist"}</h3>
+              <span className="editorHeadSub">Automatically updates from your library and listening history.</span>
+            </div>
           </div>
           <button className="closeModalButton" type="button" onClick={onClose} aria-label="Close smart playlist"><X size={18} strokeWidth={2.4} /></button>
         </div>

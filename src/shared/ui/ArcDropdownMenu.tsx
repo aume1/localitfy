@@ -86,7 +86,7 @@ export function ArcDropdownMenu<T extends string>({
     const root = triggerRef.current?.closest<HTMLElement>(".app");
     if (root) {
       const sync = () => {
-        const computed = getComputedStyle(root);
+        const computed = getComputedStyle(triggerRef.current?.closest(".localtifyPlaylistDialog") || root);
         const copied = {} as Record<string, string>;
         for (const key of THEME_VARS) copied[key] = computed.getPropertyValue(key).trim();
         setThemeStyle(copied as CSSProperties);

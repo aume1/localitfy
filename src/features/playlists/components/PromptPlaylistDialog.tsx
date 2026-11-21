@@ -87,12 +87,16 @@ export default function PromptPlaylistDialog({ songs, currentId, hidden, playSon
 
   // Portaled to the app root: the playlists page is a transformed container, which would trap a fixed overlay.
   return createPortal(
-    <div className="modalWrap smartPlaylistWrap" onClick={onClose}>
-      <div ref={dialogRef} tabIndex={-1} className="smartPlaylistModal promptPlaylistModal" role="dialog" aria-modal="true" aria-labelledby="prompt-playlist-title"
+    <div className="modalWrap smartPlaylistWrap localtifyPlaylistBackdrop" onClick={onClose}>
+      <div ref={dialogRef} tabIndex={-1} className="smartPlaylistModal promptPlaylistModal localtifyPlaylistDialog" role="dialog" aria-modal="true" aria-labelledby="prompt-playlist-title"
         onClick={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === "Escape" && !event.defaultPrevented) onClose(); }}>
         <div className="modalHead">
-          <div>
-            <h3 id="prompt-playlist-title">Describe a playlist</h3>
+          <div className="playlistDialogHeading">
+            <span className="playlistDialogGlyph" aria-hidden="true"><WandSparkles size={19} /></span>
+            <div><p className="eyebrow">Playlist studio</p>
+              <h3 id="prompt-playlist-title">Describe a playlist</h3>
+              <span className="editorHeadSub">Turn a mood, memory, or idea into songs from your library.</span>
+            </div>
           </div>
           <button className="closeModalButton" type="button" onClick={onClose} aria-label="Close"><X size={18} strokeWidth={2.4} /></button>
         </div>
