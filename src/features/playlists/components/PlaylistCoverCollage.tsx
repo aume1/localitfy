@@ -29,7 +29,7 @@ export default function PlaylistCoverCollage({
           key={song ? `${song.id}-${index}` : `empty-${index}`}
         >
           {song ? (
-            <Cover song={song} className="playlistCoverImage" preferThumbnail />
+            <Cover song={song} className="playlistCoverImage" preferThumbnail fallbackMode="monogram" />
           ) : (
             <span><Images size={18} aria-hidden="true" /></span>
           )}

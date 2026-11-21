@@ -11,9 +11,11 @@ test("playlist picker and prompt builder share keyboard focus and Escape semanti
   assert.match(picker, /ref=\{dialogRef\} tabIndex=\{-1\}/);
   assert.match(picker, /event\.key === "Escape" && !event\.defaultPrevented/);
   assert.match(picker, /aria-label="New playlist name"/);
-  assert.match(prompt, /useModalFocus\(true\)/);
-  assert.match(prompt, /ref=\{dialogRef\} tabIndex=\{-1\}/);
-  assert.match(prompt, /event\.key === "Escape" && !event\.defaultPrevented/);
+  const composer = read("src/features/playlists/components/PlaylistComposer.tsx");
+  assert.match(prompt, /<PlaylistComposer/);
+  assert.match(composer, /useModalFocus\(true\)/);
+  assert.match(composer, /ref=\{dialogRef\} tabIndex=\{-1\}/);
+  assert.match(composer, /event\.key === "Escape" && !event\.defaultPrevented/);
 });
 
 test("song editor and delete dialog use clean, readable copy", () => {
@@ -23,4 +25,18 @@ test("song editor and delete dialog use clean, readable copy", () => {
   assert.doesNotMatch(editor, /coderpixel \//);
   assert.match(confirm, /remove <span/);
   assert.match(confirm, /<\/span> from localtify/);
+});
+test("both playlist composers use the same OLED surface and focus trap", () => {
+  const prompt = read("src/features/playlists/components/PromptPlaylistDialog.tsx");
+  const smart = read("src/features/playlists/components/SmartPlaylistDialog.tsx");
+  const palette = read("src/features/playlists/playlist-oled.css");
+  const composer = read("src/features/playlists/components/PlaylistComposer.tsx");
+  assert.match(prompt, /<PlaylistComposer/);
+  assert.match(smart, /<PlaylistComposer/);
+  assert.match(smart, /<SegmentedControl/);
+  assert.match(composer, /vendor\/beui\/button/);
+  assert.match(prompt, /<FadeContent/);
+  assert.match(palette, /--lt-surface: #080808/);
+  assert.match(palette, /background: var\(--lt-surface\)/);
+  assert.match(palette, /:focus-visible/);
 });

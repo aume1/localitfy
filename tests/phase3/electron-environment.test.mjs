@@ -54,3 +54,24 @@ test("environment runtime preserves explicit Spotify IDs and supplies the public
   assert.equal(explicitProcess.env.SPOTIFY_CLIENT_ID, "explicit-client");
   assert.equal(explicitProcess.env.VITE_PUBLIC_SPOTIFY_CLIENT_ID, "explicit-client");
 });
+
+test("packaged application key is main-process only and explicit config wins", () => {
+  const os = require("node:os");
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "localtify-provider-config-"));
+  try {
+    const bundledKey = "abcdef0123456789abcdef0123456789";
+    fs.writeFileSync(path.join(directory, "provider-defaults.json"), JSON.stringify({ lastfmApiKey: bundledKey }));
+    const fakeApp = { getAppPath: () => "", getPath: () => "" };
+    const fake = (env) => ({ resourcesPath: directory, execPath: "", cwd: () => "", env });
+    const fallback = fake({});
+    loadLocaltifyEnv(fakeApp, fallback);
+    assert.equal(fallback.env.LOCALTIFY_LASTFM_API_KEY, bundledKey);
+    const explicit = fake({ LOCALTIFY_LASTFM_API_KEY: "0123456789abcdef0123456789abcdef" });
+    loadLocaltifyEnv(fakeApp, explicit);
+    assert.equal(explicit.env.LOCALTIFY_LASTFM_API_KEY, "0123456789abcdef0123456789abcdef");
+    fs.writeFileSync(path.join(directory, "provider-defaults.json"), JSON.stringify({ lastfmApiKey: "invalid" }));
+    const invalid = fake({});
+    loadLocaltifyEnv(fakeApp, invalid);
+    assert.equal(invalid.env.LOCALTIFY_LASTFM_API_KEY, undefined);
+  } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+});

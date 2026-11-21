@@ -7,6 +7,12 @@ assert.ok(platform === "win32" || platform === "linux", "Only Windows/Linux pack
 const directory = platform === "win32" ? "win-unpacked" : "linux-unpacked";
 const resources = path.join(process.cwd(), "release", directory, "resources");
 assert.ok(fs.existsSync(path.join(resources, "app.asar")), "Packaged Electron application is missing");
+const providerFile = path.join(resources, "provider-defaults.json");
+assert.ok(fs.existsSync(providerFile), "Optional public provider defaults were not packaged");
+const providerDefaults = JSON.parse(fs.readFileSync(providerFile, "utf8"));
+assert.deepEqual(Object.keys(providerDefaults), ["lastfmApiKey"], "Do not package other .env fields or secrets");
+assert.ok(providerDefaults.lastfmApiKey === "" ||
+  /^[a-f0-9]{32}$/i.test(providerDefaults.lastfmApiKey), "Only a public Last.fm application key may ship");
 const binaryRoot = path.join(resources, "app.asar.unpacked", "node_modules", "onnxruntime-node", "bin", "napi-v6");
 assert.ok(fs.existsSync(binaryRoot), "Unpacked ONNX Runtime is missing");
 assert.deepEqual(fs.readdirSync(binaryRoot), [platform], "Other platform runtimes were not pruned");

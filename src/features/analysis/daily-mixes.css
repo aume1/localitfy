@@ -1,9 +1,10 @@
 /* Daily mixes reuse playlist artwork and spacing without a nested panel. */
-.dailyMixesHeader { flex-wrap: nowrap; }
+.dailyMixesHeader { flex-wrap: nowrap; align-items: center; }
 .dailyMixesRefresh { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; }
-.dailyMixesGrid { grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); }
-.playlistShelfCard.dailyMixCard { grid-template-columns: 92px minmax(0, 1fr); gap: var(--lt-space-3); padding: var(--lt-space-2); }
-.playlistShelfCard.dailyMixCard .playlistCoverCollage { width: 92px; height: 92px; }
+.dailyMixesGrid { grid-template-columns: repeat(auto-fill,minmax(min(184px,100%),1fr)); gap: var(--lt-space-4); }
+.playlistShelfCard.dailyMixCard { display: grid; grid-template-columns: minmax(0,1fr); gap: 9px; padding: 0; }
+.playlistShelfCard.dailyMixCard .playlistCoverCollage { width: 100%; height: auto; aspect-ratio: 1; }
+.playlistShelfCard.dailyMixCard .playlistShelfMeta { width: 100%; min-width: 0; }
 .dailyMixArtists {
   overflow: hidden;
   display: -webkit-box;
@@ -18,3 +19,4 @@
 @media (max-width: 600px) {
   .dailyMixesHeader { flex-direction: column; }
 }
+@media (max-width: 560px) { .dailyMixesGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } }

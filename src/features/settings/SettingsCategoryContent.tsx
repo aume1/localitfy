@@ -5,6 +5,7 @@ import DiscordSettings from "./categories/DiscordSettings";
 import LibrarySettings from "./categories/LibrarySettings";
 import CoversSettings from "./categories/CoversSettings";
 import DownloadSettings from "./categories/DownloadSettings";
+import DiscoverSettings from "./categories/DiscoverSettings";
 import UpdateSettings from "./categories/UpdateSettings";
 import AboutSettings from "./categories/AboutSettings";
 import ExperimentalSettings from "./categories/ExperimentalSettings";
@@ -27,6 +28,7 @@ const SettingsCategoryContent = memo(function SettingsCategoryContent(p: LegacyS
     case "library":
     case "metadata": return <LibrarySettings settings={p.settings} updateSetting={p.updateSetting} songs={p.songs} libraryScanBusy={p.libraryScanBusy} cleanLibraryMetadataAction={p.cleanLibraryMetadataAction} repairMovedSongsAction={p.repairMovedSongsAction} cleanSelectedMetadataAction={p.cleanSelectedMetadataAction} metadataSelectedCount={p.metadataSelectedCount || 0} metadataCleanPreview={p.metadataCleanPreview} applyMetadataCleanPreviewAction={p.applyMetadataCleanPreviewAction} cancelMetadataCleanPreviewAction={p.cancelMetadataCleanPreviewAction} undoLastMetadataCleanAction={p.undoLastMetadataCleanAction} metadataUndoCount={p.metadataUndoCount || 0} rebuildSearchIndexAction={p.rebuildSearchIndexAction} libraryScanMessage={p.libraryScanMessage} cleanupOptions={p.discordCleanupOptions} />;
     case "covers": return <CoversSettings pixelArtAssets={p.pixelArtAssets} changeView={p.changeView} />;
+    case "discover": return <DiscoverSettings settings={p.settings} updateSetting={p.updateSetting} />;
     case "downloads": return <DownloadSettings settings={p.settings} updateSetting={p.updateSetting} downloadFolderLabel={p.downloadFolderLabel} chooseDownloadFolder={p.chooseDownloadFolder} />;
     case "updates": return <UpdateSettings settings={p.settings} updateSetting={p.updateSetting} appVersion={p.APP_VERSION} lastUpdateCheckedLabel={p.lastUpdateCheckedLabel} updatePrompt={p.updatePrompt} manualUpdateCheck={p.manualUpdateCheck} askUpdaterToDownload={p.askUpdaterToDownload} askUpdaterToInstall={p.askUpdaterToInstall} openUpdateChangelog={p.openUpdateChangelog} />;
     case "about": return <AboutSettings appVersion={p.APP_VERSION} platformInfo={platformInfo} songs={p.songs} onViewChangelog={p.openUpdateChangelog} />;

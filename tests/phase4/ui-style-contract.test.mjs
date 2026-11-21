@@ -154,7 +154,8 @@ test("Discover, similar tracks and tagging respect the active accent and UI bord
   const queue = read("src/features/player/components/queue-panel.css");
 
   assert.match(discover, /\.discoverPick\.active\s*\{[^}]*color: var\(--accent-contrast, #06100b\)/);
-  assert.match(discover, /\.app \.discoverPage :is\(\.discoverKey input, \.discoverLink, \.discoverName, \.discoverPick\):focus-visible\s*\{\s*outline: 2px solid var\(--lt-accent\) !important/);
+  assert.match(discover, /\.app \.discoverPage :is\(\.discoverName, \.discoverPick\):focus-visible\s*\{\s*outline: 2px solid var\(--lt-accent\) !important/);
+  assert.doesNotMatch(discover, /\.discoverKey\s+input|\.discoverLink\b/);
   assert.match(similar, /\.similarSongsRow\[data-current="true"\]\s*\{\s*background: rgba\(var\(--lt-accent-rgb\), \.08\)/);
   assert.match(similar, /\.similarSongsHeader h2\s*\{[^}]*overflow-wrap: anywhere/);
   assert.match(similar, /\.similarSongsPrimary\s*\{[^}]*color: var\(--accent-contrast, #06100b\)/);

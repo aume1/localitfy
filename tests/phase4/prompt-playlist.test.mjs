@@ -146,7 +146,7 @@ test("playlists show recommendations with add buttons and offer a prompt dialog"
   assert.match(panel, /addSongToPlaylist\(playlist\.id, id\)/);
   assert.match(panel, /findSimilarSongs\(\{ songIds:/, "uses audio similarity when songs are analyzed");
   assert.match(dialog, /type="checkbox"/, "songs can be picked before saving");
-  assert.match(dialog, /savePlaylist\(name \|\| result\.plan\.name, picked\)/);
+  assert.match(dialog, /savePlaylist\(name \|\| result\.plan\.name,\s*picked\)/);
   assert.match(dialog, /sound \|\| planHasLibraryTerms\(plan\) \?/, "a description alone without the prompt model gives no random songs");
 });
 

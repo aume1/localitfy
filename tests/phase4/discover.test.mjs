@@ -118,6 +118,11 @@ test("Discover stays off until turned on, needs a valid key, and reuses today's 
   registerDiscoverIpc(router, { getSongs: () => songs, getSettings: () => settings, cacheFile: "", fetch, now: () => clock });
   const get = (payload) => handlers.get("discover:get")({}, payload);
   assert.equal((await get()).status, "off");
+  assert.deepEqual(await get({ configuration: true }), { status: "configuration", lastfmSource: "missing" },
+    "the renderer receives only presence, not an API key");
+  settings.lastfmApiKey = KEY;
+  assert.deepEqual(await get({ configuration: true }), { status: "configuration", lastfmSource: "override" });
+  settings.lastfmApiKey = "";
   settings.discoverEnabled = true;
   assert.equal((await get()).status, "needs-key");
   settings.lastfmApiKey = "not a key";
@@ -351,7 +356,9 @@ test("catalog searches share an in-flight request and drop responses after opt-o
 test("Discover permits opt-in with a blank key and sends explicit catalog searches", () => {
   const view = fs.readFileSync("src/features/discover/DiscoverView.tsx", "utf8");
   const android = fs.readFileSync("src/platform/android/bridge.ts", "utf8");
-  assert.match(view, /disabled=\{Boolean\(keyDraft.trim\(\)\) && !API_KEY.test/);
+  const provider = fs.readFileSync("src/features/settings/categories/DiscoverSettings.tsx", "utf8");
+  assert.match(provider, /disabled=\{saving \|\| !VALID_KEY.test\(keyDraft\)\}/);
+  assert.match(view, /openDiscoverSettings/);
   assert.match(view, /getDiscoveries\(\{ catalog: \{ kind: catalogKind, term \} \}\)/);
   assert.match(view, /catalogRequestRef.current/);
   assert.match(android, /payload\?\.artwork \? cachedArtworkFromMac\(payload.artwork\) : payload\?\.catalog \? fromMac<DiscoverResult>/);

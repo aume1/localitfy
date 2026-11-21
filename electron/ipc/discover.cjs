@@ -15,7 +15,11 @@ const RESULT_TTL_MS = 12 * 60 * 60 * 1000;
 const BIO_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const BIO_MAX_ENTRIES = 3000;
 // A build can ship a key through the environment; one entered in Discover settings always wins.
-const apiKeyFor = (settings) => String(settings.lastfmApiKey || process.env.LOCALTIFY_LASTFM_API_KEY || "").trim();
+const apiKeyFor = (settings) => {
+  const override = String(settings.lastfmApiKey || "").trim();
+  if (/^[0-9a-f]{32}$/i.test(override)) return override;
+  return String(process.env.LOCALTIFY_LASTFM_API_KEY || "").trim();
+};
 
 const MBID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const cleanText = (value) => typeof value === "string" ? value.trim().slice(0, 300) : "";
@@ -136,6 +140,13 @@ function registerDiscoverIpc(router, { getSongs, getSettings, cacheFile, bioFile
   }
   router.handle("discover:get", async (_event, payload = {}) => {
     const settings = getSettings();
+    // Expose only configuration presence; never return the application key to
+    // the renderer, phone bridge, IPC logs, or saved settings.
+    if (payload?.configuration === true) {
+      const override = /^[0-9a-f]{32}$/i.test(String(settings.lastfmApiKey || "").trim());
+      const defaultKey = /^[0-9a-f]{32}$/i.test(String(process.env.LOCALTIFY_LASTFM_API_KEY || "").trim());
+      return { status: "configuration", lastfmSource: override ? "override" : defaultKey ? "default" : "missing" };
+    }
     if (settings.discoverEnabled !== true) return { status: "off" };
     if (payload?.artwork !== undefined) {
       const { title, artist, kind = "recording", fallback = false, providerId = "", album = "", durationMs = 0 } = payload.artwork || {};

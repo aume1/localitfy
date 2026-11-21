@@ -1,5 +1,5 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Compass, ExternalLink, Play, Plus, RefreshCw, Search, Settings2, UserX } from "lucide-react";
+import { Check, Compass, Play, Plus, RefreshCw, Search, Settings2, UserX } from "lucide-react";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { isAndroidApp, computerName } from "../../app/platform";
 import { splitArtistCredits } from "../artists/artistCredits";
@@ -23,9 +23,9 @@ export type DiscoverViewProps = {
   /** Opens Downloads with these songs selected, ready to download. */
   sendToDownloads: (tracks: SpotifyTrack[]) => unknown;
   notForMe?: { toggle: (kind: NotForMeKind, value: string) => unknown };
+  openDiscoverSettings: () => void;
 };
 
-const API_KEY = /^[0-9a-f]{32}$/i;
 // Short and stable: downloads use the ID in file names.
 function trackId(track: DiscoverTrack) {
   const recording = /^https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})$/.exec(track.url);
@@ -42,7 +42,7 @@ const toDownload = (track: DiscoverTrack): SpotifyTrack => {
 const listNames = (names: string[]) => names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 const openLink = (url: string) => { if (url) void window.localitfy.openExternal?.(url); };
 
-export default function DiscoverView({ settings, updateSetting, sendToDownloads, notForMe, songs, selectLocalSong }: DiscoverViewProps) {
+export default function DiscoverView({ settings, updateSetting, sendToDownloads, notForMe, songs, selectLocalSong, openDiscoverSettings }: DiscoverViewProps) {
   const phone = isAndroidApp();
   const [result, setResult] = useState<DiscoverResult | null>(null);
   const [artworkRevision, setArtworkRevision] = useState(0);
@@ -68,8 +68,6 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [relatedTitle, setRelatedTitle] = useState("");
   const catalogRequestRef = useRef(0);
-  const [showSettings, setShowSettings] = useState(false);
-  const [keyDraft, setKeyDraft] = useState(settings.lastfmApiKey || "");
   const [picked, setPicked] = useState<Map<string, DiscoverTrack>>(() => new Map());
   const requestVersionRef = useRef(0);
 
@@ -152,34 +150,20 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
     setPicked((current) => new Map([...current].filter(([, track]) => !includesArtist(track.artist))));
   };
 
-  async function turnOn() {
-    await updateSetting("lastfmApiKey", keyDraft.trim());
-    await updateSetting("discoverEnabled", true);
-    setShowSettings(false);
-  }
-
   const needsSetup = !settings.discoverEnabled;
-  const setup = phone ? <div className="discoverSetup"><p>Turn on Discover and manage its optional Last.fm connection in localtify on your {computerName()}, then sync this phone.</p></div> : (
-    <div className="discoverSetup">
-      <p>Search music without an account. Artwork lookups may send track and artist names to YouTube Music, Deezer and other configured providers; optional Last.fm recommendations use your library metadata.</p>
-      <details className="discoverOptional" open={Boolean(keyDraft) || undefined}>
-      <summary>Optional Last.fm recommendations</summary>
-      <label className="discoverKey">
-        <span>Last.fm API key (optional)</span>
-        <input value={keyDraft} onChange={(event) => setKeyDraft(event.currentTarget.value)} placeholder="32 letters and numbers" spellCheck={false} autoComplete="off" />
-      </label>
-      <p className="discoverHint">Use your Last.fm API key, not the shared secret.
-        {" "}<button type="button" className="discoverLink" onClick={() => openLink("https://www.last.fm/api/account/create")}>Get a key <ExternalLink size={12} /></button>
-        {" · "}<button type="button" className="discoverLink" onClick={() => openLink("https://www.last.fm/join?next=/api/account/create")}>No account? Sign up <ExternalLink size={12} /></button></p>
-      </details>
-      <div className="discoverActions">
-        <button type="button" className="heroMain" disabled={Boolean(keyDraft.trim()) && !API_KEY.test(keyDraft.trim())} onClick={() => void turnOn()}>
-          <Compass size={15} /><span>{settings.discoverEnabled ? "Save settings" : "Enable public discovery"}</span>
-        </button>
-        {settings.discoverEnabled ? <button type="button" className="softButton" onClick={() => { catalogRequestRef.current += 1; setCatalog(null); setCatalogLoading(false); void updateSetting("discoverEnabled", false); }}>Turn off Discover</button> : null}
-      </div>
+  // Keep provider configuration in Settings, not a giant form inside the music feed.
+  const setup = <div className="discoverWelcome">
+    <div className="discoverWelcomeIcon"><Compass size={21} aria-hidden="true" /></div>
+    <div className="discoverWelcomeCopy">
+      <h2>{phone ? "Discover is configured on desktop" : "Explore music beyond your library"}</h2>
+      <p>{phone ? `Configure Discover in Localtify on your ${computerName()}, then sync this phone.`
+        : "Search the public music catalog without an account. Enable suggestions when you're ready."}</p>
     </div>
-  );
+    {!phone ? <div className="discoverWelcomeActions">
+      <button className="discoverPrimaryAction" type="button" onClick={() => void updateSetting("discoverEnabled", true)}>Enable Discover</button>
+      <button className="discoverSecondaryAction" type="button" onClick={openDiscoverSettings}>Configure providers</button>
+    </div> : null}
+  </div>;
 
   const ready = settings.discoverEnabled && result?.status === "ready" ? result : null;
   const seedsLine = useMemo(() => {
@@ -203,19 +187,21 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
 
   return <section className="discoverPage" aria-busy={loading}>
     <PageHeader title="Discover" description={ready && seedsLine ? seedsLine : undefined}>
-      {!needsSetup ? <>
-        {ready || result?.status === "error" ? <button type="button" className="softButton" disabled={loading} onClick={() => void load(true)}><RefreshCw size={15} /> {loading ? "Finding music…" : "Refresh"}</button> : null}
-        {phone ? null : <button type="button" className="softButton" aria-expanded={showSettings} onClick={() => setShowSettings((open) => !open)}><Settings2 size={15} /> Settings</button>}
-      </> : null}
+      {!needsSetup && (ready || result?.status === "error") ? <button type="button" className="softButton" disabled={loading} onClick={() => void load(true)}><RefreshCw size={15} /> {loading ? "Finding music…" : "Refresh"}</button> : null}
+      {!phone ? <button type="button" className="softButton" onClick={openDiscoverSettings} aria-label="Open Discover settings"><Settings2 size={15} /> Settings</button> : null}
     </PageHeader>
+    {needsSetup ? setup : null}
+    {settings.discoverEnabled && result?.status === "needs-key" ? <div className="discoverKeyNotice" role="status">
+      <span>Public search is available. Personalized Last.fm recommendations need a configured app key.</span>
+      {!phone ? <button type="button" className="discoverSecondaryAction" onClick={openDiscoverSettings}>Provider settings</button> : null}
+    </div> : null}
 
-    {needsSetup || showSettings ? setup : null}
     {settings.discoverEnabled ? <section className="discoverCatalog" aria-labelledby="discover-catalog-title">
       <h2 id="discover-catalog-title" className="discoverHeading">Explore music</h2>
       <form className="discoverSearch" onSubmit={event => { event.preventDefault(); void searchCatalog(); }}>
         <ArcDropdownMenu<CatalogKind> ariaLabel="Search category" value={catalogKind} disabled={catalogLoading} items={[{ value: "recording", label: "Songs" }, { value: "artist", label: "Artists" }]} onValueChange={value => { setCatalogKind(value); setCatalog(null); setRelatedTitle(""); }} />
         <input type="search" aria-label="Search public music catalog" placeholder="Search songs and artists" value={catalogTerm} maxLength={160} disabled={catalogLoading} onChange={event => { setCatalogTerm(event.currentTarget.value); setCatalog(null); setRelatedTitle(""); }} />
-        <button className="heroMain" type="submit" disabled={catalogLoading || catalogTerm.trim().length < 2}><Search size={15} /><span>{catalogLoading ? "Searching…" : "Search"}</span></button>
+        <button className="discoverPrimaryAction" type="submit" disabled={catalogLoading || catalogTerm.trim().length < 2}><Search size={15} /><span>{catalogLoading ? "Searching…" : "Search"}</span></button>
       </form>
       {catalogLoading ? <p className="discoverBecause" role="status">Searching…</p> : null}
       {!relatedTitle && localMatches.length && deferredTerm === catalogTerm ? <>

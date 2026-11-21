@@ -23,7 +23,7 @@ export function getCardCoverCssUrl(song?: Song | null) {
   return `url("${coverUrl.replace(/["\\]/g, "\\$&")}")`;
 }
 
-export const Cover = memo(function Cover({ song, className, priority = "auto", preferThumbnail = false }: { song: Song | null; className: string; priority?: CoverImagePriority; preferThumbnail?: boolean }) {
+export const Cover = memo(function Cover({ song, className, priority = "auto", preferThumbnail = false, fallbackMode = "illustration" }: { song: Song | null; className: string; priority?: CoverImagePriority; preferThumbnail?: boolean; fallbackMode?: "illustration" | "monogram" }) {
   const [failedSources, setFailedSources] = useState<Record<string, boolean>>({});
   // Readiness is tied to the URL that actually loaded. A song update that keeps the same URL must not
   // hide the image again: the mounted <img> would never fire another load event.
@@ -60,7 +60,7 @@ export const Cover = memo(function Cover({ song, className, priority = "auto", p
   let coverSrc = sourceCandidates.find(source => source && !failedSources[source]) || "";
   // Most tracks have real art; avoid hashing metadata and resolving fallback
   // assets unless the real cover is unavailable.
-  if (!coverSrc && song) {
+  if (!coverSrc && song && fallbackMode === "illustration") {
     const fallbackSrc = runtimePixelArtImageUrl(pixelArtForSong(song));
     if (fallbackSrc && !failedSources[fallbackSrc]) coverSrc = fallbackSrc;
     else {

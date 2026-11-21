@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { useModalFocus } from "../../../shared/hooks/useModalFocus";
-import { Play, RefreshCw, Save, WandSparkles, X } from "lucide-react";
+import PlaylistComposer, { ComposerButton } from "./PlaylistComposer";
+import FadeContent from "../../../vendor/react-bits/FadeContent";
+import { Play, RefreshCw, Save, WandSparkles, ArrowUpRight } from "lucide-react";
 import { Cover } from "../../covers/Cover";
 import type { Song } from "../../library/song.types";
 import { prettyMeta, prettyTitle } from "../../search";
@@ -25,7 +25,6 @@ type SoundState = "used" | "model-missing" | "no-profiles" | "error" | null;
 type Result = { plan: PromptPlan; ids: string[]; sound: SoundState };
 
 export default function PromptPlaylistDialog({ songs, currentId, hidden, playSongs, selectSong, savePlaylist, openAnalysisSettings, onClose }: PromptPlaylistDialogProps) {
-  const dialogRef = useModalFocus(true);
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
@@ -85,76 +84,67 @@ export default function PromptPlaylistDialog({ songs, currentId, hidden, playSon
     : result.sound === "error" ? "Couldn't compare the description with your music. Try again."
     : !result.ids.length ? "Nothing in your library matches that. Try fewer or different words." : null;
 
-  // Portaled to the app root: the playlists page is a transformed container, which would trap a fixed overlay.
-  return createPortal(
-    <div className="modalWrap smartPlaylistWrap" onClick={onClose}>
-      <div ref={dialogRef} tabIndex={-1} className="smartPlaylistModal promptPlaylistModal" role="dialog" aria-modal="true" aria-labelledby="prompt-playlist-title"
-        onClick={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === "Escape" && !event.defaultPrevented) onClose(); }}>
-        <div className="modalHead">
-          <div>
-            <h3 id="prompt-playlist-title">Describe a playlist</h3>
+  return (
+    <PlaylistComposer kind="prompt" title="Describe a playlist" description="Find songs in your library that fit your idea." onClose={onClose}>
+      <div className="playlistComposerBody">
+        <form className="playlistPromptBox" onSubmit={event => { event.preventDefault(); void generate(prompt); }}>
+          <textarea autoFocus aria-label="Prompt" value={prompt} onChange={event => setPrompt(event.currentTarget.value)}
+            maxLength={300} rows={3} placeholder="Late-night music, songs like my favourites, or a 30-minute mix…" />
+          <div className="playlistPromptBar">
+            <span className="playlistComposerHint">{prompt.length}/300</span>
+            <ComposerButton variant="primary" type="submit" disabled={!prompt.trim() || loading}>
+              <WandSparkles size={16}/>{loading ? "Finding songs…" : "Generate playlist"}
+            </ComposerButton>
           </div>
-          <button className="closeModalButton" type="button" onClick={onClose} aria-label="Close"><X size={18} strokeWidth={2.4} /></button>
-        </div>
-
-        <form className="promptPlaylistForm" onSubmit={(event) => { event.preventDefault(); void generate(prompt); }}>
-          <input value={prompt} onChange={(event) => setPrompt(event.currentTarget.value)} maxLength={300} autoFocus
-            placeholder="e.g. chill songs like Mac Miller, no hip hop, 1 hour" aria-label="Prompt" />
-          <button className="heroMain" type="submit" disabled={!prompt.trim() || loading}><WandSparkles size={15} /><span>{loading ? "thinking…" : "generate"}</span></button>
         </form>
-        {!result ? (
-          <div className="smartPlaylistPresets" aria-label="Examples">
-            {EXAMPLES.map((example) => <button key={example} type="button" className="settingsTinyButton"
-              onClick={() => { setPrompt(example); void generate(example); }}>{example}</button>)}
-          </div>
-        ) : (
-          <ul className="promptPlaylistUnderstood" aria-label="Understood as">
-            {describePrompt(result.plan, result.sound === "used").map((label) => <li key={label}>{label}</li>)}
-          </ul>
-        )}
-        {notice ? (
-          <p className="promptPlaylistNotice" role="status">{notice}{result?.sound === "model-missing" || result?.sound === "no-profiles" ? (
-            <> <button type="button" className="settingsTinyButton" onClick={openAnalysisSettings}>open experimental settings</button></>
-          ) : null}</p>
-        ) : null}
-
-        {result?.ids.length ? <>
-          <div className="smartPlaylistMatch">
-            <span>{picked.length} of {result.ids.length} songs · {formatTime(seconds)}</span>
-            <button type="button" className="settingsTinyButton" onClick={() => setSelected(new Set(picked.length === result.ids.length ? [] : result.ids))}>
-              {picked.length === result.ids.length ? "select none" : "select all"}</button>
-          </div>
-          <ol className="promptPlaylistList">
-            {result.ids.map((id) => {
-              const song = songsById.get(id) as Song;
-              return (
-                <li key={id} className="promptPlaylistRow" data-current={currentId === id}>
-                  <label>
-                    <input type="checkbox" checked={selected.has(id)} onChange={() => toggle(id)} />
-                    <Cover song={song} className="playlistRecommendationCover" />
+        {!result ? <div className="playlistComposerExamples">
+          <span className="playlistComposerHint">Try an idea</span>
+          <div className="playlistComposerChips">{EXAMPLES.map(example =>
+            <ComposerButton key={example} variant="ghost" size="sm" disabled={loading} onClick={() => { setPrompt(example); void generate(example); }}>
+              {example}<ArrowUpRight size={12}/>
+            </ComposerButton>)}</div>
+        </div> : <div className="playlistComposerResults">
+          <FadeContent trigger="mount" effect="fade" duration={180} initialOpacity={0}>
+            <ul className="promptPlaylistUnderstood" aria-label="Understood as">
+              {describePrompt(result.plan, result.sound === "used").map(label => <li key={label}>{label}</li>)}
+            </ul>
+          </FadeContent>
+          {notice ? <p className="promptPlaylistNotice" role="status">{notice}
+            {result.sound === "model-missing" || result.sound === "no-profiles" ?
+              <ComposerButton size="sm" variant="ghost" onClick={openAnalysisSettings}>Open analysis settings</ComposerButton> : null}
+          </p> : null}
+          {result.ids.length > 0 ? <>
+            <div className="playlistComposerLine">
+              <strong>{picked.length} of {result.ids.length} songs · {formatTime(seconds)}</strong>
+              <ComposerButton size="sm" variant="ghost" onClick={() => setSelected(new Set(picked.length === result.ids.length ? [] : result.ids))}>
+                {picked.length === result.ids.length ? "Select none" : "Select all"}
+              </ComposerButton>
+            </div>
+            <ol className="promptPlaylistList">
+              {result.ids.map(id => {
+                const song = songsById.get(id);
+                if (!song) return null;
+                return <li key={id} className="promptPlaylistRow" data-current={currentId === id}>
+                  <label><input type="checkbox" checked={selected.has(id)} onChange={() => toggle(id)}/>
+                    <Cover song={song} className="playlistRecommendationCover" preferThumbnail/>
                     <span className="playlistTrackText"><strong>{prettyTitle(song.title)}</strong><small>{prettyMeta(song.artist)}</small></span>
                   </label>
                   <span className="playlistTrackDuration">{formatTime(song.duration)}</span>
-                  <button type="button" className="settingsTinyButton" aria-label={`Play ${song.title}`} onClick={() => void selectSong(id, true)}><Play size={14} /></button>
-                </li>
-              );
-            })}
-          </ol>
-          <div className="smartPlaylistFooter">
-            <label className="smartPlaylistField">
-              <span>name</span>
-              <input value={name} onChange={(event) => setName(event.currentTarget.value)} maxLength={120} placeholder="playlist name" />
-            </label>
-            <div className="promptPlaylistActions">
-              <button type="button" className="settingsTinyButton" disabled={loading} onClick={() => void generate(prompt, true)}><RefreshCw size={14} /> regenerate</button>
-              <button type="button" className="settingsTinyButton" disabled={!picked.length} onClick={() => playSongs(picked, name || result.plan.name)}><Play size={14} /> play</button>
-              <button type="button" className="heroMain" disabled={!picked.length}
-                onClick={() => { if (savePlaylist(name || result.plan.name, picked)) onClose(); }}><Save size={15} strokeWidth={2.4} /><span>save playlist</span></button>
-            </div>
-          </div>
-        </> : null}
+                  <ComposerButton variant="ghost" size="icon" aria-label={`Play ${song.title}`} onClick={() => void selectSong(id,true)}><Play size={14}/></ComposerButton>
+                </li>;
+              })}
+            </ol>
+          </> : null}
+        </div>}
       </div>
-    </div>,
-    document.querySelector(".app") || document.body
+      {result?.ids.length ? <footer className="playlistComposerFooter">
+        <label className="playlistComposerField"><span>Playlist name</span><input value={name} onChange={event => setName(event.currentTarget.value)} maxLength={120} placeholder="Playlist name"/></label>
+        <div className="playlistComposerActions">
+          <ComposerButton variant="ghost" disabled={loading} onClick={() => void generate(prompt,true)}><RefreshCw size={15}/> Regenerate</ComposerButton>
+          <ComposerButton disabled={!picked.length} onClick={() => playSongs(picked,name || result.plan.name)}><Play size={15}/> Play</ComposerButton>
+          <ComposerButton variant="primary" disabled={!picked.length || loading} onClick={() => { if (savePlaylist(name || result.plan.name,picked)) onClose(); }}><Save size={15}/> Save playlist</ComposerButton>
+        </div>
+      </footer> : null}
+    </PlaylistComposer>
   );
 }

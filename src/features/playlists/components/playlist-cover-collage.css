@@ -1,4 +1,4 @@
-.playlistCoverCollage { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(2,minmax(0,1fr)); aspect-ratio: 1; gap: 2px; overflow: hidden; background: var(--lt-surface-raised); border-radius: var(--lt-radius-item); }
+.playlistCoverCollage { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(2,minmax(0,1fr)); width: 100%; height: auto; aspect-ratio: 1; gap: 2px; overflow: hidden; background: var(--lt-surface-raised); border-radius: var(--lt-radius-item); }
 .playlistCoverTile { position: relative; min-width: 0; min-height: 0; display: grid; place-items: center; overflow: hidden; background: var(--lt-surface-raised); }
 .playlistCoverTile > span { color: var(--lt-faint); }
 .playlistCoverTile img, .playlistCoverImage, .playlistCoverImage img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -10,3 +10,6 @@
 .playlistCoverCollage .playlistCoverImage::before { content: none; }
 
 .playlistCoverCollage.homeReleaseCoverWrap { display: grid; }
+.playlistCoverTile .playlistCoverImage { width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
+.playlistCoverTile :is(.playlistCoverImage img, img) { object-position: center; object-fit: cover; image-rendering: auto; }
+.playlistCoverTile .coverPlaceholder { display: grid; place-items: center; width: 100%; height: 100%; color: var(--lt-muted); }

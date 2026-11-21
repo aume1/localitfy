@@ -1,6 +1,7 @@
 import { PageHeader } from "../../shared/ui/PageHeader";
 import "./settings.css";
 import "./settings-premium.css";
+import "./settings-finish.css";
 import type { ReactNode } from "react";
 import SettingsRail from "./SettingsRail";
 import type { SettingsRailProps } from "./SettingsRail";
@@ -17,7 +18,7 @@ export default function SettingsView({
 }: SettingsViewProps) {
   return (
     <section data-page-section="settings" className="settingsPage settingsPageV027">
-      <PageHeader title="Settings" description={settingsRail.tabs.find((tab) => tab.id === settingsCategory)?.label ?? "Settings"} />
+      <PageHeader title="Settings" description="Playback, library, appearance, and connected music services" />
       <div className="settingsLayout settingsPageLayoutV027">
         <SettingsRail {...settingsRail} />
         <div className="settingsCategoryContent settingsCategoryContentV027">

@@ -4,6 +4,7 @@ export type DiscoverArtist = { name: string; url: string; because: string[]; see
 export type CatalogKind = "recording" | "artist";
 export type CatalogItem = { id: string; title: string; artist: string; album?: string; subtitle: string; url: string } & DiscoverArtwork;
 export type DiscoverResult =
+  | { status: "configuration"; lastfmSource: "default" | "override" | "missing" }
   | ({ status: "artwork" } & DiscoverArtwork)
   | { status: "catalog"; kind: CatalogKind; items: CatalogItem[] }
   | { status: "ready" | "no-taste"; generatedAt: number; seeds: string[]; artists: DiscoverArtist[]; tracks: DiscoverTrack[] }
