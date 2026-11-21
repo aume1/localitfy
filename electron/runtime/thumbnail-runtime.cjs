@@ -6,7 +6,9 @@ const { execFile } = require("node:child_process");
 const { createThumbnailScheduler } = require("./thumbnail-scheduler.cjs");
 const { pruneThumbnails } = require("./thumbnail-retention.cjs");
 
-// Size is part of the derived-cache identity. Existing 256px entries remain valid.
+// Version derived covers so old black-padded thumbnails are rebuilt lazily.
+// Original artwork and its metadata are not changed.
+const THUMBNAIL_FORMAT = "square-fill-v2";
 const THUMBNAIL_SIZES = new Set([96, 256, 512]);
 const thumbnailSize = value => THUMBNAIL_SIZES.has(value) ? value : 256;
 const jobKey = (file, size) => JSON.stringify([file, thumbnailSize(size)]);
@@ -66,10 +68,10 @@ function createThumbnailRuntime({
   function getCoverThumbnailCacheKey(filePath, size = COVER_THUMBNAIL_SIZE) {
     try {
       const info = getFileInfoCached(filePath);
-      const signature = [filePathKey(String(filePath || "")), info.size || 0, Math.round(info.mtimeMs || 0), thumbnailSize(size)].join("|");
+      const signature = [filePathKey(String(filePath || "")), info.size || 0, Math.round(info.mtimeMs || 0), thumbnailSize(size), THUMBNAIL_FORMAT].join("|");
       return crypto.createHash("sha1").update(signature).digest("hex");
     } catch {
-      return crypto.createHash("sha1").update(String(filePath || "") + "|" + thumbnailSize(size)).digest("hex");
+      return crypto.createHash("sha1").update(String(filePath || "") + "|" + thumbnailSize(size) + "|" + THUMBNAIL_FORMAT).digest("hex");
     }
   }
 
@@ -134,7 +136,7 @@ function createThumbnailRuntime({
           await new Promise((resolve, reject) => execFile(ffmpegPath, [
             "-hide_banner", "-loglevel", "error", "-nostdin", "-threads", "1", "-i", filePath,
             "-map", "0:v:0", "-frames:v", "1", "-filter_threads", "1", "-vf",
-            `scale=${size}:${size}:force_original_aspect_ratio=decrease,pad=${size}:${size}:(ow-iw)/2:(oh-ih)/2`,
+            `crop=w='min(iw,ih)':h='min(iw,ih)':exact=1,scale=${size}:${size},setsar=1`,
             "-threads", "1", "-f", "image2", "-y", temporary
           ], { windowsHide: true, timeout: 12000, maxBuffer: 256 * 1024, signal: encoder.signal }, error => error ? reject(error) : resolve()));
           invalidateFileInfo(filePath);
