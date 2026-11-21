@@ -15,7 +15,11 @@ const RESULT_TTL_MS = 12 * 60 * 60 * 1000;
 const BIO_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const BIO_MAX_ENTRIES = 3000;
 // A build can ship a key through the environment; one entered in Discover settings always wins.
-const apiKeyFor = (settings) => String(settings.lastfmApiKey || process.env.LOCALTIFY_LASTFM_API_KEY || "").trim();
+const apiKeyFor = (settings) => {
+  const override = String(settings.lastfmApiKey || "").trim();
+  if (/^[0-9a-f]{32}$/i.test(override)) return override;
+  return String(process.env.LOCALTIFY_LASTFM_API_KEY || "").trim();
+};
 
 const MBID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const cleanText = (value) => typeof value === "string" ? value.trim().slice(0, 300) : "";

@@ -18,3 +18,11 @@
 @media (max-width: 600px) {
   .dailyMixesHeader { flex-direction: column; }
 }
+
+/* Match the full-size artwork cards used on Home instead of tiny row tiles. */
+.dailyMixesGrid { grid-template-columns: repeat(auto-fill,minmax(min(184px,100%),1fr)); gap: var(--lt-space-4); }
+.playlistShelfCard.dailyMixCard { display: grid; grid-template-columns: minmax(0,1fr); gap: 9px; padding: 0; }
+.playlistShelfCard.dailyMixCard .playlistCoverCollage { width: 100%; height: auto; aspect-ratio: 1; }
+.playlistShelfCard.dailyMixCard .playlistShelfMeta { width: 100%; min-width: 0; }
+.dailyMixesHeader { align-items: center; }
+@media (max-width: 560px) { .dailyMixesGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } }

@@ -26,7 +26,7 @@ const MATCH_ITEMS = [{ value: "all", label: "all of these" }, { value: "any", la
 const EMPTY_RULES: SmartRules = { match: "all", rules: [defaultSmartRule("liked")], sort: "library", limit: null };
 
 export default function SmartPlaylistDialog({ playlist, songs, listeningCounts, onSave, onClose }: SmartPlaylistDialogProps) {
-  const dialogRef = useModalFocus(true);
+  const dialogRef = useModalFocus<HTMLFormElement>(true);
   const [name, setName] = useState(playlist?.name || "");
   const [rules, setRules] = useState<SmartRules>(() => playlist?.rules || EMPTY_RULES);
   // Preview exactly what will be saved: blank text rules are dropped.

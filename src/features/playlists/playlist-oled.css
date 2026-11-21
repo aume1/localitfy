@@ -194,3 +194,18 @@
   .playlistToolbar .playlistAction, .app .localtifyPlaylistDialog :is(button, input) { transition: none; }
   .localtifyPlaylistBackdrop.modalWrap { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
+
+/* Override legacy global modal rules, which use !important to confine dialogs
+   to the content pane. These editors must cover sidebar and player as well. */
+.app .modalWrap.localtifyPlaylistBackdrop {
+  inset: var(--localtify-titlebar-height, 48px) 0 0 0 !important;
+  z-index: 220 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 18px !important;
+  background: rgba(0,0,0,.86) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+.app .localtifyPlaylistDialog.smartPlaylistModal .modalHead { margin-bottom: 0 !important; }
