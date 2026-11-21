@@ -136,6 +136,13 @@ function registerDiscoverIpc(router, { getSongs, getSettings, cacheFile, bioFile
   }
   router.handle("discover:get", async (_event, payload = {}) => {
     const settings = getSettings();
+    // Expose only configuration presence; never return the application key to
+    // the renderer, phone bridge, IPC logs, or saved settings.
+    if (payload?.configuration === true) {
+      const override = /^[0-9a-f]{32}$/i.test(String(settings.lastfmApiKey || "").trim());
+      const defaultKey = /^[0-9a-f]{32}$/i.test(String(process.env.LOCALTIFY_LASTFM_API_KEY || "").trim());
+      return { status: "configuration", lastfmSource: override ? "override" : defaultKey ? "default" : "missing" };
+    }
     if (settings.discoverEnabled !== true) return { status: "off" };
     if (payload?.artwork !== undefined) {
       const { title, artist, kind = "recording", fallback = false, providerId = "", album = "", durationMs = 0 } = payload.artwork || {};

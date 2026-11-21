@@ -125,6 +125,20 @@ function loadLocaltifyEnv(app, processRef = process) {
     }
   }
 
+  // A signed release can include an optional *public application key* generated
+  // during packaging. No other .env content is copied into the installer.
+  // System/user .env values always override this packaged default.
+  if (!processRef.env.LOCALTIFY_LASTFM_API_KEY && processRef.resourcesPath) {
+    try {
+      const defaults = JSON.parse(fs.readFileSync(path.join(processRef.resourcesPath, "provider-defaults.json"), "utf8"));
+      if (typeof defaults.lastfmApiKey === "string" && /^[0-9a-f]{32}$/i.test(defaults.lastfmApiKey)) {
+        processRef.env.LOCALTIFY_LASTFM_API_KEY = defaults.lastfmApiKey;
+      }
+    } catch {
+      // No configured provider default: Discover still works for public search.
+    }
+  }
+
   processRef.env.SPOTIFY_CLIENT_ID =
     processRef.env.SPOTIFY_CLIENT_ID ||
     processRef.env.VITE_SPOTIFY_CLIENT_ID ||

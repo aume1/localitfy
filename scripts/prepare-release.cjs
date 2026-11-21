@@ -13,6 +13,17 @@ function prepareRelease(root, includeRust = false) {
   }
 
   fs.rmSync(path.join(root, "release"), { recursive: true, force: true });
+  // Only the Last.fm APPLICATION API key may be packaged. Never include a
+  // shared secret, arbitrary .env fields, or credentials in the renderer.
+  // This is a distributed public client identifier, not a private credential:
+  // users can extract all data shipped inside a desktop executable.
+  const providerFile = path.join(root, "build", "provider-defaults.json");
+  const localEnv = path.join(root, ".env");
+  const parsed = fs.existsSync(localEnv) ? require("dotenv").parse(fs.readFileSync(localEnv)) : {};
+  const key = String(process.env.LOCALTIFY_LASTFM_API_KEY || parsed.LOCALTIFY_LASTFM_API_KEY || "").trim();
+  if (key && !/^[0-9a-f]{32}$/i.test(key)) throw new Error("LOCALTIFY_LASTFM_API_KEY must be a 32-character hexadecimal application key");
+  fs.mkdirSync(path.dirname(providerFile), { recursive: true });
+  fs.writeFileSync(providerFile, JSON.stringify({ lastfmApiKey: key || "" }) + "\n", { mode: 0o600 });
   if (!fs.existsSync(nativeDirectory)) return;
 
   for (const filename of fs.readdirSync(nativeDirectory)) {
