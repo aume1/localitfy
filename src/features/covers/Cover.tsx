@@ -23,7 +23,7 @@ export function getCardCoverCssUrl(song?: Song | null) {
   return `url("${coverUrl.replace(/["\\]/g, "\\$&")}")`;
 }
 
-export const Cover = memo(function Cover({ song, className, priority = "auto", preferThumbnail = false, preferHighResolution = false, fallbackMode = "illustration" }: { song: Song | null; className: string; priority?: CoverImagePriority; preferThumbnail?: boolean; preferHighResolution?: boolean; fallbackMode?: "illustration" | "monogram" }) {
+export const Cover = memo(function Cover({ song, className, priority = "auto", preferThumbnail = false, fallbackMode = "illustration" }: { song: Song | null; className: string; priority?: CoverImagePriority; preferThumbnail?: boolean; fallbackMode?: "illustration" | "monogram" }) {
   const [failedSources, setFailedSources] = useState<Record<string, boolean>>({});
   // Readiness is tied to the URL that actually loaded. A song update that keeps the same URL must not
   // hide the image again: the mounted <img> would never fire another load event.
@@ -35,7 +35,7 @@ export const Cover = memo(function Cover({ song, className, priority = "auto", p
   const [viewport, setViewport] = useState<{near: boolean; size: ThumbnailSize}>({near: false, size: 256});
   const coverIntrinsicSize = useFullCover ? 512 : viewport.size;
 
-  const directCover = useFullCover || preferHighResolution ? getFullCoverUrl(song) || getCardCoverUrl(song) : getCardCoverUrl(song);
+  const directCover = useFullCover ? getFullCoverUrl(song) : getCardCoverUrl(song);
   const savedCover = String(song?.coverPath || "").trim();
   const savedCoverSrc = getRendererSafeImageUrl(savedCover);
   // A broken thumbnail must fall back to the actual original, not a placeholder.

@@ -83,7 +83,7 @@ export function HomeSongRail({ id, title, songs, currentId, selectSong, playSong
             onOpen={() => selectSong(song.id, true)}
             onPlay={() => selectSong(song.id, true)}
             onContextMenu={(event) => void openSongMenu(event, song)}
-            cover={<span className="homeReleaseCoverWrap"><Cover song={song} className="homeReleaseCover" preferHighResolution fallbackMode="monogram" /></span>}
+            cover={<span className="homeReleaseCoverWrap"><Cover song={song} className="homeReleaseCover" preferThumbnail fallbackMode="monogram" /></span>}
           >
             <span className="homeReleaseCopy">
               <strong title={song.title}>{song.title || prettyTitle(song.title, 5)}</strong>
