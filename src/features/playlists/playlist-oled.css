@@ -126,8 +126,9 @@
 }
 .app .localtifyPlaylistDialog .heroMain {
   border: 1px solid var(--lt-accent); background: var(--lt-accent);
-  color: #08090b; text-shadow: none;
+  color: #08140d !important; text-shadow: none;
 }
+.app .localtifyPlaylistDialog .heroMain :is(span,svg) { color: #08140d !important; }
 .app .localtifyPlaylistDialog .heroMain:hover:not(:disabled) { filter: brightness(1.07); }
 .app .localtifyPlaylistDialog button:disabled { opacity: .42; cursor: not-allowed; }
 .app .localtifyPlaylistDialog .smartPlaylistPresets { gap: 8px; }

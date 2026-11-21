@@ -17,8 +17,8 @@ const SETTINGS_NAV_GROUPS: ReadonlyArray<{
   label: string;
   ids: ReadonlyArray<SettingsCategory>;
 }> = [
-  { label: "Listening", ids: ["appearance", "playback", "discord"] },
-  { label: "Your collection", ids: ["library", "covers", "downloads", "discover"] },
+  { label: "Listening", ids: ["appearance", "playback", "discover", "discord"] },
+  { label: "Your collection", ids: ["library", "covers", "downloads"] },
   { label: "Application", ids: ["updates", "experimental", "advanced", "about"] }
 ];
 
