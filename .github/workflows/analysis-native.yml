@@ -49,7 +49,7 @@ jobs:
           else
             npx electron-builder --linux dir --x64 --publish never
           fi
-      - name: Check bundled runtime
+      - name: Check bundled runtime and public provider config
         run: node scripts/check-analysis-native-package.cjs
       - name: Ensure normal package excludes optional Rust
         run: node scripts/check-rust-package.cjs --absent

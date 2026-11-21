@@ -420,6 +420,11 @@ server.listen(5173,async()=>{
        await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.discoverProviderSettings')").catch(()=>false),"Discover Settings "+mode);
        assert.equal(await win.webContents.executeJavaScript("!!document.querySelector('.discoverProviderStatus')"),true,"Provider configuration status must render");
        await screenshot(win,"settings-discover-"+mode);
+       // The broader visual suite expects Appearance to be selected when it
+       // next opens Settings. Restore selection after exercising Discover.
+       const appearanceRestored=await win.webContents.executeJavaScript("(()=>{const b=[...document.querySelectorAll('.settingsCategoryButton')].find(b=>b.textContent.includes('Appearance'));if(!b)return false;b.click();return true})()");
+       assert.equal(appearanceRestored,true,"Appearance category must stay reachable");
+       await until(()=>win.webContents.executeJavaScript("document.querySelectorAll('.settingsModeButton').length===2").catch(()=>false),"Appearance after Discover "+mode);
       // Keep full 860/1280 coverage; exercise original wide-desktop layout
       // only for the player and the two recently redesigned pages.
       for (const width of [1280,860,1920]) {
