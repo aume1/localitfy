@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { IconButton } from "../../shared/ui/IconButton";
 import { Search, X } from "lucide-react";
 import type { SettingsCategory } from "./settings.types";
@@ -24,6 +25,12 @@ const SETTINGS_NAV_GROUPS: ReadonlyArray<{
 export default function SettingsRail({
   tabs, activeCategory, search, resultLabel, onSearchChange, onCategoryChange
 }: SettingsRailProps) {
+  const selectedRef = useRef<HTMLButtonElement>(null);
+  useLayoutEffect(() => {
+    // Deep-linked sections (Discover in particular) can sit below the rail fold.
+    // Reveal the selected item without moving keyboard focus or resetting search.
+    selectedRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [activeCategory]);
   return (
     <aside className="settingsCategoryRail settingsCategoryRailV027 settingsCategoryRailPage" aria-label="Settings navigation">
       <div className="settingsSearchBoxV027">
@@ -49,7 +56,7 @@ export default function SettingsRail({
             {items.map((tab) => {
               const Icon = tab.icon;
               const selected = activeCategory === tab.id;
-              return <button key={tab.id} className={`settingsCategoryButton ${selected ? "active" : ""}`}
+              return <button key={tab.id} ref={selected ? selectedRef : undefined} className={`settingsCategoryButton ${selected ? "active" : ""}`}
                 type="button" onClick={() => onCategoryChange(tab.id)} title={tab.description}
                 aria-current={selected ? "page" : undefined}>
                 <span className="settingsCategoryIcon" aria-hidden="true">

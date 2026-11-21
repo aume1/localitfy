@@ -125,11 +125,12 @@
 .discoverWelcomeCopy p { margin: 0; color: var(--lt-muted); font-size: 13px; line-height: 1.6; }
 .discoverWelcomeActions { display: flex; gap: 9px; flex-wrap: wrap; }
 .discoverPrimaryAction, .discoverSecondaryAction {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   min-height: 39px; padding: 8px 14px; border-radius: 10px;
   font: inherit; font-size: 13px; font-weight: 650; cursor: pointer;
 }
 .discoverPrimaryAction { border: 1px solid var(--lt-accent); background: var(--lt-accent); color: var(--lt-bg); }
+.discoverPrimaryAction:disabled { opacity: .47; cursor: not-allowed; }
 .discoverSecondaryAction { border: 1px solid var(--lt-border); background: var(--lt-surface-raised); color: var(--lt-text); }
 .discoverSecondaryAction:hover { background: var(--lt-fill-hover); }
 .discoverKeyNotice {

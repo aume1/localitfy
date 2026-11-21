@@ -201,7 +201,7 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
       <form className="discoverSearch" onSubmit={event => { event.preventDefault(); void searchCatalog(); }}>
         <ArcDropdownMenu<CatalogKind> ariaLabel="Search category" value={catalogKind} disabled={catalogLoading} items={[{ value: "recording", label: "Songs" }, { value: "artist", label: "Artists" }]} onValueChange={value => { setCatalogKind(value); setCatalog(null); setRelatedTitle(""); }} />
         <input type="search" aria-label="Search public music catalog" placeholder="Search songs and artists" value={catalogTerm} maxLength={160} disabled={catalogLoading} onChange={event => { setCatalogTerm(event.currentTarget.value); setCatalog(null); setRelatedTitle(""); }} />
-        <button className="heroMain" type="submit" disabled={catalogLoading || catalogTerm.trim().length < 2}><Search size={15} /><span>{catalogLoading ? "Searching…" : "Search"}</span></button>
+        <button className="discoverPrimaryAction" type="submit" disabled={catalogLoading || catalogTerm.trim().length < 2}><Search size={15} /><span>{catalogLoading ? "Searching…" : "Search"}</span></button>
       </form>
       {catalogLoading ? <p className="discoverBecause" role="status">Searching…</p> : null}
       {!relatedTitle && localMatches.length && deferredTerm === catalogTerm ? <>

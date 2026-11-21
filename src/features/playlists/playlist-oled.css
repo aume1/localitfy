@@ -49,6 +49,10 @@
 }
 .app .localtifyPlaylistDialog.smartPlaylistModal {
   --lt-bg: #08090b;
+  /* OLED dialogs need a legible brand accent even under the light theme,
+     whose normal accent can be close to black. Keep this scoped to editors. */
+  --lt-accent: #7decb0;
+  --lt-accent-rgb: 125, 236, 176;
   --lt-bg-elevated: #101115;
   --lt-surface: #0d0e11;
   --lt-surface-soft: #15171b;
