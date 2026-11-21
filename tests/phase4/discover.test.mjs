@@ -356,7 +356,9 @@ test("catalog searches share an in-flight request and drop responses after opt-o
 test("Discover permits opt-in with a blank key and sends explicit catalog searches", () => {
   const view = fs.readFileSync("src/features/discover/DiscoverView.tsx", "utf8");
   const android = fs.readFileSync("src/platform/android/bridge.ts", "utf8");
-  assert.match(view, /disabled=\{Boolean\(keyDraft.trim\(\)\) && !API_KEY.test/);
+  const provider = fs.readFileSync("src/features/settings/categories/DiscoverSettings.tsx", "utf8");
+  assert.match(provider, /disabled=\{saving \|\| !VALID_KEY.test\(keyDraft\)\}/);
+  assert.match(view, /openDiscoverSettings/);
   assert.match(view, /getDiscoveries\(\{ catalog: \{ kind: catalogKind, term \} \}\)/);
   assert.match(view, /catalogRequestRef.current/);
   assert.match(android, /payload\?\.artwork \? cachedArtworkFromMac\(payload.artwork\) : payload\?\.catalog \? fromMac<DiscoverResult>/);

@@ -37,7 +37,7 @@ test("Library uses a neutral hover without disabling drag indicators", () => {
 test("Arc menu owns its styles and preserves Localtify theme tokens", () => {
   const css = read("src/shared/ui/ArcDropdownMenu.css");
   const component = read("src/shared/ui/ArcDropdownMenu.tsx");
-  assert.match(component, /getComputedStyle\(root\)/);
+  assert.match(component, /getComputedStyle\(triggerRef.current\?\.closest\("\.localtifyPlaylistDialog"\) \|\| root\)/);
   assert.match(component, /--lt-surface-raised/);
   assert.match(css, /z-index: 3000/);
   assert.match(css, /prefers-reduced-motion: reduce/);

@@ -31,6 +31,7 @@ test("both playlist composers use the same OLED surface and focus trap", () => {
   assert.match(prompt, /localtifyPlaylistDialog/);
   assert.match(smart, /useModalFocus<HTMLFormElement>\(true\)/);
   assert.match(smart, /localtifyPlaylistDialog/);
-  assert.match(palette, /background: #0d0e11/);
+  assert.match(palette, /--lt-surface: #0d0e11/);
+  assert.match(palette, /background: var\(--lt-surface\)/);
   assert.match(palette, /:focus-visible/);
 });
