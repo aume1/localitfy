@@ -39,6 +39,8 @@ jobs:
       - name: Native runtime load
         run: node -e "const ort = require('onnxruntime-node'); if(typeof ort.InferenceSession?.create !== 'function') throw new Error('ONNX CPU runtime unavailable')"
       - run: npm run build
+      - name: Prepare packaged provider configuration
+        run: npm run clean:release
       - name: Build unpacked app
         shell: bash
         run: |
