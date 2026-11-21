@@ -80,7 +80,7 @@
   color: var(--accent-contrast, #06100b);
 }
 
-.app .discoverPage :is(.discoverKey input, .discoverLink, .discoverName, .discoverPick):focus-visible {
+.app .discoverPage :is(.discoverName, .discoverPick):focus-visible {
   outline: 2px solid var(--lt-accent) !important;
   outline-offset: 2px !important;
 }
