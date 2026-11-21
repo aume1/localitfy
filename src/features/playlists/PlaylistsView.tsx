@@ -8,6 +8,7 @@ import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import { notForMeTest, type NotForMeMarks } from "../analysis/notForMe";
 import PlaylistRecommendations from "./components/PlaylistRecommendations";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
+import { Button } from "../../vendor/beui/button";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { LocaltifyStateCard, MetaDividerDot } from "../../shared/ui/LocaltifyViewUi";
 import { VirtualPlaylistTrackList } from "./components/VirtualPlaylistTrackList";
@@ -290,17 +291,17 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
             aria-label="New playlist name"
             maxLength={120}
           />
-          <button className="playlistAction playlistActionPrimary" type="submit"><ActionLabel icon={Plus}>Create playlist</ActionLabel></button>
+          <Button className="playlistAction playlistActionPrimary" type="submit"><ActionLabel icon={Plus}>Create playlist</ActionLabel></Button>
         </form>
         <div className="playlistSecondaryActions">
-          <button className="playlistAction playlistActionSecondary" type="button" onClick={() => setSmartEditing(null)} disabled={!songs.length}
+          <Button variant="secondary" className="playlistAction playlistActionSecondary" type="button" onClick={() => setSmartEditing(null)} disabled={!songs.length}
             title="A playlist that fills itself from rules and your listening history">
             <ActionLabel icon={Sparkles}>Smart playlist</ActionLabel>
-          </button>
-          <button className="playlistAction playlistActionSecondary" type="button" onClick={() => setPrompting(true)} disabled={!songs.length}
+          </Button>
+          <Button variant="secondary" className="playlistAction playlistActionSecondary" type="button" onClick={() => setPrompting(true)} disabled={!songs.length}
             title="Describe a playlist, then choose the songs to keep">
             <ActionLabel icon={WandSparkles}>From a prompt</ActionLabel>
-          </button>
+          </Button>
         </div>
       </div>
 
