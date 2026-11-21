@@ -550,6 +550,10 @@ server.listen(5173,async()=>{
       }
       win.setSize(1280,800);
       await win.webContents.executeJavaScript("document.querySelector('.sidebar [data-nav-id=settings]').click()");
+      await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.settingsCategoryRail')").catch(()=>false),"settings navigation");
+      // The active Discover category is remembered when returning to Settings.
+      const appearanceSelected=await win.webContents.executeJavaScript("(()=>{const button=[...document.querySelectorAll('.settingsCategoryButton')].find(button=>button.textContent.includes('Appearance'));if(!button)return false;button.click();return true;})()");
+      assert.equal(appearanceSelected,true,"Appearance remains reachable from Settings");
       await until(()=>win.webContents.executeJavaScript("document.querySelectorAll('.settingsModeButton').length===2").catch(()=>false),"appearance navigation");
     }
     // Render the actual title-bar update banner and remote What's New flow without installing a fake package.
