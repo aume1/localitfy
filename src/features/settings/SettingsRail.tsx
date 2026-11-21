@@ -17,7 +17,7 @@ const SETTINGS_NAV_GROUPS: ReadonlyArray<{
   ids: ReadonlyArray<SettingsCategory>;
 }> = [
   { label: "Listening", ids: ["appearance", "playback", "discord"] },
-  { label: "Your collection", ids: ["library", "covers", "downloads"] },
+  { label: "Your collection", ids: ["library", "covers", "downloads", "discover"] },
   { label: "Application", ids: ["updates", "experimental", "advanced", "about"] }
 ];
 
@@ -55,7 +55,7 @@ export default function SettingsRail({
                 <span className="settingsCategoryIcon" aria-hidden="true">
                   <Icon className="settingsLucideIcon" size={20} strokeWidth={1.9} />
                 </span>
-                <span className="settingsCategoryCopy"><strong>{tab.label}</strong></span>
+                <span className="settingsCategoryCopy"><strong>{tab.label}</strong><small>{tab.description}</small></span>
               </button>;
             })}
           </div>;

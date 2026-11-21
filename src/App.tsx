@@ -5963,6 +5963,7 @@ function MainModeApp() {
     },
     discover: {
       settings, updateSetting, notForMe, songs, selectLocalSong: (id: string) => void selectSong(id, true),
+      openDiscoverSettings: () => { setSettingsSearch(""); openSettingsPanel("discover"); },
       sendToDownloads: (tracks: SpotifyTrack[]) => {
         setSpotifyTracks((current) => [...tracks, ...current.filter((track) => !tracks.some((next) => next.id === track.id))]);
         setSpotifySelectedIds(new Set(tracks.map((track) => track.id)));
