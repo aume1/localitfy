@@ -62,7 +62,7 @@
   --lt-border-strong: #4a4e56;
   --lt-radius-item: 10px;
   width: min(660px, calc(100vw - 32px));
-  max-height: min(780px, calc(100dvh - 36px));
+  max-height: min(760px, calc(100dvh - var(--localtify-titlebar-height, 48px) - 36px));
   padding: clamp(18px, 2.2vw, 28px);
   display: grid; align-content: start; gap: 20px; overflow: auto;
   color: var(--lt-text); background: var(--lt-surface);
