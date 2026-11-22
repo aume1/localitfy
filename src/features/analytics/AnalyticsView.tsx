@@ -1,6 +1,6 @@
 import "./analytics.css";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Ellipsis, Music2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ellipsis } from "lucide-react";
 import { isAndroidApp } from "../../app/platform";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { Cover } from "../covers/Cover";

@@ -1034,7 +1034,7 @@ function MainModeApp() {
   }
 
 
-  const { libraryIndex, filteredSongs, likedSongs, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
+  const { libraryIndex, likedSongs, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
     songs, deferredQuery, view, libraryFilterMode, librarySortMode, libraryRenderLimit, libraryListLengthRef, libraryRenderLimitRef
   });
   const similarSeed = useMemo(() => resolveSimilarSeed(similarRequest, songsById, songs, playlists), [similarRequest, songsById, songs, playlists]);

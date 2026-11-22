@@ -157,7 +157,7 @@ export function LocaltifyStateCard({
   mascotState
 }: {
   tone?: LocaltifyStateCardTone;
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   message: string;
   detail?: string;
@@ -177,7 +177,7 @@ export function LocaltifyStateCard({
             </span>
           </div>
           <div className="localtifyEmptyCopyV467">
-            <p className="eyebrow">{eyebrow}</p>
+            {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
             <strong className="localtifyEmptyCaptionV467">{title}</strong>
             <span>{message}</span>
             {detail ? <small>{detail}</small> : null}
@@ -191,7 +191,7 @@ export function LocaltifyStateCard({
           </span>
 
           <div className="localtifyStateCopyV373">
-            <p className="eyebrow">{eyebrow}</p>
+            {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
             <strong>{title}</strong>
             <span>{message}</span>
             {detail ? <small>{detail}</small> : null}
