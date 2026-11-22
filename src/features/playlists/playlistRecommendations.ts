@@ -72,7 +72,7 @@ export function relatedSongScores(seeds: readonly Song[], songs: readonly Song[]
   // Songs that share a playlist with the seeds; a large playlist says less about each of its songs.
   const together = new Map<string, number>();
   for (const playlist of playlists) {
-    if (playlist.rules || !playlist.songIds.length) continue;
+    if (!playlist.songIds.length) continue;
     const overlap = playlist.songIds.filter((id) => seedIds.has(id)).length;
     if (!overlap || overlap === playlist.songIds.length) continue;
     const weight = overlap / playlist.songIds.length;

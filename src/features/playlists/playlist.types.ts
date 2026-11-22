@@ -1,5 +1,4 @@
 import type { Song } from "../library/song.types";
-import type { SmartRules } from "./smartPlaylist";
 
 export type Playlist = {
   id: string;
@@ -7,8 +6,6 @@ export type Playlist = {
   songIds: string[];
   createdAt: number;
   coverArtwork?: string;
-  /** Smart playlists fill `songIds` from these rules instead of by hand. */
-  rules?: SmartRules;
 };
 
 export type PlaylistSummary = {
