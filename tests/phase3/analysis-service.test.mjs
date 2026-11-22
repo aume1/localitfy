@@ -40,6 +40,7 @@ function fixture(t, { battery = false, enabled = true, records = [], defer = fal
 test("analysis is opt-in and power-aware; status does not start workers", async (t) => {
   const { service, workers } = fixture(t, { enabled: false });
   await service.status();
+  for (const action of ["download", "cancelDownload", "removeModel"]) await assert.rejects(service[action]("prompt"), /Unknown model/);
   assert.equal(workers.length, 0);
   await assert.rejects(service.start(), /Enable analysis/);
   assert.equal((await service.status()).scanning, false);
