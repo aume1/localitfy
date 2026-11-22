@@ -51,9 +51,3 @@ test("cover picker preserves single-item and all-current fallback behavior", () 
   assert.equal(pick([single, { ...single }], song, new Map(), "s")?.file, "one");
 });
 
-test("bulk cover updates use pre-indexed song locations", () => {
-  const source = fs.readFileSync("src/features/covers/useCoversController.ts", "utf8");
-  assert.doesNotMatch(source, /nextSongs\.findIndex/);
-  assert.equal(source.split("const songIndexById = new Map").length - 1, 2);
-  assert.match(source, /selectBalancedPixelAsset/);
-});

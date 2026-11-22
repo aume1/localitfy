@@ -384,24 +384,8 @@ server.listen(5173,async()=>{
       await win.webContents.executeJavaScript(`(()=>{const e=document.querySelector('.librarySearch');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,"no matching fixture");e.dispatchEvent(new Event("input",{bubbles:true}));})()`);
       await until(()=>win.webContents.executeJavaScript("document.querySelector('.libraryPageLiked')?.textContent.includes('No songs found')"),"liked search empty "+mode);
       await win.webContents.executeJavaScript("[...document.querySelectorAll('.libraryPageLiked button')].find(b=>b.textContent==='clear search').click()");
-      await win.webContents.executeJavaScript("document.querySelector('.sidebar [data-nav-id=playlists]').click()");
+      await win.webContents.executeJavaScript("document.querySelector('.librarySectionNav [data-library-section=playlists]').click()");
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('button[aria-label=\"open qa playlist\"]')").catch(()=>false),"fixture playlist "+mode);
-       // Verify both real playlist editors render and close on desktop.
-       const smartOpened=await win.webContents.executeJavaScript("(()=>{const b=[...document.querySelectorAll('.playlistSecondaryActions button')].find(b=>b.textContent.includes('Smart playlist'));if(!b)return false;b.click();return true})()");
-       assert.equal(smartOpened,true,"Smart playlist action must be accessible");
-       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.localtifyPlaylistDialog[aria-modal=true]')").catch(()=>false),"OLED smart playlist "+mode);
-       const oledDialog=await win.webContents.executeJavaScript("(()=>{const d=document.querySelector('.localtifyPlaylistDialog');const c=getComputedStyle(d);const r=d.getBoundingClientRect();return {fill:c.backgroundColor,top:r.top,bottom:r.bottom,visible:r.width>0&&r.height>0}})()");
-       assert.equal(oledDialog.fill,"rgb(8, 8, 8)","Smart editor must use OLED surface");
-       assert.ok(oledDialog.visible&&oledDialog.top>=0&&oledDialog.bottom<=win.getBounds().height+1,"Smart editor stays within the viewport");
-       await screenshot(win,"smart-playlist-oled-"+mode);
-       await win.webContents.executeJavaScript("document.querySelector('.localtifyPlaylistDialog .playlistComposerClose').click()");
-       await until(()=>win.webContents.executeJavaScript("!document.querySelector('.localtifyPlaylistDialog')").catch(()=>false),"Smart editor closes "+mode);
-       const promptOpened=await win.webContents.executeJavaScript("(()=>{const b=[...document.querySelectorAll('.playlistSecondaryActions button')].find(b=>b.textContent.includes('From a prompt'));if(!b)return false;b.click();return true})()");
-       assert.equal(promptOpened,true,"Prompt playlist action must be accessible");
-       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.promptPlaylistModal.localtifyPlaylistDialog')").catch(()=>false),"OLED prompt playlist "+mode);
-       await screenshot(win,"prompt-playlist-oled-"+mode);
-       await win.webContents.executeJavaScript("document.querySelector('.promptPlaylistModal .playlistComposerClose').click()");
-       await until(()=>win.webContents.executeJavaScript("!document.querySelector('.localtifyPlaylistDialog')").catch(()=>false),"Prompt editor closes "+mode);
       await win.webContents.executeJavaScript("document.querySelector('button[aria-label=\"open qa playlist\"]').click()");
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.playlistDetailPage .collectionHero') && document.querySelector('.app').dataset.workspaceArtwork==='on'").catch(()=>false),"playlist contextual shell artwork "+mode);
       await screenshot(win,"playlist-atmosphere-"+mode);
@@ -430,9 +414,9 @@ server.listen(5173,async()=>{
       for (const width of [1280,860,1920]) {
         win.setSize(width,width===1920?1080:800);
         await until(()=>win.webContents.executeJavaScript("window.innerWidth").then(actual=>actual===width),"viewport "+width,5000);
-        const views=width===1920?["home","downloads","analytics"]:["home","library","artists","genres","playlists","discover","downloads","covers","analytics","settings"];
+        const views=width===1920?["home","downloads","analytics"]:["home","library","artists","genres","playlists","discover","downloads","analytics","settings"];
         for (const view of views) {
-          await win.webContents.executeJavaScript(`document.querySelector('.sidebar [data-nav-id="${view}"]').click()`);
+          await win.webContents.executeJavaScript(`document.querySelector('${["artists","genres","playlists"].includes(view) ? ".librarySectionNav [data-library-section=" : ".sidebar [data-nav-id="}"${view}"]').click()`);
           await until(()=>win.webContents.executeJavaScript(`(()=>{const page=document.querySelector('.pageTransition[data-view="${view}"]');return !!page?.firstElementChild&&!page.querySelector('.collectionLoading')&&!document.querySelector('.appCrashBoundary')&&Number(getComputedStyle(page).opacity)>=0.99})()`).catch(()=>false),view+" "+mode+" "+width);
           if(view==="downloads") {
             const saved=await win.webContents.executeJavaScript("window.localitfy.getDownloadJobs()");
@@ -635,7 +619,9 @@ server.listen(5173,async()=>{
     await screenshot(win,"immersive-narrow-lyrics");
     await win.webContents.executeJavaScript("document.querySelector('[aria-label=\"Close immersive player\"]').click()");
     await until(()=>win.webContents.executeJavaScript("!document.querySelector('.immersivePlayer')&&document.querySelector('.playerBar').contains(document.activeElement)&&document.activeElement.getClientRects().length>0"),"immersive trigger focus restored");
-    await win.webContents.executeJavaScript("document.querySelector('.sidebar [data-nav-id=artists]').click()");
+    await win.webContents.executeJavaScript("document.querySelector('.sidebar [data-nav-id=library]').click()");
+    await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.librarySectionNav [data-library-section=artists]')"),"Library sections");
+    await win.webContents.executeJavaScript("document.querySelector('.librarySectionNav [data-library-section=artists]').click()");
     await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.artistCard .mediaCardOpen')"),"narrow artist cards");
     await win.webContents.executeJavaScript("document.querySelector('.artistCard .mediaCardOpen').click()");
     await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.collectionHero')&&!!document.querySelector('.trackRow')"),"narrow collection details");

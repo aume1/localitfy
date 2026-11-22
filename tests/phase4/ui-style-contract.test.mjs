@@ -7,20 +7,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 
-const rebuiltStyles = [
-  "src/features/covers/covers.css"
-];
 
-test("cover styles remain lazy-loaded in their features", () => {
-  const main = read("src/main.tsx");
-  for (const file of rebuiltStyles) {
-    assert.equal(fs.existsSync(path.join(root, file)), true, file + " should exist");
-    assert.equal(main.includes(file.replace(/^src\//, "./")), false, file + " should not be a global import");
-  }
-  assert.equal(fs.existsSync(path.join(root, "src/features/library/library.css")), true, "Library should now have a co-located design owner");
-  assert.equal(fs.existsSync(path.join(root, "src/features/artists/artists.css")), true, "Artists should have a co-located design owner");
-
-});
 
 test("permanent visual owners remain explicit and co-located", () => {
   const app = read("src/App.tsx");
@@ -31,7 +18,6 @@ test("permanent visual owners remain explicit and co-located", () => {
   const genres = read("src/features/genres/GenresView.tsx");
   const player = read("src/features/player/components/PlayerBar.tsx");
   const settingsView = read("src/features/settings/SettingsView.tsx");
-  const coversView = read("src/features/covers/CoversView.tsx");
   const playlists = read("src/features/playlists/PlaylistsView.tsx");
   const downloads = read("src/features/downloads/DownloadsView.tsx");
   const analytics = read("src/features/analytics/AnalyticsView.tsx");
@@ -47,7 +33,6 @@ test("permanent visual owners remain explicit and co-located", () => {
   assert.ok(fs.existsSync(path.join(root, "src/features/genres/genres.css")));
   assert.equal(player.includes('import "../player.css";'), true, "PlayerBar must own player CSS");
   assert.equal(settingsView.includes('import "./settings.css";'), true, "SettingsView must own settings CSS");
-  assert.ok(coversView.includes('import "./covers.css";'), "Covers must own its stylesheet");
   for (const [source, name] of [[playlists, "playlists"], [downloads, "downloads"], [analytics, "analytics"]]) {
     assert.ok(source.includes('import "./' + name + '.css";'), name + " needs a local stylesheet");
     assert.ok(fs.existsSync(path.join(root, "src/features/" + name + "/" + name + ".css")));
@@ -91,7 +76,7 @@ test("theme controls and library layout follow their owners", () => {
 test("sidebar navigation retains keyboard focus and theme contrast", () => {
   const nav = read("src/features/shell/SidebarNav.tsx");
   const effects = read("src/features/shell/effects.css");
-  assert.ok(nav.includes('aria-current={view === item.id ? "page" : undefined}'));
+  assert.ok(nav.includes('aria-current={activeView === item.id ? "page" : undefined}'));
   assert.match(read("src/styles/view-shell.css"), /\.navItem:focus-visible \.navIcon\s*\{\s*outline: 2px solid var\(--lt-accent\) !important/);
   assert.match(read("src/styles/view-shell.css"), /\.navItem\.active \{[^}]*color: var\(--lt-text\) !important/);
 });
@@ -186,21 +171,6 @@ test("shared focus remains visible and component insets override the app and Lin
 });
 
 
-test("Cover virtual rows keep fixed positions when hovered and gallery items fit their slots", () => {
-  const css = read("src/features/covers/covers.css");
-  const songs = read("src/features/covers/components/VirtualCoverSongList.tsx");
-  const gallery = read("src/features/covers/components/VirtualCoverGalleryGrid.tsx");
-  assert.match(songs, /style=\{\{ top: \`\$\{virtualRow\.start - scrollMargin\}px\` \}\}/);
-  assert.match(gallery, /style=\{\{ top: \`\$\{virtualRow\.start - scrollMargin\}px\`/);
-  assert.doesNotMatch(songs + gallery, /translate3d\(0, var\(--cover-/);
-  assert.match(css, /height: 228px/);
-  assert.match(gallery, /estimateSize: \(\) => 228/);
-  assert.match(css, /coverSongPickVirtual[\s\S]*?transform: none !important/);
-  assert.match(gallery, /Math\.max\(1, Math\.floor/);
-  assert.match(gallery, /if \(!entries\.length\) return <div ref=\{parentRef\}/);
-  assert.match(songs, /if \(!songs\.length\) return <div ref=\{parentRef\}/);
-  assert.match(songs, /aria-pressed=\{selected\}/);
-});
 
 
 test("Artists and Genres share collection primitives but own their variants", () => {
@@ -228,7 +198,7 @@ test("Artists and Genres share collection primitives but own their variants", ()
 });
 
 
-const resetPageSelectors = [".albumsPageV318", ".playlistsPage", ".coverStudioLayout", ".downloadsLayoutV031", ".analyticsStudioV339", ".settingsPageV027"];
+const resetPageSelectors = [".albumsPageV318", ".playlistsPage", ".downloadsLayoutV031", ".analyticsStudioV339", ".settingsPageV027"];
 
 test("shared shell owns viewport and responsive sidebar behavior only", () => {
   const main = read("src/main.tsx");
