@@ -97,8 +97,10 @@ final class RemoteArtworkCache {
         Arrays.sort(files,Comparator.comparingLong(File::lastModified));
         long bytes=0;int count=0;
         for(File file:files){if(file.getName().endsWith(".part")){file.delete();continue;}bytes+=file.length();count++;}
+        long targetBytes=bytes>32L*1024*1024?28L*1024*1024:32L*1024*1024;
+        int targetCount=count>2048?1792:2048;
         for(File file:files){
-            if(bytes<=32L*1024*1024&&count<=2048)break;
+            if(bytes<=targetBytes&&count<=targetCount)break;
             if(file.equals(keep)||!file.getName().endsWith(".png"))continue;
             long length=file.length();if(file.delete()){bytes-=length;count--;}
         }

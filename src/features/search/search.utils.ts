@@ -94,7 +94,7 @@ export function rankSongsForSearch(entries: SongSearchEntry[], query: string) {
   if (!search.clean) return entries.map(entry => entry.song);
   const requiredTerm = search.terms.reduce((longest, term) => term.length > longest.length ? term : longest, "");
   const cached = searchCandidates.get(entries);
-  const candidates = cached && search.terms.some(term => term.includes(cached.term)) ? cached.indices : null;
+  const candidates = cached && requiredTerm.includes(cached.term) ? cached.indices : null;
   const matches: Array<{entry: SongSearchEntry; index: number; score: number}> = [];
   const limit = Math.min(8192, Math.floor(entries.length / 3));
   let nextCandidates: number[] | null = requiredTerm && limit > 0 ? [] : null;

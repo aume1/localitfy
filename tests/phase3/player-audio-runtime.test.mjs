@@ -105,6 +105,11 @@ test("suspended Web Audio must not intercept audible HTML audio before resuming"
   runtime.apply(audio, profile);
   assert.equal(sourceConnections, 1, "reusing effects does not create another media source");
   assert.equal(pitchWrites, 1, "unchanged pitch must not reconfigure the audio pipeline");
+  const standby = { playbackRate: 1, preservesPitch: true };
+  runtime.applyTransport(standby, profile);
+  assert.equal(sourceConnections, 1, "standby playback must not detach the active graph");
+  assert.equal(standby.preservesPitch, false);
+  assert.ok(standby.playbackRate < 1);
   runtime.dispose();
 });
 

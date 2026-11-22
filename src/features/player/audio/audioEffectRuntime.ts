@@ -90,11 +90,16 @@ export class AudioEffectRuntime {
   private analyserConnected = false;
   private readonly parameterTargets = new WeakMap<AudioParam, number>();
 
+  applyTransport(audio: HTMLAudioElement, input: AudioEffectProfileInput) {
+    const profile = getAudioEffectProfile(input);
+    this.applyMediaElementRate(audio, profile);
+    return profile;
+  }
+
   apply(audio: HTMLAudioElement | null | undefined, input: AudioEffectProfileInput) {
     if (!audio) return getAudioEffectProfile(input);
 
-    const profile = getAudioEffectProfile(input);
-    this.applyMediaElementRate(audio, profile);
+    const profile = this.applyTransport(audio, input);
 
     const needsGraph = profile.wetGain > 0.001 || Boolean(this.source);
     if (!needsGraph) return profile;

@@ -45,6 +45,8 @@ public class MediaPlaybackService extends Service {
     private boolean noisyRegistered = false;
     private boolean shuffle = false;
     private String repeat = "off";
+    private Notification lastNotification;
+    private boolean notificationPlaying;
 
     private final BroadcastReceiver noisy = new BroadcastReceiver() {
         @Override
@@ -100,8 +102,11 @@ public class MediaPlaybackService extends Service {
         long position = Math.round(intent.getDoubleExtra("position", 0) * 1000);
         long duration = Math.round(intent.getDoubleExtra("duration", 0) * 1000);
         float rate = (float) intent.getDoubleExtra("rate", 1);
+        boolean previousShuffle = shuffle;
+        String previousRepeat = repeat;
         shuffle = intent.getBooleanExtra("shuffle", false);
         repeat = intent.getStringExtra("repeat") == null ? "off" : intent.getStringExtra("repeat");
+        boolean modesChanged = previousShuffle != shuffle || !previousRepeat.equals(repeat);
 
         String nextArtwork = intent.getStringExtra("artwork");
         if (nextArtwork == null) nextArtwork = "";
@@ -124,9 +129,10 @@ public class MediaPlaybackService extends Service {
         }
         String title = intent.getStringExtra("title"), artist = intent.getStringExtra("artist"), album = intent.getStringExtra("album");
         long effectiveDuration = duration > 0 ? duration : -1;
-        if (artworkChanged || !java.util.Objects.equals(metadataTitle, title) ||
+        boolean metadataChanged = artworkChanged || !java.util.Objects.equals(metadataTitle, title) ||
             !java.util.Objects.equals(metadataArtist, artist) || !java.util.Objects.equals(metadataAlbum, album) ||
-            metadataDuration != effectiveDuration) {
+            metadataDuration != effectiveDuration;
+        if (metadataChanged) {
             session.setMetadata(new MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
@@ -149,9 +155,11 @@ public class MediaPlaybackService extends Service {
             .addCustomAction(new PlaybackStateCompat.CustomAction.Builder("shuffle", shuffle ? "Turn shuffle off" : "Turn shuffle on", shuffleIcon()).build())
             .addCustomAction(new PlaybackStateCompat.CustomAction.Builder("repeat", repeatLabel(), repeatIcon()).build())
             .build());
-        session.setShuffleMode(shuffle ? PlaybackStateCompat.SHUFFLE_MODE_ALL : PlaybackStateCompat.SHUFFLE_MODE_NONE);
-        session.setRepeatMode("one".equals(repeat) ? PlaybackStateCompat.REPEAT_MODE_ONE
-            : "all".equals(repeat) ? PlaybackStateCompat.REPEAT_MODE_ALL : PlaybackStateCompat.REPEAT_MODE_NONE);
+        if (modesChanged || lastNotification == null) {
+            session.setShuffleMode(shuffle ? PlaybackStateCompat.SHUFFLE_MODE_ALL : PlaybackStateCompat.SHUFFLE_MODE_NONE);
+            session.setRepeatMode("one".equals(repeat) ? PlaybackStateCompat.REPEAT_MODE_ONE
+                : "all".equals(repeat) ? PlaybackStateCompat.REPEAT_MODE_ALL : PlaybackStateCompat.REPEAT_MODE_NONE);
+        }
 
         if (playing && !noisyRegistered) {
             registerReceiver(noisy, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
@@ -166,7 +174,12 @@ public class MediaPlaybackService extends Service {
             stopSelf();
             return;
         }
-        Notification notification = buildNotification(intent.getStringExtra("title"), intent.getStringExtra("artist"), playing);
+        boolean notificationChanged = lastNotification == null || metadataChanged || modesChanged || notificationPlaying != playing;
+        if (notificationChanged) {
+            lastNotification = buildNotification(title, artist, playing);
+            notificationPlaying = playing;
+        }
+        Notification notification = lastNotification;
         if (playing) {
             int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK : 0;
             try {
@@ -180,7 +193,7 @@ public class MediaPlaybackService extends Service {
         } else {
             // Paused: keep the controls but let the system reclaim the process if it needs to.
             stopForegroundCompat(false);
-            getSystemService(NotificationManager.class).notify(NOTIFICATION_ID, notification);
+            if (notificationChanged) getSystemService(NotificationManager.class).notify(NOTIFICATION_ID, notification);
         }
     }
 

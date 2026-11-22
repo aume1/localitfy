@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from "react";
-import type { Song } from "../library/song.types";
 import type { Settings } from "../settings/settings.types";
 import { APP_VERSION } from "../updates/update.constants";
 import { updateStatusLabel } from "../updates";
@@ -19,7 +18,8 @@ type DiagnosticsInfoOptions = {
   platformInfo: PlatformInfo;
   playlistCount: number;
   settings: Settings;
-  songs: Song[];
+  songCount: number;
+  libraryAlbumCount: number;
   updatePrompt: any;
   lastUpdateCheckedLabel: string;
   setDiagnosticsCopied: (copied: boolean) => void;
@@ -33,7 +33,8 @@ export function useDiagnosticsInfo({
   platformInfo,
   playlistCount,
   settings,
-  songs,
+  songCount,
+  libraryAlbumCount,
   updatePrompt,
   lastUpdateCheckedLabel,
   setDiagnosticsCopied
@@ -44,11 +45,6 @@ export function useDiagnosticsInfo({
     const startupStatus = platformInfo.startupSettingSupported
       ? (settings.startWithWindows ? "enabled" : "disabled")
       : "not supported on this platform";
-    const libraryAlbumCount = new Set(
-      songs
-        .map((song) => String(song.album || "").trim().toLowerCase())
-        .filter((album) => album && album !== "unknown album")
-    ).size;
     const downloadFolderStatus = downloadFolderLabel || settings.downloadFolder || "default downloads folder";
     const updateStatus = updatePrompt.visible
       ? updateStatusLabel(updatePrompt.status)
@@ -73,7 +69,7 @@ export function useDiagnosticsInfo({
       { label: "platform", value: platformInfo.label },
       { label: "Electron", value: electronVersion },
       { label: "Chromium", value: chromeVersion },
-      { label: "song count", value: String(songs.length) },
+      { label: "song count", value: String(songCount) },
       { label: "playlist count", value: String(playlistCount) },
       { label: "album count", value: String(libraryAlbumCount) },
       { label: "downloads folder", value: downloadFolderStatus },
@@ -92,7 +88,7 @@ export function useDiagnosticsInfo({
         `release package: ${platformInfo.releaseLabel}`,
         `electron: ${electronVersion}`,
         `chromium: ${chromeVersion}`,
-        `song count: ${songs.length}`,
+        `song count: ${songCount}`,
         `playlist count: ${playlistCount}`,
         `album count: ${libraryAlbumCount}`,
         `downloads folder: ${downloadFolderStatus}`,
@@ -119,7 +115,8 @@ export function useDiagnosticsInfo({
     settings.discordEnabled,
     settings.downloadFolder,
     settings.startWithWindows,
-    songs,
+    songCount,
+    libraryAlbumCount,
     updatePrompt,
     lastUpdateCheckedLabel
   ]);

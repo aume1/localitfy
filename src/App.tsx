@@ -489,9 +489,7 @@ function MainModeApp() {
       );
     };
   }, []);
-  const currentSong = useMemo(() => {
-    return songs.find((song) => song.id === currentId) ?? null;
-  }, [songs, currentId]);
+  const currentSong = songsById.get(currentId) ?? null;
   function buildPlayerEngineSource(song: Song, url: string): PlayerEngineSource {
     return {
       id: song.id,
@@ -520,8 +518,8 @@ function MainModeApp() {
 
   const visualCurrentSong = useMemo(() => {
     if (!crossfadePreviewSongId) return currentSong;
-    return songs.find((song) => song.id === crossfadePreviewSongId) ?? currentSong;
-  }, [crossfadePreviewSongId, songs, currentSong]);
+    return songsById.get(crossfadePreviewSongId) ?? currentSong;
+  }, [crossfadePreviewSongId, songsById, currentSong]);
   const screensaverVisualSource = screensaverImage;
 
   function clearScreensaverPreviewTimer() {
@@ -873,7 +871,8 @@ function MainModeApp() {
     platformInfo,
     playlistCount: playlists.length,
     settings,
-    songs,
+    songCount: songs.length,
+    libraryAlbumCount: libraryIndex.albumCount - Number(libraryIndex.albumOccurrences.has("unknown album")),
     updatePrompt,
     lastUpdateCheckedLabel,
     setDiagnosticsCopied
@@ -1060,8 +1059,8 @@ function MainModeApp() {
   );
 
   const selectedPlaylistSongs = useMemo(
-    () => selectedPlaylist?.songIds.map((songId) => songsById.get(songId)).filter(isPlayableSong) ?? [],
-    [selectedPlaylist, songsById]
+    () => view === "playlists" ? selectedPlaylist?.songIds.map((songId) => songsById.get(songId)).filter(isPlayableSong) ?? [] : [],
+    [selectedPlaylist, songsById, view]
   );
 
   const selectedPlaylistDuration = useMemo(
@@ -1070,7 +1069,7 @@ function MainModeApp() {
   );
 
   const playlistSummaries = useMemo<PlaylistSummary[]>(
-    () => playlists.map((playlist) => {
+    () => view === "playlists" ? playlists.map((playlist) => {
       let duration = 0;
       let songCount = 0;
       const previewSongs: Song[] = [];
@@ -1085,8 +1084,8 @@ function MainModeApp() {
       }
 
       return { playlist, previewSongs, songCount, duration };
-    }),
-    [playlists, songsById]
+    }) : [],
+    [playlists, songsById, view]
   );
 
 
@@ -2012,11 +2011,23 @@ function MainModeApp() {
         fadeFrameRef.current = null;
       }
 
-      nextAudioRef.current?.pause();
-      nextAudioRef.current = null;
+      releaseStandbyAudio();
       window.localitfy.clearDiscordActivity().catch(() => undefined);
     };
   }, []);
+
+  function releaseStandbyAudio() {
+    const audio = nextAudioRef.current;
+    nextAudioRef.current = null;
+    if (!audio) return;
+    try { audio.pause(); audio.removeAttribute("src"); audio.load(); } catch {}
+  }
+
+  useEffect(() => {
+    if ((!settings.gaplessPlayback && !settings.crossfadeEnabled) || !currentSong) {
+      if (nextAudioRef.current?.paused) releaseStandbyAudio();
+    }
+  }, [settings.gaplessPlayback, settings.crossfadeEnabled, currentSong?.id]);
 
   function getAudioEffectRuntime() {
     const runtime = audioEffectRuntimeRef.current;
@@ -2057,12 +2068,9 @@ function MainModeApp() {
 
   function applyPlaybackRateSettings(audio: HTMLAudioElement | null | undefined) {
     if (!audio) return;
-    getAudioEffectRuntime().apply(audio, getAudioEffectInput());
-  }
-
-  function syncAudioEffectGraph(audio: HTMLAudioElement | null | undefined) {
-    if (!audio || audio !== audioRef.current) return;
-    getAudioEffectRuntime().apply(audio, getAudioEffectInput());
+    const runtime = getAudioEffectRuntime();
+    if (audio === audioRef.current) runtime.apply(audio, getAudioEffectInput());
+    else runtime.applyTransport(audio, getAudioEffectInput());
   }
 
   const getTargetAudioVolume = useCallback(
@@ -2082,7 +2090,6 @@ function MainModeApp() {
 
       setAudioElementVolume(audio, safeVolume);
       applyPlaybackRateSettings(audio);
-      syncAudioEffectGraph(audio);
       audio.preload = settings.gaplessPlayback ? "auto" : "metadata";
       effectiveVolumeRef.current = safeVolume;
       return safeVolume;
@@ -2700,7 +2707,6 @@ function MainModeApp() {
       setAudioElementVolume(audio, 0);
       applyPlaybackRateSettings(audio);
       audio.preload = settings.gaplessPlayback ? "auto" : "metadata";
-      syncAudioEffectGraph(audio);
 
       await audio.play();
       if (!ownsHandoff()) return;
@@ -3103,7 +3109,6 @@ function MainModeApp() {
       setAudioElementVolume(audio, continuingCrossfadePlayback || settings.reducedMotion || !settings.crossfadeEnabled ? safeVolume : 0);
       applyPlaybackRateSettings(audio);
       audio.preload = settings.gaplessPlayback ? "auto" : "metadata";
-      syncAudioEffectGraph(audio);
       resumeAudioContextSafely();
       effectiveVolumeRef.current = safeVolume;
 
