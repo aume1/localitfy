@@ -269,7 +269,7 @@ function MainModeApp() {
     librarySongElementRefs, pointerLibraryDragRef, pointerLibraryDragFrameRef
   } = useLibraryController();
 
-  const { libraryIndex, likedSongs, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
+  const { libraryIndex, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
     songs, deferredQuery, view, libraryFilterMode, librarySortMode, libraryRenderLimit, libraryListLengthRef, libraryRenderLimitRef
   });
 
