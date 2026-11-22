@@ -51,7 +51,6 @@ const ArtistPage = lazy(() => import("../pages/SongGroupPage").then((module) => 
 const GenrePage = lazy(() => import("../pages/SongGroupPage").then((module) => ({ default: module.GenrePage })));
 const MixPage = lazy(() => import("../pages/MixPage"));
 const PlaylistsView = lazy(() => import("../playlists/PlaylistsView"));
-const CoversView = lazy(() => import("../covers/CoversView"));
 const AnalyticsView = lazy(() => import("../analytics/AnalyticsView"));
 const DiscoverView = lazy(() => import("../discover/DiscoverView"));
 const SettingsView = lazy(() => import("../settings/SettingsView"));
@@ -67,7 +66,7 @@ export type { AppShellProps } from "./appShell.contract";
 export default function AppShell(props: AppShellProps) {
   const {
     frame, updates, screensaver, effects, navigation,
-    home, library, artists, genres, playlists, covers, analytics, discover, settingsView, downloads,
+    home, library, artists, genres, playlists, analytics, discover, settingsView, downloads,
     playerBar, modals, playbackAudio, collections
   } = props;
 
@@ -259,7 +258,6 @@ export default function AppShell(props: AppShellProps) {
                 {view === "playlists" ? (detail?.kind === "mix"
                   ? <MixPage key={detail.id} mixId={detail.id} {...pageProps} savePlaylist={playlists.dailyMixes.savePlaylist} />
                   : <PlaylistsView {...playlists} detailPlaylistId={detail?.kind === "playlist" ? detail.id : null} />) : null}
-                {view === "covers" ? <CoversView {...covers} /> : null}
                 {view === "analytics" ? <AnalyticsView {...analytics} /> : null}
                 {view === "discover" ? <DiscoverView {...discover} /> : null}
                 {view === "settings" ? <SettingsView {...settingsView} /> : null}

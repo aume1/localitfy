@@ -1,5 +1,3 @@
-import type { ComponentType, Dispatch, SetStateAction } from "react";
-
 export type CoverMood = "all" | "favorites" | "leastUsed" | "cute" | "space" | "dark" | "cozy" | "energy";
 export type PixelArtAsset = { file: string; label: string; discordKey: string };
 export type RuntimePixelArtAsset = PixelArtAsset & { path?: string; url?: string; key?: string };
@@ -34,32 +32,3 @@ export type CoverStats = {
   most?: CoverGalleryEntry | null;
 };
 
-export type CoverStudioProps = {
-  pixelArtBusy: boolean;
-  selectedCoverSongs: CoverSong[];
-  currentSong: CoverSong | null;
-  missingCoverSongs?: CoverSong[];
-  coverGalleryMood: CoverMood;
-  coverMoodOptions: Array<{ id: CoverMood; name?: string; label?: string }>;
-  coverMoodCounts: Map<CoverMood, number>;
-  coverStats: CoverStats;
-  filteredCoverGalleryAssets: CoverGalleryEntry[];
-  coverPickerSongList: CoverSong[];
-  coverSelectedSongIds: string[];
-  CoverComponent: ComponentType<{ song: CoverSong | null; className: string }>;
-  prettyTitle: (rawTitle: string, maxWords?: number) => string;
-  prettyMeta: (text: string) => string;
-  pixelArtUrl: (file: string) => string;
-  coverMoodName: (mood: CoverMood) => string;
-  setCoverGalleryMood: (mood: CoverMood) => void;
-  randomizeSelectedCovers: (mood: CoverMood) => void | Promise<void>;
-  randomizeMissingCovers?: () => void | Promise<void>;
-  cleanupCoverCache?: () => void | Promise<void>;
-  rescanPixelArtFolder: () => void | Promise<void>;
-  selectCurrentSongForCovers: () => void;
-  selectVisibleSongsForCovers: () => void;
-  setCoverSelectedSongIds: Dispatch<SetStateAction<string[]>>;
-  toggleCoverSongSelection: (songId: string) => void;
-  applyCoverAssetToSelection: (asset: RuntimePixelArtAsset) => void | Promise<void>;
-  togglePixelCoverExcluded: (key: string) => void;
-};

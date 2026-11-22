@@ -98,7 +98,7 @@ export function usePlaylistsController({
     const id = previous?.id || makeLocalId("playlist");
     const createdAt = Date.now();
     setPlaylists(items => previous
-      ? items.map(item => item.id === id && !item.rules ? {...item,songIds} : item)
+      ? items.map(item => item.id === id ? {...item,songIds} : item)
       : [{id,name:safeName,songIds,createdAt},...items]);
     setSelectedPlaylistId(id);
     setActivePlaylistId(id);
