@@ -12,9 +12,9 @@ These instructions apply to all AI coding assistants and human contributors work
 ## Tests: reuse before adding
 - First search `tests/phase3`, `tests/phase4` and `tests/helpers` for an existing test file matching the changed behavior. Extend that file with the smallest meaningful regression check.
 - Do NOT create a separate `*.test.mjs` for each bug, CSS selector, component, PR, commit or refactor. Avoid tiny source-text and regex snapshot tests that only enforce a particular implementation shape.
-- Create a new test file only when there is a genuinely new independent module with behavior or security boundaries that are not naturally covered by an existing suite. Keep fixtures shared.
+- AI assistants must not create new test files for routine fixes, CSS, component styling, refactors, or minor changes. Reuse an existing relevant suite if a meaningful regression check is needed; otherwise use the existing build/typecheck or direct verification. A new test file requires an independent behavior or security boundary that cannot reasonably fit an existing suite and a concrete justification. Keep fixtures shared.
 - Favor behavioral tests of invariants, failures and recovery over exact source strings. Update tests after a legitimate refactor to verify the preserved behavior, not to demand obsolete code structure.
-- Remove duplicated assertions and obsolete tests after inspecting their coverage. Do NOT weaken tests covering playback continuity, database migrations/restore, user data, file safety, provider authorization, IPC security, downloads or concurrency.
+- Delete obsolete source-shape-only tests and redundant assertions after inspecting their coverage. Do not assert exact class names, import paths, JSX strings, dimensions or formatting merely to freeze implementation details. Do NOT weaken tests covering playback continuity, database migrations/restore, user data, file safety, provider authorization, IPC security, downloads or concurrency.
 - Do not generate one-off test harnesses, duplicate benchmark variants or extra documentation solely to demonstrate routine changes.
 - Fix the underlying failure instead of deleting a meaningful failing test or raising a performance budget to hide a regression.
 
