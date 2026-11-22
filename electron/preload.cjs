@@ -154,7 +154,6 @@ contextBridge.exposeInMainWorld("localitfy", {
   installUpdate: () => ipcRenderer.invoke("localitfy:install-update"),
   openExternal: (url) => ipcRenderer.invoke("localitfy:open-external", url),
 
-  /** Check if Spotify OAuth/PKCE is configured and connected. */
   spotifyCheck: () => ipcRenderer.invoke("spotify-check"),
   spotifyLogin: () => ipcRenderer.invoke("spotify-login"),
   spotifyImportBrowser: () => ipcRenderer.invoke("spotify-import-browser"),

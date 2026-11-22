@@ -7,7 +7,6 @@ export const songSignature=(song?:Song|null)=>song?[song.id,song.title,song.arti
 export const pixelArtForSong=(song?:Song|null):RuntimePixelArtAsset=>{const pool=getCachedRuntimePixelArtAssets();return pool[stableHash(songSignature(song))%Math.max(1,pool.length)]||DEFAULT_RUNTIME_PIXEL_ART_ASSETS[0];};
 export const nextPixelArtForSong=(song?:Song|null):RuntimePixelArtAsset=>{const pool=getCachedRuntimePixelArtAssets();return pool[(stableHash(`${songSignature(song)}::next`)+7)%Math.max(1,pool.length)]||DEFAULT_RUNTIME_PIXEL_ART_ASSETS[0];};
 
-// Select the same stable-sort winner in O(pool size) without temporary ranked arrays.
 export function selectBalancedPixelAsset(pool: RuntimePixelArtAsset[], song: Song, usage: ReadonlyMap<string, number>, randomSalt: string): RuntimePixelArtAsset | null {
   if (!pool.length) return null;
   const currentKeys = new Set([song.coverPath, song.coverUrl].filter(Boolean));

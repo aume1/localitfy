@@ -1241,7 +1241,6 @@ async function importNewAudioFilesFromDirectory(directory, tracks = [], options 
   if (result.importedCount) console.log("[localtify library refresh] imported new audio files from folder", { folder: directory, changedCount: result.changedCount });
   return { ...result, songs: shapeResult() };
 }
-/** Adds the files that are not in the library yet (matched by path). Shared by folder refreshes and watched folders. */
 async function importNewAudioFiles(audioFiles, tracks = []) {
   const existingPaths = new Set(getSongs().map((song) => filePathKey(String(song.filePath || ""))).filter(Boolean));
   const newFiles = audioFiles.filter((filePath) => {

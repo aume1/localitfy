@@ -144,7 +144,6 @@ function getStoredSchemaVersion(database) {
       if (Number.isFinite(version)) return version;
     }
   } catch {
-    // ignore
   }
 
   return 0;
@@ -607,11 +606,9 @@ function migrateSettingsTable(database) {
 
   const addedColumns = addMissingColumns(database, "settings", SETTINGS_COLUMNS);
 
-  // v0.3.1 cleanup: remove an old saved setting that no longer has UI.
   try {
     database.prepare("DELETE FROM settings WHERE key = ?").run("showMiniPlayer");
   } catch {
-    // non-critical cleanup only
   }
 
   return addedColumns;
