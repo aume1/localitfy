@@ -110,7 +110,6 @@ export function createAndroidBridge(): Bridge {
     liveSend: sendLive,
     onLiveEvent: onLiveEvent as Bridge["onLiveEvent"],
     recordPlayEvent: async (event: PlayEvent) => phoneLibrary.recordPlayEvent(event),
-    getListeningCounts: async () => phoneLibrary.listeningCounts,
     getListeningSummary: (payload) => fromMacOrKept<Awaited<ReturnType<Bridge["getListeningSummary"]>>>("listening:summary", payload, `mac:listening-summary:${payload.days}`, null, result => isListeningSummary(result, payload.days)),
     getListeningCalendarSummary: (payload) => fromMacOrKept<Awaited<ReturnType<Bridge["getListeningCalendarSummary"]>>>("listening:calendar-summary", payload, `mac:listening-calendar:${payload.range}:${payload.offset}`, null, result => isListeningCalendarSummary(result, payload)),
     onWatchedFoldersChange: subscribe("songs") as Bridge["onWatchedFoldersChange"],

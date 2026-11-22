@@ -92,7 +92,6 @@ contextBridge.exposeInMainWorld("localitfy", {
   clearAnalysis: () => ipcRenderer.invoke("analysis:clear"),
   setListeningHistoryEnabled: (enabled) => ipcRenderer.invoke("listening:set-enabled", enabled),
   clearListeningHistory: () => ipcRenderer.invoke("listening:clear"),
-  getListeningCounts: () => ipcRenderer.invoke("listening:counts"),
   getListeningSummary: (payload) => ipcRenderer.invoke("listening:summary", payload),
   getListeningCalendarSummary: (payload) => ipcRenderer.invoke("listening:calendar-summary", payload),
   recordPlayEvent: (payload) => ipcRenderer.invoke("listening:record", payload),

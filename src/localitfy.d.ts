@@ -624,7 +624,6 @@ declare global {
       setListeningHistoryEnabled: (enabled: boolean) => Promise<AnalysisStatus>;
       clearListeningHistory: () => Promise<AnalysisStatus>;
       /** All-time [songId, finished plays, skips] for songs with listening history. */
-      getListeningCounts: () => Promise<Array<[string, number, number]>>;
       getListeningSummary: (payload: { days: 7 | 30 | 90 }) => Promise<import("./features/analytics/listeningSummary").ListeningSummary | null>;
       getListeningCalendarSummary: (payload: { range: "week" | "month" | "year"; offset: number }) => Promise<import("./features/analytics/listeningSummary").ListeningCalendarSummary | null>;
       recordPlayEvent: (payload: PlayEvent) => Promise<boolean>;
