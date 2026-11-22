@@ -409,8 +409,11 @@
   overflow-y: hidden;
   scrollbar-width: none;
   scroll-padding-inline: 3px;
+  cursor: grab;
 }
 .homeReleaseRail::-webkit-scrollbar { display: none; }
+.homeReleaseRail[data-dragging] { cursor: grabbing; user-select: none; scroll-snap-type: none; }
+.homeReleaseRail[data-dragging] * { cursor: grabbing; }
 .homeReleaseRail:focus-visible { outline: 2px solid var(--lt-accent); outline-offset: -2px; }
 .homeMixRail { grid-auto-columns: clamp(150px, 18cqi, 232px); }
 .homeMixRail .homeReleaseCard { align-content: start; }
