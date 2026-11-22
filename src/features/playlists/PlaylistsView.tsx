@@ -1,3 +1,4 @@
+import "../../shared/ui/collection-layout.css";
 import "./playlists.css";
 import "./playlist-oled.css";
 import { isAndroidApp } from "../../app/platform";
@@ -272,11 +273,11 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           </div>
 
           {playlistSummaries.length > 0 && visiblePlaylists.length === 0 ? <p role="status">No matching playlists.</p> : null}
-          <div className="playlistShelfGrid">
+          <div className="collectionBrowseGrid">
             {playlistSummaries.length ? visiblePlaylists.map(({ playlist, previewSongs, songCount, duration }, index) => (
               <MediaCard
                 key={playlist.id}
-                className={`playlistShelfCard ${activePlaylistId === playlist.id ? "playing" : ""} ${playlistDragOverPlaylistId === playlist.id ? "dropTarget" : ""}`}
+                className={`collectionBrowseCard playlistShelfCard ${activePlaylistId === playlist.id ? "playing" : ""} ${playlistDragOverPlaylistId === playlist.id ? "dropTarget" : ""}`}
                 style={{ "--playlist-stagger": Math.min(index, 12) } as CSSProperties}
                 openLabel={`open ${playlist.name}`}
                 playLabel={`play ${playlist.name}`}
@@ -289,7 +290,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
                 title="drop a song here to add it"
                 cover={<PlaylistCoverCollage songs={previewSongs} coverArtwork={playlist.coverArtwork} />}
               >
-                <span className="playlistShelfMeta">
+                <span className="collectionBrowseCardMeta">
                   <strong>{playlist.name}</strong>
                   <small>{songCount} song{songCount === 1 ? "" : "s"}<MetaDividerDot />{formatTime(duration)}</small>
                 </span>

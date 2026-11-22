@@ -241,7 +241,7 @@ export default function AppShell(props: AppShellProps) {
             >
               {libraryViews.includes(view) ? <nav className="librarySectionNav" aria-label="Library sections">
                 {([["library", "Songs"], ["artists", "Artists"], ["genres", "Genres"], ["playlists", "Playlists"], ["liked", "Liked"]] as const).map(([id, label]) =>
-                  <button key={id} type="button" aria-current={view === id ? "page" : undefined} onClick={() => nav.go(id)}>{label}</button>
+                  <button key={id} type="button" data-library-section={id} aria-current={view === id ? "page" : undefined} onClick={() => nav.go(id)}>{label}</button>
                 )}
               </nav> : null}
               <PageErrorBoundary key={view + ":" + (detail?.id ?? "")}>

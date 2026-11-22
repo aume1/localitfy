@@ -1,5 +1,3 @@
-/* Localtify playlist workspace and shared OLED composer.
-   Both editors use this one surface; no separate theme state is persisted. */
 .playlistToolbar {
   display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
   min-width: 0; margin-top: -6px;
@@ -11,7 +9,6 @@
   border-radius: 10px; background: var(--lt-surface-soft); color: var(--lt-text);
   box-shadow: none;
 }
-.playlistToolbar .playlistSecondaryActions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .playlistsPage .playlistAction,
 .playlistsPage .dailyMixesRefresh {
   display: inline-flex; justify-content: center; align-items: center; gap: 8px;
@@ -23,11 +20,9 @@
   border: 1px solid var(--lt-accent); background: var(--lt-accent); color: var(--lt-bg);
 }
 .playlistsPage .playlistActionPrimary:hover:not(:disabled) { filter: brightness(1.06); }
-.playlistsPage .playlistActionSecondary,
 .playlistsPage .dailyMixesRefresh {
   border: 1px solid var(--lt-border); background: var(--lt-surface-soft); color: var(--lt-text);
 }
-.playlistsPage .playlistActionSecondary:hover:not(:disabled),
 .playlistsPage .dailyMixesRefresh:hover:not(:disabled) {
   border-color: var(--lt-border-strong); background: var(--lt-fill-hover);
 }
@@ -37,80 +32,7 @@
   border-radius: 9px; box-shadow: none;
 }
 .playlistsPage .playlistManageActions .settingsTinyButton:hover:not(:disabled) { background: var(--lt-fill-hover); }
-
-/* Independent OLED composer: no legacy modalWrap/heroMain/settingsTinyButton selectors. */
-.app .playlistComposerBackdrop {
-  position: fixed; inset: var(--localtify-titlebar-height, 48px) 0 0; z-index: 220;
-  display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.64);
-}
-.app .playlistComposer {
-  --lt-bg: #000; --lt-surface: #080808; --lt-surface-soft: #101010; --lt-surface-raised: #171717;
-  --lt-text: #f5f5f5; --lt-muted: #aaa; --lt-faint: #888; --lt-border: #272727;
-  --lt-border-strong: #454545; --lt-fill-hover: #1b1b1b; --lt-fill-selected: #292929; --lt-fill-subtle: #121212;
-  --lt-accent: #e8e8e8; --lt-accent-rgb: 232,232,232;
-  display: flex; flex-direction: column; width: min(620px,100%);
-  max-height: calc(100dvh - var(--localtify-titlebar-height,48px) - 32px);
-  overflow: hidden; box-sizing: border-box; border: 1px solid var(--lt-border);
-  border-radius: 16px; background: var(--lt-surface); color: var(--lt-text);
-  color-scheme: dark; box-shadow: 0 20px 64px rgba(0,0,0,.5); outline: none;
-}
-.app .playlistComposerHeader { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; padding: 22px 22px 18px; }
-.app .playlistComposerHeader h2 { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -.035em; line-height: 1.25; }
-.app .playlistComposerHeader p { margin: 6px 0 0; color: var(--lt-muted); font-size: 12px; line-height: 1.5; }
-.app .playlistComposerForm { display: flex; flex-direction: column; min-height: 0; }
-.app .playlistComposerBody { display: grid; gap: 17px; padding: 0 22px 22px; overflow-y: auto; min-height: 0; scrollbar-width: thin; }
-.app .playlistComposer .playlistComposerButton {
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 36px;
-  min-width: 0; flex: 0 0 auto; padding: 0 13px; border: 1px solid transparent;
-  border-radius: 8px; background: transparent; color: var(--lt-muted);
-  font-size: 12px; font-weight: 570; line-height: 1.3; box-shadow: none; text-shadow: none; cursor: pointer;
-}
-.app .playlistComposer .playlistComposerButton[data-variant="primary"] { background: #f0f0f0; color: #141414; border-color: #f0f0f0; }
-.app .playlistComposer .playlistComposerButton[data-variant="secondary"] { background: var(--lt-surface-raised); border-color: var(--lt-border); color: var(--lt-text); }
-.app .playlistComposer .playlistComposerButton[data-size="sm"] { height: 29px; padding: 0 9px; }
-.app .playlistComposer .playlistComposerButton[data-size="icon"] { width: 32px; height: 32px; padding: 0; }
-.app .playlistComposer .playlistComposerButton:not(:disabled):hover { filter: brightness(1.12); }
-.app .playlistComposer .playlistComposerButton[data-variant="ghost"]:hover { background: var(--lt-fill-hover); color: var(--lt-text); }
-.app .playlistComposer .playlistComposerButton:disabled { opacity: .38; cursor: not-allowed; }
-.app .playlistComposer :is(button,input,textarea):focus-visible { outline: 2px solid #e8e8e8; outline-offset: 2px; }
-.app .playlistPromptBox { display: grid; gap: 4px; padding: 11px; border: 1px solid var(--lt-border-strong); border-radius: 12px; background: var(--lt-surface-soft); }
-.app .playlistPromptBox:focus-within { border-color: #777; }
-.app .playlistPromptBox textarea { box-sizing: border-box; width: 100%; min-height: 86px; max-height: 200px; resize: vertical; padding: 7px; color: var(--lt-text); background: transparent; border: 0; border-radius: 5px; outline: none; font: inherit; font-size: 14px; line-height: 1.65; box-shadow: none; }
-.app .playlistPromptBar { display: flex; gap: 10px; justify-content: space-between; align-items: center; }
-.app .playlistComposerHint { color: var(--lt-muted); font-size: 11px; font-weight: 500; }
-.app .playlistComposerExamples { display: grid; gap: 7px; }
-.app .playlistComposerChips { display: flex; flex-wrap: wrap; gap: 6px; }
-.app .playlistComposerChips .playlistComposerButton { border: 1px solid var(--lt-border); font-weight: 500; height: auto; min-height: 30px; padding: 6px 10px; white-space: normal; text-align: left; }
-.app .playlistComposerResults { display: grid; gap: 12px; min-width: 0; }
-.app .playlistComposerResults .promptPlaylistUnderstood li { color: var(--lt-muted); border: 1px solid var(--lt-border); background: var(--lt-surface-soft); font-weight: 500; }
-.app .playlistComposerResults .promptPlaylistNotice { background: var(--lt-surface-soft); }
-.app .playlistComposerResults .promptPlaylistList { max-height: min(32dvh,300px); }
-.app .playlistComposerLine { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
-.app .playlistComposerLine strong { font-size: 12px; font-weight: 600; }
-.app .playlistComposerField { display: grid; gap: 6px; min-width: 0; color: var(--lt-muted); font-size: 12px; }
-.app .playlistComposer :is(.playlistComposerField input,.playlistComposerRule input) { box-sizing: border-box; width: 100%; min-width: 0; height: 38px; padding: 0 10px; border: 1px solid var(--lt-border); border-radius: 8px; background: var(--lt-surface-soft); color: var(--lt-text); font: inherit; font-size: 13px; box-shadow: none; }
-.app .playlistComposerRules { display: grid; gap: 7px; padding: 0; margin: -7px 0; list-style: none; }
-.app .playlistComposerRule { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 32px; align-items: center; gap: 7px; }
-.app .playlistComposerRule[data-kind="flag"] { grid-template-columns: minmax(0,1fr) minmax(0,2fr) 32px; }
-.app .playlistComposer .arcDropdownTrigger { min-width: 0; min-height: 38px; width: 100%; border-radius: 8px; background: var(--lt-surface-soft); border: 1px solid var(--lt-border); color: var(--lt-text); box-shadow: none; }
-.app .playlistComposerNumber { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 11px; color: var(--lt-muted); }
-.app .playlistComposerOptions { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 12px; padding-top: 12px; border-top: 1px solid var(--lt-border); }
-.app .playlistComposerFooter { display: grid; gap: 13px; flex-shrink: 0; padding: 16px 22px; border-top: 1px solid var(--lt-border); background: #0b0b0b; }
-.app .playlistComposerActions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
-.app .playlistComposerSmartFooter { display: flex; justify-content: space-between; align-items: center; }
-.app .playlistComposerCount { flex: 1; min-width: 0; display: grid; gap: 3px; }
-.app .playlistComposerCount strong { font-size: 15px; font-weight: 650; }
-.app .playlistComposerCount small { color: var(--lt-muted); font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 @media (max-width: 760px) {
   .playlistToolbar .playlistCreateForm { flex-basis: 100%; }
-  .playlistToolbar .playlistSecondaryActions { width: 100%; }
   .playlistToolbar .playlistAction { flex: 1 1 auto; }
-}
-@media (max-width: 560px) {
-  .app .playlistComposerHeader { padding: 17px 16px 14px; }
-  .app .playlistComposerBody { padding: 0 16px 16px; gap: 14px; }
-  .app .playlistComposerFooter { padding: 13px 16px; }
-  .app .playlistComposerRule { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 32px; }
-  .app .playlistComposerRule > :nth-child(3):not(button) { grid-column: 1/3; grid-row: 2; }
-  .app .playlistComposerRule > .playlistComposerButton { grid-column: 3; grid-row: 1; }
 }
