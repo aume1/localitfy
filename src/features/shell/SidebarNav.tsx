@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { ArrowDown, ArrowUp, EyeOff, SlidersHorizontal } from "lucide-react";
-import { navItems } from "./navigation.constants";
+import { navItems, primaryNavigationView } from "./navigation.constants";
 import { ContextMenuLayer } from "../../shared/ui/ContextMenuLayer";
 import { canMoveSidebarItem, moveSidebarItem, resolveSidebarGroups, sidebarGroupForView, toggleSidebarItemHidden } from "./sidebarLayout";
 import type { SidebarNavOrder } from "./sidebarLayout";
@@ -54,14 +54,14 @@ export default function SidebarNav({ view, changeView, sidebarNavOrder, sidebarH
                 return (
                   <button
                     key={item.id}
-                    className={`navItem navItemAnimatedV468 nav-${item.id} ${view === item.id ? "active" : ""}`}
+                    className={`navItem navItemAnimatedV468 nav-${item.id} ${primaryNavigationView(view) === item.id ? "active" : ""}`}
                     data-nav-id={item.id}
                     data-nav-group={group.id}
                     onClick={() => changeView(item.id, "nav")}
                     onContextMenu={(event) => openMenu(event, item.id)}
                     title={item.label}
                     aria-label={`open ${item.label}`}
-                    aria-current={view === item.id ? "page" : undefined}
+                    aria-current={primaryNavigationView(view) === item.id ? "page" : undefined}
                   >
                     <span className="navDiscordPillV468" aria-hidden="true" />
                     <span className={`navIcon navIcon-${item.id}`} aria-hidden="true">

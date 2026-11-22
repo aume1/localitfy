@@ -43,7 +43,7 @@ export function useNavigationHistory(view: View, changeView: (view: View, source
   }, [contentRef]);
 
   const go = useCallback((nextView: View, source: "nav" | "unknown" = "nav") => {
-    const destination = String(nextView) === "albums" ? "library" : nextView;
+    const destination = ["albums", "covers"].includes(String(nextView)) ? "library" : nextView;
     push(destination, null);
     changeViewStable(destination, source);
   }, [push, changeViewStable]);

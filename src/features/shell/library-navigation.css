@@ -1,0 +1,11 @@
+.librarySectionNav {
+  display: flex; align-items: center; gap: var(--lt-space-2);
+  overflow-x: auto; scrollbar-width: none; margin: 0 0 var(--lt-space-4); padding: 2px 0;
+}
+.librarySectionNav button {
+  flex: 0 0 auto; padding: 8px 16px; border: 1px solid transparent;
+  border-radius: var(--lt-radius-control); background: transparent; color: var(--lt-muted);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.librarySectionNav button:hover { color: var(--lt-text); background: var(--lt-fill-hover); }
+.librarySectionNav button[aria-current="page"] { color: var(--lt-text); background: var(--lt-fill-selected); }

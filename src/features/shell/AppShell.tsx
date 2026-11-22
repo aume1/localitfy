@@ -16,14 +16,14 @@ import { AppActionsContext, playableIds, type AppActions } from "./appActions";
 import { useCollectionActions } from "./useCollectionActions";
 import { CollectionLoading } from "../../shared/ui/CollectionLoading";
 import { PageErrorBoundary } from "./PageErrorBoundary";
-import { MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
-import type { MascotStateKey } from "../../shared/ui/LocaltifyViewUi";
 const WhatsNewModal = lazy(() => import("../updates/WhatsNewModal"));
 import { clamp } from "../../shared/utils/format";
 import type { AppShellProps } from "./appShell.contract";
 import type { Song } from "../library/song.types";
 import { useDownloadTagPrompt } from "../tagging/useDownloadTagPrompt";
 import SidebarNav from "./SidebarNav";
+import { libraryViews } from "./navigation.constants";
+import "./library-navigation.css";
 import { isAndroidApp } from "../../app/platform";
 import {
   APP_VERSION
@@ -126,9 +126,6 @@ export default function AppShell(props: AppShellProps) {
     show={showTopUpdateRibbon} updatePrompt={updatePrompt} appVersion={APP_VERSION} reducedMotion={settings.reducedMotion}
     onDownload={askUpdaterToDownload} onInstall={askUpdaterToInstall} onCheckAgain={manualUpdateCheck}
     onWhatsNew={onWhatsNew} onDismiss={onDismiss}/></Suspense>:null;
-  const mascotDebugMode =
-    typeof window !== "undefined" &&
-    window.localStorage.getItem("localtify:mascotDebug") === "1";
 
 
   return (
@@ -239,41 +236,15 @@ export default function AppShell(props: AppShellProps) {
 
           <section className="content" ref={contentRef}>
             {isAndroidApp()&&updateBanner?<div className="androidUpdateNotice">{updateBanner}</div>:null}
-            {mascotDebugMode ? (
-              <section className="mascotDebugPanelV498" aria-label="Mascot state debug gallery">
-                <div className="panelHead mascotDebugHeadV498">
-                  <div>
-                    <p className="eyebrow">mascot debug</p>
-                    <h3>all mascot states</h3>
-                  </div>
-                  <button
-                    className="softButton"
-                    type="button"
-                    onClick={() => {
-                      window.localStorage.removeItem("localtify:mascotDebug");
-                      window.location.reload();
-                    }}
-                  >
-                    hide
-                  </button>
-                </div>
-
-                <div className="mascotDebugGridV498">
-                  {(["empty", "happy", "question", "info", "warning", "danger", "error", "loading"] as MascotStateKey[]).map((state) => (
-                    <div className="mascotDebugCardV498" key={state}>
-                      <MascotStateArt state={state} />
-                      <strong>{state}</strong>
-                      <small>{state}-state.png</small>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
             <div
               className={`pageTransition pageTransition-${view}`}
               data-view={view}
             >
+              {libraryViews.includes(view) ? <nav className="librarySectionNav" aria-label="Library sections">
+                {([["library", "Songs"], ["artists", "Artists"], ["genres", "Genres"], ["playlists", "Playlists"], ["liked", "Liked"]] as const).map(([id, label]) =>
+                  <button key={id} type="button" aria-current={view === id ? "page" : undefined} onClick={() => nav.go(id)}>{label}</button>
+                )}
+              </nav> : null}
               <PageErrorBoundary key={view + ":" + (detail?.id ?? "")}>
               {view === "home" ? <HomeView {...home} /> : null}
 
