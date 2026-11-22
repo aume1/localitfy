@@ -1,4 +1,4 @@
-import type { AnalysisStatus, PromptSoundResult, SimilarSongsResult } from "./features/analysis/analysis.types";
+import type { AnalysisStatus, SimilarSongsResult } from "./features/analysis/analysis.types";
 import type { SimilarSongsQuery } from "./features/analysis/similarSeed";
 import type { DuplicateMerge, DuplicateSet } from "./features/library/duplicates/duplicates.types";
 import type { PlayEvent } from "./features/player/listeningHistory";
@@ -385,53 +385,6 @@ declare global {
     error?: string;
   };
 
-  type LocalitfyCoverBrokenItem = {
-    id: string;
-    title?: string;
-    coverPath?: string;
-  };
-
-  type LocalitfyCoverStats = {
-    pixelDir?: string;
-    coverCount?: number;
-    songCount?: number;
-    songsWithCovers?: number;
-    songsMissingCovers?: number;
-    songsWithBrokenCovers?: number;
-    brokenItems?: LocalitfyCoverBrokenItem[];
-  };
-
-  type LocalitfyCoverThumbnailStatus = {
-    ok: boolean;
-    directory?: string;
-    count?: number;
-    sizeBytes?: number;
-    queued?: number;
-    size?: number;
-    message?: string;
-    error?: string;
-  };
-
-  type LocalitfyCoverThumbnailWarmResult = {
-    ok: boolean;
-    scanned?: number;
-    created?: number;
-    cached?: number;
-    warnings?: string[];
-    status?: LocalitfyCoverThumbnailStatus;
-    message?: string;
-    error?: string;
-  };
-
-  type LocalitfyCoverThumbnailCleanupResult = {
-    ok: boolean;
-    directory?: string;
-    removed?: number;
-    sizeBytes?: number;
-    message?: string;
-    error?: string;
-  };
-
   type LocalitfyDiscordActivityPayload = Record<string, unknown>;
   type LocalitfyDiscordResult = {
     ok?: boolean;
@@ -605,28 +558,23 @@ declare global {
       }>;
 
       listPixelArt?: () => Promise<PixelArtBridgeAsset[]>;
-      listPixelCovers?: () => Promise<Array<{ name: string; key?: string; path: string; url: string }>>;
 
-      setPixelArtCover?: (id: string, coverPath: string) => Promise<Song | null>;
       setSongCover?: (id: string, coverPath: string) => Promise<Song | null>;
 
       getDailyMixes: (payload?: { refresh?: boolean }) => Promise<import("./features/analysis/analysis.types").DailyMixesResult>;
       findSimilarSongs: (payload: SimilarSongsQuery & { limit?: number }) => Promise<SimilarSongsResult>;
-      /** How closely each analyzed song sounds like a text description (needs the optional prompt model). */
-      scorePromptSound: (payload: { text: string }) => Promise<PromptSoundResult>;
       getAnalysisStatus: () => Promise<AnalysisStatus>;
       setAnalysisOnBattery: (allowed: boolean) => Promise<AnalysisStatus>;
       setAnalysisEnabled: (enabled: boolean) => Promise<AnalysisStatus>;
-      downloadAnalysisModel: (target?: "prompt") => Promise<AnalysisStatus>;
-      cancelAnalysisDownload: (target?: "prompt") => Promise<AnalysisStatus>;
-      removeAnalysisModel: (target?: "prompt") => Promise<AnalysisStatus>;
+      downloadAnalysisModel: () => Promise<AnalysisStatus>;
+      cancelAnalysisDownload: () => Promise<AnalysisStatus>;
+      removeAnalysisModel: () => Promise<AnalysisStatus>;
       startAnalysis: (options?: { retry?: boolean }) => Promise<AnalysisStatus>;
       pauseAnalysis: () => Promise<AnalysisStatus>;
       clearAnalysis: () => Promise<AnalysisStatus>;
       setListeningHistoryEnabled: (enabled: boolean) => Promise<AnalysisStatus>;
       clearListeningHistory: () => Promise<AnalysisStatus>;
       /** All-time [songId, finished plays, skips] for songs with listening history. */
-      getListeningCounts: () => Promise<Array<[string, number, number]>>;
       getListeningSummary: (payload: { days: 7 | 30 | 90 }) => Promise<import("./features/analytics/listeningSummary").ListeningSummary | null>;
       getListeningCalendarSummary: (payload: { range: "week" | "month" | "year"; offset: number }) => Promise<import("./features/analytics/listeningSummary").ListeningCalendarSummary | null>;
       recordPlayEvent: (payload: PlayEvent) => Promise<boolean>;
@@ -639,24 +587,12 @@ declare global {
       patchSong: (id: string, patch: Partial<Song>) => Promise<Song | null>;
       deleteSong: (id: string) => Promise<Song[]>;
 
-      randomizeSongCover: (id: string) => Promise<Song | null>;
-      randomizeAllSongCovers?: () => Promise<Song[]>;
-      randomizeMissingSongCovers?: () => Promise<Song[]>;
-      randomizeSelectedSongCovers?: (ids: string[]) => Promise<Song[]>;
 
-      pickSongCover: (id: string) => Promise<Song | null>;
 
-      getCoverStats?: () => Promise<LocalitfyCoverStats>;
-      rescanPixelArt?: () => Promise<Song[]>;
-      listBrokenCovers?: () => Promise<LocalitfyCoverBrokenItem[]>;
-      getLeastUsedCover?: () => Promise<string | null>;
       resolveRemoteArtwork?: (url: string) => Promise<{ url: string; cacheTtlMs?: number } | null>;
       cancelCoverThumbnail?: (payload: {id: string; source: string; size: 96 | 256 | 512}) => Promise<boolean>;
       requestCoverThumbnail?: (payload: { id: string; source: string; size?: 96 | 256 | 512; failed?: string }) => Promise<{ source: string; url: string; size?: 96 | 256 | 512 } | null>;
       onCoverThumbnailReady?: (callback: (result: { source: string; url: string; size?: 96 | 256 | 512 }) => void) => () => void;
-      getCoverThumbnailStatus?: () => Promise<LocalitfyCoverThumbnailStatus>;
-      warmCoverThumbnails?: (payload?: { limit?: number; force?: boolean }) => Promise<LocalitfyCoverThumbnailWarmResult>;
-      cleanupCoverCache: () => Promise<LocalitfyCoverThumbnailCleanupResult>;
 
       analyzeSongVolume?: (id: string) => Promise<LocalitfyVolumeAnalysisResult>;
 

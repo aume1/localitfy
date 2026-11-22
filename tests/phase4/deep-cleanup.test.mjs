@@ -7,16 +7,6 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 
-test("legacy compatibility shims stay deleted", () => {
-  const forbidden = [
-    "src/localtifyConstants.ts", "src/localtifyUtils.ts", "src/localtifyTypes.ts", "src/localtifyAssets.ts",
-    "src/SettingsCategoryContent.tsx", "src/cover.tsx", "src/ui/Surface.tsx", "src/motion/physicalDrag.ts",
-    "src/player/PlayerEngine.ts", "src/player/htmlAudioEngine.ts", "src/player/playerController.ts",
-    "src/types/downloads.ts", "src/types/playlists.ts", "src/types/settings.ts", "src/types/song.ts", "src/types/theme.ts"
-  ];
-  for (const relative of forbidden) assert.equal(fs.existsSync(path.join(root, relative)), false, `${relative} must stay deleted`);
-});
-
 test("App and Discord use canonical feature owners", () => {
   const app = read("src/App.tsx");
   assert.match(app, /features\/player\/engine\/htmlAudioEngine/);

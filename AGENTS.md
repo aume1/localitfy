@@ -21,13 +21,13 @@ These instructions apply to all AI coding assistants and human contributors work
 ## Validation: use the smallest useful set
 - For routine changes, run focused existing tests and `npm run check:quick` where appropriate. Do not run the full suite after every edit.
 - Before merging nontrivial changes, ensure the standard `quality` PR checks pass. Linux runs the full gate; Windows validates TypeScript, build and real Electron smoke. Do not manually re-run successful jobs without a relevant code change or confirmed flaky infrastructure failure.
-- `integrated-validation` is deliberately **manual** and expensive. Run it only for changes with meaningful desktop-vs-baseline, playback, media/cache, Android or large-library performance risk. The workflow still provides its own extended regression evidence.
+- Desktop comparisons in `integrated-validation` are opt-in; run them for meaningful runtime or large-library performance changes. Existing Android build and emulator checks run automatically only for Android and phone-sync changes.
 - Release installer and experimental Rust workflows are opt-in. Do not trigger them for unrelated frontend/code cleanup.
 - Avoid repeated `npm ci`, full benchmarks, emulator boot, packaging, audit or release checks across overlapping workflows.
 - Preserve reproducible performance data, meaningful coverage and security gates; reduce duplicated work, not safety.
 
 ## Working with GitHub
-- Keep changes in the existing relevant pull request; avoid extra PRs or commits solely for status updates.
+- Keep changes in the existing relevant pull request; avoid extra PRs or commits solely for status updates. Continue independent implementation while CI runs, using stacked PRs where needed, and merge in dependency order after validation.
 - Use simple commit messages and keep scope narrow. Review the final diff.
 - Do not merge if meaningful CI gates fail, if critical bugs are known, or if data safety/recovery claims are unverified.
 - Report exactly what was implemented, validated, not validated and remains incomplete. No version bump or release unless explicitly requested.

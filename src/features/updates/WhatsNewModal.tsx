@@ -1,6 +1,6 @@
 import "./updates.css";
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, Check, ChevronDown, ExternalLink, X } from "lucide-react";
+import { BookOpen, Check, ExternalLink, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useModalFocus } from "../../shared/hooks/useModalFocus";
 import { APP_VERSION } from "./update.constants";
@@ -42,7 +42,6 @@ export default function WhatsNewModal({open,onClose,initialVersion,availableRele
       <header className="releaseNotesHead">
         <div><span className="releaseNotesEyebrow"><BookOpen size={13}/> Release history</span>
           <h2 id="releaseNotesTitle">What's new in Localtify</h2>
-          <p>Updates, improvements and fixes across releases.</p>
         </div>
         <button type="button" className="releaseNotesClose" aria-label="Close release notes" onClick={onClose}><X size={20}/></button>
       </header>
@@ -65,7 +64,7 @@ export default function WhatsNewModal({open,onClose,initialVersion,availableRele
           </> : <p className="releaseNotesMissing">Release notes for this version aren't available yet.</p>}
         </article>
       </div>
-      <footer className="releaseNotesFooter"><span><ChevronDown size={14}/> Scroll to read all changes</span><button type="button" onClick={onClose}>Done</button></footer>
+      <footer className="releaseNotesFooter"><button type="button" onClick={onClose}>Done</button></footer>
     </section>
   </div>;
 }

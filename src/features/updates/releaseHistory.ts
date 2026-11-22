@@ -1,4 +1,3 @@
-/** Verified published GitHub releases are bundled for offline browsing, while online installs can refresh the list. */
 import installedNotes from "../../../.github/release-notes.md?raw";
 import { APP_VERSION } from "./update.constants";
 import officialArchive from "./publishedHistory.json";

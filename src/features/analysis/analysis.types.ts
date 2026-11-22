@@ -7,8 +7,6 @@ export type AnalysisStatus = {
   historyEnabled: boolean;
   model: AnalysisModel;
   download: ModelDownload;
-  /** Optional text encoder used to match playlist prompts to saved audio profiles. */
-  promptModel: AnalysisModel & { download: ModelDownload };
   paused: boolean;
   running: boolean;
   scanning: boolean;
@@ -37,5 +35,3 @@ export type DailyMixesResult = {
   day: string; edition: number; generatedAt: number; eligible: number; mixes: DailyMix[];
 };
 
-/** `scores` pairs a song ID with how closely its sound matches the prompt, relative to the rest of the library. */
-export type PromptSoundResult = { status: "ready" | "model-missing" | "no-profiles"; scores: Array<[string, number]> };

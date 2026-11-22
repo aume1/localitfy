@@ -18,15 +18,6 @@ export function markOnboardingSeenForThisRelease() {
     window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "done");
     window.localStorage.setItem(RELEASE_SHOWCASE_KEY, "done");
   } catch {
-    // Storage errors must never block playback.
   }
 }
 
-export function resetOnboardingForThisRelease() {
-  try {
-    window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
-    window.localStorage.removeItem(RELEASE_SHOWCASE_KEY);
-  } catch {
-    // Ignore reset storage errors.
-  }
-}

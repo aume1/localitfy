@@ -56,7 +56,6 @@ import {
 } from "./features/feedback/feedbackPrompt";
 import {
   markOnboardingSeenForThisRelease,
-  resetOnboardingForThisRelease,
   shouldOpenOnboardingForThisRelease
 } from "./features/onboarding/onboardingRelease";
 import {
@@ -241,7 +240,6 @@ function MainModeApp() {
   } = useFeedbackController();
   const [isViewSwitching, setIsViewSwitching] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(() => shouldOpenOnboardingForThisRelease());
-  const [onboardingDevPreview, setOnboardingDevPreview] = useState(false);
   const {
     editorSong, setEditorSong,
     deleteTarget, setDeleteTarget,
@@ -311,7 +309,6 @@ function MainModeApp() {
   const [secretToast, setSecretToast] = useState("");
   const [secretBurst, setSecretBurst] = useState(0);
   const [playButtonBurst, setPlayButtonBurst] = useState(0);
-  // Where the current queue was started from, so the player bar can link back to it.
   const [playbackSource, setPlaybackSource] = useState<PlaybackSource | null>(null);
   const nav = useNavigationHistory(view, changeView, contentRef);
   const [queuePanelOpen, setQueuePanelOpen] = useState(false);
@@ -365,7 +362,6 @@ function MainModeApp() {
     repairPlaybackAfterAppReturns
   });
 
-  // V313: onboarding is now a true first-run mini-app.
   // Do not auto-close it just because songs exist; import completion is handled inside Onboarding.
 
   const settingsSearchQuery = normalizeSettingsSearch(deferredSettingsSearch);
@@ -1601,16 +1597,6 @@ function MainModeApp() {
     return pick.discordKey;
   };
 
-  function openOnboardingDevPreview() {
-    setOnboardingDevPreview(true);
-    setOnboardingOpen(true);
-    setEditorSong(null);
-    setDeleteTarget(null);
-    changeView("home", "unknown");
-    setStatusText("onboarding preview opened");
-    showAppToast("onboarding preview opened", "success");
-  }
-
   const handleSearchInput = (value: string) => {
     const command = value.trim().toLowerCase();
 
@@ -1621,31 +1607,6 @@ function MainModeApp() {
       openFeedbackPrompt();
       setStatusText("feedback box opened");
       showAppToast("feedback box opened", "success");
-      return;
-    }
-
-    if (
-      command === "onboardingtrue" ||
-      command === "/onboardingtrue" ||
-      command === "showonboarding" ||
-      command === "/showonboarding" ||
-      command === "onboarding"
-    ) {
-      openOnboardingDevPreview();
-      setQuery("");
-      return;
-    }
-
-    if (
-      command === "onboardingreset" ||
-      command === "/onboardingreset"
-    ) {
-      resetOnboardingForThisRelease();
-
-      openOnboardingDevPreview();
-      setStatusText("onboarding reset and opened");
-      showAppToast("onboarding reset and opened", "success");
-      setQuery("");
       return;
     }
 
@@ -1843,8 +1804,6 @@ function MainModeApp() {
       cancelPixelArtLoad?.();
     };
   }, [loadPixelArtAssets, bootRetryKey]);
-  // Heavy automatic late-night secret effects were removed in V215.
-  // Heavy automatic MiSide/joke visual mode was removed in V215.
 
 
   // Watched folders: new files were imported in the background, or a library file went missing or came back.
@@ -2502,7 +2461,6 @@ function MainModeApp() {
         try {
           audio.currentTime = 0;
         } catch {
-          // ignore seek reset errors
         }
 
         setCurrentTime(0);
@@ -2638,7 +2596,6 @@ function MainModeApp() {
         nextAudio.currentTime = 0;
         setAudioElementVolume(nextAudio, 0);
       } catch {
-        // ignore audio cleanup errors
       }
     }
   }
@@ -2753,7 +2710,6 @@ function MainModeApp() {
               nextAudio.currentTime = 0;
               setAudioElementVolume(nextAudio, 0);
             } catch {
-              // ignore cleanup errors
             }
 
             crossfadeMainPauseGuardRef.current = false;
@@ -2782,7 +2738,6 @@ function MainModeApp() {
           nextAudio.currentTime = 0;
           setAudioElementVolume(nextAudio, 0);
         } catch {
-          // ignore cleanup errors
         }
         clearCrossfadeHandoffSoon(target.song.id);
       }, 950);
@@ -2826,7 +2781,6 @@ function MainModeApp() {
       try {
         setAudioElementVolume(audio, getTargetAudioVolume(current));
       } catch {
-        // ignore volume restore errors
       }
       return;
     }
@@ -2870,7 +2824,6 @@ function MainModeApp() {
         const elapsed = performance.now() - startTime;
         const rawProgress = clamp(elapsed / crossfadeMs, 0, 1);
 
-        // Blend tracks without an abrupt volume spike.
         const outgoingHold = 0.16;
         const outgoingProgress = rawProgress <= outgoingHold
           ? 0
@@ -2909,13 +2862,11 @@ function MainModeApp() {
       try {
         setAudioElementVolume(audio, getTargetAudioVolume(current));
       } catch {
-        // ignore volume restore errors
       }
       try {
         nextAudio.pause();
         setAudioElementVolume(nextAudio, 0);
       } catch {
-        // ignore cleanup errors
       }
     }
   }
@@ -4299,7 +4250,6 @@ function MainModeApp() {
 
     const shouldKeepPlaylistContext = Boolean(playbackContext?.keepPlaylistContext && activePlaylist?.songIds.includes(targetSong.id));
 
-    // Drop old collection context on standalone selections.
     if (playbackContext && "source" in playbackContext) {
       setPlaybackSource(playbackContext.source ?? null);
     } else if (!playbackContext?.keepSource && !playbackContext?.keepPlaylistContext) {
@@ -4437,7 +4387,6 @@ function MainModeApp() {
       try {
         if (audio) audio.currentTime = 0;
       } catch {
-        // ignore seek errors
       }
     }
 
@@ -4699,7 +4648,6 @@ function MainModeApp() {
     setCurrentTime(nextTime);
     playbackTransitionRef.current.seekFinished();
 
-    // V341: seeking is temporary only. Next play still starts at 0:00.
   }
 
   function paintRangeProgress(input: HTMLInputElement | null | undefined, percent: number) {
@@ -5118,7 +5066,6 @@ function MainModeApp() {
   function dismissOnboarding() {
     markOnboardingSeenForThisRelease();
 
-    setOnboardingDevPreview(false);
     setOnboardingOpen(false);
   }
 
@@ -6055,7 +6002,7 @@ function MainModeApp() {
     );
   }
 
-  if (onboardingOpen || onboardingDevPreview) {
+  if (onboardingOpen) {
     return (
       <Suspense fallback={<main role="status" aria-label="Loading setup" />}>
       <Onboarding

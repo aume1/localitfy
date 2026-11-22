@@ -77,11 +77,9 @@ contextBridge.exposeInMainWorld("localitfy", {
   pickAndConvertMedia: (payload) => ipcRenderer.invoke("media:convert-pick", payload),
 
   listPixelArt: () => ipcRenderer.invoke("pixel:list"),
-  setPixelArtCover: (id, coverPath) => ipcRenderer.invoke("song:set-cover", id, coverPath),
 
   getDailyMixes: (payload) => ipcRenderer.invoke("analysis:daily-mixes", payload),
   findSimilarSongs: (payload) => ipcRenderer.invoke("analysis:similar-songs", payload),
-  scorePromptSound: (payload) => ipcRenderer.invoke("analysis:prompt-sound", payload),
   getAnalysisStatus: () => ipcRenderer.invoke("analysis:status"),
   setAnalysisOnBattery: (allowed) => ipcRenderer.invoke("analysis:set-battery", allowed),
   setAnalysisEnabled: (enabled) => ipcRenderer.invoke("analysis:set-enabled", enabled),
@@ -93,7 +91,6 @@ contextBridge.exposeInMainWorld("localitfy", {
   clearAnalysis: () => ipcRenderer.invoke("analysis:clear"),
   setListeningHistoryEnabled: (enabled) => ipcRenderer.invoke("listening:set-enabled", enabled),
   clearListeningHistory: () => ipcRenderer.invoke("listening:clear"),
-  getListeningCounts: () => ipcRenderer.invoke("listening:counts"),
   getListeningSummary: (payload) => ipcRenderer.invoke("listening:summary", payload),
   getListeningCalendarSummary: (payload) => ipcRenderer.invoke("listening:calendar-summary", payload),
   recordPlayEvent: (payload) => ipcRenderer.invoke("listening:record", payload),
@@ -105,15 +102,6 @@ contextBridge.exposeInMainWorld("localitfy", {
   clearLyricsCache: () => ipcRenderer.invoke("lyrics:clear-cache"),
   patchSong: (id, patch) => ipcRenderer.invoke("song:patch", id, patch),
   deleteSong: (id) => ipcRenderer.invoke("song:delete", id),
-  randomizeSongCover: (id) => ipcRenderer.invoke("song:random-cover", id),
-  randomizeAllSongCovers: () => ipcRenderer.invoke("covers:randomize-all"),
-  randomizeMissingSongCovers: () => ipcRenderer.invoke("covers:randomize-missing"),
-  randomizeSelectedSongCovers: (ids) => ipcRenderer.invoke("covers:randomize-selected", ids),
-  listPixelCovers: () => ipcRenderer.invoke("covers:list-pixelart"),
-  getCoverStats: () => ipcRenderer.invoke("covers:stats"),
-  rescanPixelArt: () => ipcRenderer.invoke("covers:rescan"),
-  listBrokenCovers: () => ipcRenderer.invoke("covers:broken"),
-  getLeastUsedCover: () => ipcRenderer.invoke("covers:least-used"),
   requestCoverThumbnail: (payload) => ipcRenderer.invoke("covers:request-thumbnail", payload),
   cancelCoverThumbnail: (payload) => ipcRenderer.invoke("covers:cancel-thumbnail", payload),
   onCoverThumbnailReady: (callback) => {
@@ -121,11 +109,7 @@ contextBridge.exposeInMainWorld("localitfy", {
     ipcRenderer.on("covers:thumbnail-ready", handler);
     return () => ipcRenderer.removeListener("covers:thumbnail-ready", handler);
   },
-  getCoverThumbnailStatus: () => ipcRenderer.invoke("covers:thumbnail-status"),
-  warmCoverThumbnails: (payload) => ipcRenderer.invoke("covers:warm-thumbnails", payload),
-  cleanupCoverCache: () => ipcRenderer.invoke("covers:cleanup-cache"),
   setSongCover: (id, coverPath) => ipcRenderer.invoke("song:set-cover", id, coverPath),
-  pickSongCover: (id) => ipcRenderer.invoke("song:pick-cover", id),
   analyzeSongVolume: (id) => ipcRenderer.invoke("song:analyze-volume", id),
 
   getSettings: () => ipcRenderer.invoke("settings:get"),
@@ -170,7 +154,6 @@ contextBridge.exposeInMainWorld("localitfy", {
   installUpdate: () => ipcRenderer.invoke("localitfy:install-update"),
   openExternal: (url) => ipcRenderer.invoke("localitfy:open-external", url),
 
-  /** Check if Spotify OAuth/PKCE is configured and connected. */
   spotifyCheck: () => ipcRenderer.invoke("spotify-check"),
   spotifyLogin: () => ipcRenderer.invoke("spotify-login"),
   spotifyImportBrowser: () => ipcRenderer.invoke("spotify-import-browser"),

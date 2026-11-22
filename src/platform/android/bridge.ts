@@ -20,8 +20,8 @@ type Listener = (payload: never) => void;
 const unavailable = () => `Not available in the Android app. Use localtify on your ${computerName()} for this.`;
 
 /** Desktop-only calls that return a song list; on the phone they leave the library as it is. */
-const RETURNS_SONGS = new Set(["importSongs", "deleteSong", "clearLibrary", "randomizeAllSongCovers", "randomizeMissingSongCovers", "randomizeSelectedSongCovers", "rescanPixelArt"]);
-const RETURNS_LIST = new Set(["listPixelArt", "listPixelCovers", "listBrokenCovers", "getPendingMusicBrainzTags", "searchMusicBrainz", "getMusicBrainzAlbumTracks"]);
+const RETURNS_SONGS = new Set(["importSongs", "deleteSong", "clearLibrary"]);
+const RETURNS_LIST = new Set(["listPixelArt", "getPendingMusicBrainzTags", "searchMusicBrainz", "getMusicBrainzAlbumTracks"]);
 
 /** A lyrics choice made from the phone replaces the copy kept for offline use. */
 async function keepLyrics(id: string, answer: Promise<LyricsResult>) {
@@ -110,7 +110,6 @@ export function createAndroidBridge(): Bridge {
     liveSend: sendLive,
     onLiveEvent: onLiveEvent as Bridge["onLiveEvent"],
     recordPlayEvent: async (event: PlayEvent) => phoneLibrary.recordPlayEvent(event),
-    getListeningCounts: async () => phoneLibrary.listeningCounts,
     getListeningSummary: (payload) => fromMacOrKept<Awaited<ReturnType<Bridge["getListeningSummary"]>>>("listening:summary", payload, `mac:listening-summary:${payload.days}`, null, result => isListeningSummary(result, payload.days)),
     getListeningCalendarSummary: (payload) => fromMacOrKept<Awaited<ReturnType<Bridge["getListeningCalendarSummary"]>>>("listening:calendar-summary", payload, `mac:listening-calendar:${payload.range}:${payload.offset}`, null, result => isListeningCalendarSummary(result, payload)),
     onWatchedFoldersChange: subscribe("songs") as Bridge["onWatchedFoldersChange"],
@@ -122,7 +121,6 @@ export function createAndroidBridge(): Bridge {
     findSimilarSongs: (query) => fromMacOrKept("analysis:similar-songs", query, `mac:similar:${JSON.stringify(query)}`, {
       seedId: "songId" in query ? query.songId : "seedKey" in query ? query.seedKey : "recent", status: "seed-unavailable", matches: [], compared: 0, seedCount: 0
     }),
-    scorePromptSound: (payload) => fromMacOrKept("analysis:prompt-sound", payload, `mac:prompt:${payload.text.trim().toLowerCase()}`, { status: "model-missing", scores: [] }),
     getLyrics: (payload) => !payload.cancel && phoneLibrary.effectiveSettings().lyricsEnabled !== true ? Promise.resolve({ status: "disabled", source: "none", lines: [] }) : payload.cancel ? fromMac<LyricsResult>("lyrics:get", payload) : fromMacOrKept<LyricsResult>("lyrics:get", payload, `mac:lyrics:${payload.id}`, { status: "offline", source: "none", lines: [] }, (result) => ["synced","plain","instrumental"].includes(result.status), 45000),
     searchLyrics: (payload) => fromMac("lyrics:search", payload, 15000),
     selectLyricsMatch: (payload) => keepLyrics(payload.id, fromMac("lyrics:select-match", payload, 15000)),

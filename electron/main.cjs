@@ -146,11 +146,6 @@ function clearFileInfoCache() {
   fileInfoCache.clear();
 }
 
-function clearPixelArtCache() {
-  pixelArtDirectoryCache = { value: "", expiresAt: 0 };
-  pixelArtFilesCache = { value: [], root: "", expiresAt: 0 };
-}
-
 function getFileInfoCached(filePath) {
   const cleanPath = String(filePath || "");
   if (!cleanPath) return { exists: false, isFile: false, size: 0, mtimeMs: 0 };
@@ -491,8 +486,7 @@ const thumbnailRuntime = createThumbnailRuntime({
   }
 });
 const {
-  getCoverThumbnailUrl, getCoverThumbnailStatus, warmCoverThumbnails,
-  cleanupCoverThumbnailCache, scheduleCoverThumbnailWarmup,
+  getCoverThumbnailUrl, scheduleCoverThumbnailWarmup,
   queue: coverThumbnailQueue
 } = thumbnailRuntime;
 
@@ -1132,47 +1126,6 @@ function getPixelArtFiles(options = {}) {
   }
 }
 
-function listPixelCoversDetailed(songs = getSongs()) {
-  const usage = new Map();
-  for (const song of songs) if (song.coverPath) usage.set(song.coverPath, (usage.get(song.coverPath) || 0) + 1);
-  return getPixelArtFiles().map((coverPath) => {
-    const exists = fileExists(coverPath);
-    return { name: path.basename(coverPath), key: path.parse(coverPath).name, path: coverPath,
-      url: safeMediaUrl(coverPath), usageCount: usage.get(coverPath) || 0, exists, broken: !exists };
-  });
-}
-
-function getCoverStats() {
-  const songs = getSongs();
-  const covers = listPixelCoversDetailed(songs);
-  const brokenSongs = [];
-  let songsWithCovers = 0;
-  for (const song of songs) {
-    if (!song.coverPath) continue;
-    songsWithCovers++;
-    if (!fileExists(song.coverPath)) brokenSongs.push({ id: song.id, title: song.title, coverPath: song.coverPath });
-  }
-  return { pixelDir: getPixelArtDirectory(), coverCount: covers.length, songCount: songs.length,
-    songsWithCovers, songsMissingCovers: songs.length - songsWithCovers,
-    songsWithBrokenCovers: brokenSongs.length, brokenItems: brokenSongs };
-}
-
-function pickLeastUsedCover(availableCovers = [], fallbackSongs = [], choices = {}) {
-  if (!availableCovers.length) return "";
-  const songs = fallbackSongs.length ? fallbackSongs : getSongs();
-  const usage = new Map();
-  for (const p of availableCovers) usage.set(p, 0);
-  for (const song of songs) if (song.coverPath && usage.has(song.coverPath)) usage.set(song.coverPath, usage.get(song.coverPath) + 1);
-  let candidates = [...availableCovers];
-  if (choices.avoidSelectedCurrent && choices.currentPath) candidates = candidates.filter((p) => p !== choices.currentPath);
-  if (!candidates.length) candidates = [...availableCovers];
-  candidates.sort((a, b) => (usage.get(a) || 0) - (usage.get(b) || 0));
-  const minCount = usage.get(candidates[0]) || 0;
-  const bestPool = candidates.filter((p) => (usage.get(p) || 0) === minCount);
-  const selected = bestPool[Math.floor(Math.random() * bestPool.length)];
-  return selected || "";
-}
-
 // All files in one import share cover usage. Avoid a full SQLite library
 // read for every track when assigning fallback artwork.
 const importCoverAllocators = new WeakMap();
@@ -1283,7 +1236,6 @@ async function importNewAudioFilesFromDirectory(directory, tracks = [], options 
   if (result.importedCount) console.log("[localtify library refresh] imported new audio files from folder", { folder: directory, changedCount: result.changedCount });
   return { ...result, songs: shapeResult() };
 }
-/** Adds the files that are not in the library yet (matched by path). Shared by folder refreshes and watched folders. */
 async function importNewAudioFiles(audioFiles, tracks = []) {
   const existingPaths = new Set(getSongs().map((song) => filePathKey(String(song.filePath || ""))).filter(Boolean));
   const newFiles = audioFiles.filter((filePath) => {
@@ -1624,20 +1576,6 @@ function listSongsShaped() {
   const artworkCache = new Map();
   return getSongs().map((song) => shapeSong(song, pixelArtFiles, artworkCache));
 }
-function buildRandomizeMissingSongCovers() {
-  const covers = getPixelArtFiles();
-  if (!covers.length) return listSongsShaped();
-  const songs = getSongs();
-  const allocator = createLeastUsedCoverAllocator(covers, songs);
-  for (const song of songs.filter((song) => !song.coverPath || !fileExists(song.coverPath))) {
-    const chosen = allocator.choose(song.coverPath);
-    if (!chosen) continue;
-    const updated = patchSong(song.id, { coverPath: chosen });
-    if (updated?.coverPath === chosen) allocator.record(song.coverPath, chosen);
-  }
-  return listSongsShaped();
-}
-
 async function repairMissingSongMetadata(payload = {}) {
   const limit = Math.max(1, Math.min(1000, Number(payload?.limit || 180) || 180));
   const force = Boolean(payload?.force || payload?.forceAll);
@@ -2174,10 +2112,7 @@ app.whenReady().then(async () => {
   });
 
   registerCoverIpc(ipcRouter, {
-    getPixelArtFiles, safeMediaUrl, listPixelCoversDetailed, getCoverStats, clearPixelArtCache, clearFileInfoCache, yieldToMainLoop,
-    buildRandomizeMissingSongCovers, listSongsShaped, getSongs, createLeastUsedCoverAllocator, patchSong, pickLeastUsedCover,
-    getCoverThumbnailStatus, warmCoverThumbnails, thumbnailRuntime, cleanupCoverThumbnailCache, shapeSong, getSong,
-    fileExists, isImageFile, getWindow: event => BrowserWindow.fromWebContents(event.sender) || mainWindow, dialog
+    getPixelArtFiles, safeMediaUrl, thumbnailRuntime, patchSong, shapeSong, getSong, fileExists, isImageFile
   });
   ipcRouter.handle("song:analyze-volume", async (_event, id) => {
     const target = (typeof id === "string" ? getSong(id) : null);
@@ -2257,13 +2192,6 @@ app.whenReady().then(async () => {
     const recorded = databaseRepositories.listening.record(payload);
     if (recorded) { try { scrobbler?.observe(payload); } catch (error) { console.log("[localtify scrobble observation]", error?.message || error); } }
     return recorded;
-  });
-  ipcRouter.handle("song:random-cover", async (_event, id) => {
-    const covers = getPixelArtFiles();
-    const song = (typeof id === "string" ? getSong(id) : null);
-    const chosen = pickLeastUsedCover(covers, song ? [song] : [], { avoidSelectedCurrent: true });
-    const updated = patchSong(id, { coverPath: chosen });
-    return updated ? shapeSong(updated) : null;
   });
   ipcRouter.handle("song:delete", async (_event, id) => { try { deleteSong(id); return listSongsShaped(); } catch (error) { console.log("[localitfy delete song error]", error?.message); return listSongsShaped(); } });
   ipcRouter.handle("library:clear", async () => { clearLibrary(); return []; });

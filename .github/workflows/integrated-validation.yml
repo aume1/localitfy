@@ -4,9 +4,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Extended cross-platform benchmarks are intentionally opt-in. Normal PRs run
-# quality.yml. Invoke this before merging changes to media, sync, native runtimes,
-# caching, Android integration or large-library performance.
+# Desktop comparisons are opt-in; Android integration changes require Android validation.
 on:
   workflow_dispatch:
     inputs:
@@ -18,12 +16,17 @@ on:
   pull_request:
     paths:
       - '.github/workflows/integrated-validation.yml'
+      - 'android/**'
+      - 'src/platform/android/**'
+      - 'electron/sync/**'
+      - 'capacitor.config.*'
 permissions:
   contents: read
 env:
   ONNXRUNTIME_NODE_INSTALL: skip
 jobs:
   regression:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
