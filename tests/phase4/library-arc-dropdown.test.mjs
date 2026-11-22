@@ -29,7 +29,9 @@ test("Library uses a neutral hover without disabling drag indicators", () => {
   assert.match(read("src/App.css"), /\.songDropTarget::before\s*\{/);
   assert.match(library, /var\(--lt-fill-hover\)/);
   assert.match(view, /<PageHeader title=\{isLiked/);
-  assert.match(library, /\.libraryCollectionShortcuts\s*\{[\s\S]*?display: grid/);
+  const shell = read("src/features/shell/AppShell.tsx");
+  assert.match(shell, /className="librarySectionNav"/);
+  assert.match(read("src/features/shell/library-navigation.css"), /\.librarySectionNav\s*\{[\s\S]*?display: flex/);
   assert.match(view, /missingFileCount > 0 \?/);
   assert.doesNotMatch(view, /drag to reorder · right-click for more/);
 });
