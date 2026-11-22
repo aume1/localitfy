@@ -5,7 +5,7 @@
   border: 1px solid var(--lt-border);
   border-radius: var(--lt-radius-panel);
   color: var(--lt-text);
-  background: var(--lt-fill);
+  background: var(--lt-fill-subtle);
 }
 
 :where(.localtifySurface-accent) {

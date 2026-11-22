@@ -3,7 +3,8 @@ import { ListEnd, MoreHorizontal, Play, Shuffle } from "lucide-react";
 import type { Song } from "../library/song.types";
 import type { LibrarySortMode } from "../library/librarySort";
 import { IconButton } from "../../shared/ui/IconButton";
-import { Surface } from "../../shared/ui/Surface";
+import { EntityHero, HeroMeta } from "../../shared/ui/EntityHero";
+import Button from "../../shared/ui/Button";
 
 export type CollectionHeroProps = {
   typeLabel: string;
@@ -28,18 +29,12 @@ export type CollectionHeroProps = {
 /** Top of every album, artist, genre, playlist and mix page: artwork, title, then play · shuffle · queue · more. */
 export default function CollectionHero({ typeLabel, title, cover, round = false, byline, stats, playable, onPlay, onShuffle, onQueue, onMore, children, search, sort }: CollectionHeroProps) {
   return (
-    <Surface as="header" variant="transparent" className={`collectionHero ${round ? "isRound" : ""}`}>
-      <div className="collectionHeroArt">{cover}</div>
-      <div className="collectionHeroCopy">
-        <h1 title={title}>{title}</h1>
-        {byline ? <div className="collectionHeroByline">{byline}</div> : null}
-        <p className="collectionHeroStats">{typeLabel} · {stats}</p>
-      </div>
-      <div className="collectionHeroActions">
-        <button className="collectionPlayButton" type="button" onClick={() => void onPlay()} disabled={!playable} aria-label={`play ${title}`} title="Play">
+    <EntityHero cover={cover} round={round} title={<h1 title={title}>{title}</h1>}
+      subtitle={byline} meta={<HeroMeta items={[typeLabel, stats]}/>} actions={<>
+        <Button className="collectionPlayButton" size="sm" type="button" onClick={() => void onPlay()} disabled={!playable} aria-label={`play ${title}`} title="Play">
           <Play size={16} fill="currentColor" strokeWidth={2} aria-hidden="true" />
           <span>Play all</span>
-        </button>
+        </Button>
         <IconButton className="collectionIconButton" type="button" onClick={() => void onShuffle()} disabled={playable < 2} aria-label={`shuffle ${title}`} title="Shuffle">
           <Shuffle size={17} strokeWidth={2.2} aria-hidden="true" />
         </IconButton>
@@ -56,7 +51,6 @@ export default function CollectionHero({ typeLabel, title, cover, round = false,
         <IconButton className="collectionIconButton" type="button" onClick={(event) => void onMore(event)} aria-label={`more options for ${title}`} title="More options">
           <MoreHorizontal size={18} strokeWidth={2.2} aria-hidden="true" />
         </IconButton>
-      </div>
-    </Surface>
+      </>} />
   );
 }

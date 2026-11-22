@@ -115,3 +115,25 @@ input[type="range"]::-webkit-slider-thumb{
 
 /* Embedded inputs inherit the parent field, without a second opaque surface. */
 .app [data-embedded-field] { background:transparent !important; border:0 !important; box-shadow:none !important; outline:none !important; }
+
+/* Liner Button variants, remapped to Localtify's existing theme tokens. */
+.ltButton {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--lt-gap-control);
+  border: 1px solid transparent; border-radius: var(--lt-radius-control);
+  font: inherit; font-size: var(--lt-text-base); font-weight: 550; line-height: 1.3;
+  cursor: pointer; min-width: 0; white-space: nowrap; color: var(--lt-text);
+  transition: background-color var(--lt-control-motion) var(--lt-ease-out), color var(--lt-control-motion) var(--lt-ease-out), transform var(--lt-control-motion) var(--lt-ease-out);
+}
+.ltButtonDefault { min-height: var(--lt-control-height); padding: 0 18px; }
+.ltButtonSmall { min-height: 36px; padding: 0 14px; }
+.ltButtonLarge { min-height: 52px; padding: 0 24px; }
+.ltButtonIcon { width: var(--lt-control-height); height: var(--lt-control-height); padding: 0; }
+.ltButtonPrimary { background: var(--lt-accent); color: var(--lt-bg); }
+.ltButtonPrimary:hover:not(:disabled) { opacity: .9; }
+.ltButtonSecondary, .ltButtonGlass { background: var(--lt-fill); }
+.ltButtonOutline { background: transparent; border-color: var(--lt-border); }
+.ltButtonGhost { background: transparent; color: var(--lt-muted); }
+:is(.ltButtonSecondary,.ltButtonGlass,.ltButtonOutline,.ltButtonGhost):hover:not(:disabled) { color: var(--lt-text); background: var(--lt-fill-hover); }
+.ltButton:active:not(:disabled) { transform: scale(.96); }
+@media (prefers-reduced-motion: reduce) { .ltButton:active:not(:disabled) { transform: none; } }
+.app.reducedMotion .ltButton:active:not(:disabled) { transform: none; }

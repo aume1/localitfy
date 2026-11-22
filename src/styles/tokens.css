@@ -43,9 +43,11 @@
   --lt-text-collection: 32px;
   --lt-leading: 1.4;
   --lt-control-height: 42px;
-  --lt-control-radius: 12px;
+  --lt-control-radius: var(--lt-radius-control);
   --lt-menu-item-height: 36px;
-  --lt-radius-item: 8px;
+  /* Liner shared shape scale: controls 8, items 12, panels 20. */
+  --lt-radius-control: 8px;
+  --lt-radius-item: 12px;
   --lt-radius-panel: 20px;
   --lt-gap-control: var(--lt-space-2);
   --lt-shell-control: 36px;
@@ -59,7 +61,7 @@
   --lt-duration-fast: 120ms;
   --lt-duration-normal: 180ms;
   --lt-control-motion: var(--lt-duration-fast);
-  --lt-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --lt-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --lt-duration-atmosphere: 360ms;
   --lt-shadow-menu: 0 12px 32px rgba(0, 0, 0, .28);
 
