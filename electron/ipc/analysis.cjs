@@ -6,7 +6,9 @@ const { createAnalysisService } = require("../analysis/service.cjs");
 function registerAnalysisIpc(router, { app, powerMonitor, repositories, ffmpegPath }) {
   let service;
   const root = path.join(app.getPath("userData"), "experimental-models");
-  void fs.rm(path.join(root, "clap-htsat-unfused-text-q8-v1"), { recursive: true, force: true }).catch(() => undefined);
+  void fs.readdir(root).then(entries => Promise.allSettled(entries.filter(name =>
+    name === "clap-htsat-unfused-text-q8-v1" || /^clap-htsat-unfused-text-q8-v1\.partial-[a-f0-9-]{36}$/i.test(name)
+  ).map(name => fs.rm(path.join(root, name), { recursive: true, force: true })))).catch(() => undefined);
   const similarity = createSimilarityService({ getDatabasePath: () => repositories.database.status().path });
   router.handle("analysis:similar-songs", (_event, payload) => similarity.find(payload));
   router.handle("analysis:daily-mixes", (_event, payload) => similarity.dailyMixes(payload));

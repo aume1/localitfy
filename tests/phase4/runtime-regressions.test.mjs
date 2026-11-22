@@ -15,7 +15,7 @@ test("MainModeApp render guards happen after hook calls", () => {
 
   const body = source.slice(start, end);
   const bootReturn = body.lastIndexOf("if (!ready)");
-  const onboardingReturn = body.lastIndexOf("if (onboardingOpen || onboardingDevPreview)");
+  const onboardingReturn = body.lastIndexOf("if (onboardingOpen)");
   assert.ok(bootReturn >= 0, "boot render guard was not found");
   assert.ok(onboardingReturn >= 0, "onboarding render guard was not found");
 

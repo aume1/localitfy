@@ -56,7 +56,6 @@ import {
 } from "./features/feedback/feedbackPrompt";
 import {
   markOnboardingSeenForThisRelease,
-  resetOnboardingForThisRelease,
   shouldOpenOnboardingForThisRelease
 } from "./features/onboarding/onboardingRelease";
 import {
@@ -241,7 +240,6 @@ function MainModeApp() {
   } = useFeedbackController();
   const [isViewSwitching, setIsViewSwitching] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(() => shouldOpenOnboardingForThisRelease());
-  const [onboardingDevPreview, setOnboardingDevPreview] = useState(false);
   const {
     editorSong, setEditorSong,
     deleteTarget, setDeleteTarget,
@@ -1601,16 +1599,6 @@ function MainModeApp() {
     return pick.discordKey;
   };
 
-  function openOnboardingDevPreview() {
-    setOnboardingDevPreview(true);
-    setOnboardingOpen(true);
-    setEditorSong(null);
-    setDeleteTarget(null);
-    changeView("home", "unknown");
-    setStatusText("onboarding preview opened");
-    showAppToast("onboarding preview opened", "success");
-  }
-
   const handleSearchInput = (value: string) => {
     const command = value.trim().toLowerCase();
 
@@ -1621,31 +1609,6 @@ function MainModeApp() {
       openFeedbackPrompt();
       setStatusText("feedback box opened");
       showAppToast("feedback box opened", "success");
-      return;
-    }
-
-    if (
-      command === "onboardingtrue" ||
-      command === "/onboardingtrue" ||
-      command === "showonboarding" ||
-      command === "/showonboarding" ||
-      command === "onboarding"
-    ) {
-      openOnboardingDevPreview();
-      setQuery("");
-      return;
-    }
-
-    if (
-      command === "onboardingreset" ||
-      command === "/onboardingreset"
-    ) {
-      resetOnboardingForThisRelease();
-
-      openOnboardingDevPreview();
-      setStatusText("onboarding reset and opened");
-      showAppToast("onboarding reset and opened", "success");
-      setQuery("");
       return;
     }
 
@@ -5118,7 +5081,6 @@ function MainModeApp() {
   function dismissOnboarding() {
     markOnboardingSeenForThisRelease();
 
-    setOnboardingDevPreview(false);
     setOnboardingOpen(false);
   }
 
@@ -6055,7 +6017,7 @@ function MainModeApp() {
     );
   }
 
-  if (onboardingOpen || onboardingDevPreview) {
+  if (onboardingOpen) {
     return (
       <Suspense fallback={<main role="status" aria-label="Loading setup" />}>
       <Onboarding
