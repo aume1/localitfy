@@ -97,7 +97,7 @@ export default function SidebarNav({ view, changeView, sidebarNavOrder, sidebarH
             <button type="button" role="menuitem" disabled={!canMoveSidebarItem(sidebarNavOrder, sidebarHiddenNav, menu.view, 1)} onClick={() => move(menu.view, 1)}>
               <span className="songContextMenuIcon"><ArrowDown size={13} strokeWidth={3} /></span> move down
             </button>
-            <button type="button" role="menuitem" onClick={() => {
+            <button type="button" role="menuitem" disabled={menu.view === "library"} onClick={() => {
               setMenu(null);
               updateSidebarLayout({ sidebarHiddenNav: toggleSidebarItemHidden(sidebarHiddenNav, menu.view) });
             }}>

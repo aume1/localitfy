@@ -1991,7 +1991,7 @@ body,
   animation: none !important;
 }
 
-body.localtifyIdle .app:not(.songDragActive) :where( .secretLayer, .coverSpark){
+body.localtifyIdle .app:not(.songDragActive) .secretLayer{
   animation-play-state: paused !important;
 }
 

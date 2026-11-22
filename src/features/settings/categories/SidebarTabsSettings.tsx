@@ -91,10 +91,11 @@ export default function SidebarTabsSettings({ settings, updateSetting }: Sidebar
                     <button
                       type="button"
                       className={`sidebarTabsButton sidebarTabsVisibility ${isHidden ? "" : "active"}`}
+                      disabled={itemId === "library"}
                       onClick={() => void updateSetting("sidebarHiddenNav", toggleSidebarItemHidden(hidden, itemId))}
                       aria-pressed={!isHidden}
                       aria-label={isHidden ? `show ${item.label}` : `hide ${item.label}`}
-                      title={isHidden ? "show in sidebar" : "hide from sidebar"}
+                      title={itemId === "library" ? "Library stays in the sidebar" : isHidden ? "show in sidebar" : "hide from sidebar"}
                     >
                       {isHidden ? <EyeOff size={14} strokeWidth={2.4} aria-hidden="true" /> : <Eye size={14} strokeWidth={2.4} aria-hidden="true" />}
                     </button>
