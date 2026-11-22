@@ -1,21 +1,24 @@
 const path = require("node:path");
+const fs = require("node:fs/promises");
 const { createSimilarityService } = require("../analysis/similarity-service.cjs");
 const { createAnalysisService } = require("../analysis/service.cjs");
 
 function registerAnalysisIpc(router, { app, powerMonitor, repositories, ffmpegPath }) {
   let service;
+  const root = path.join(app.getPath("userData"), "experimental-models");
+  void fs.rm(path.join(root, "clap-htsat-unfused-text-q8-v1"), { recursive: true, force: true }).catch(() => undefined);
   const similarity = createSimilarityService({ getDatabasePath: () => repositories.database.status().path });
   router.handle("analysis:similar-songs", (_event, payload) => similarity.find(payload));
   router.handle("analysis:daily-mixes", (_event, payload) => similarity.dailyMixes(payload));
   const get = () => (service ||= createAnalysisService({
-    root: path.join(app.getPath("userData"), "experimental-models"), ffmpegPath, repositories, powerMonitor
+    root, ffmpegPath, repositories, powerMonitor
   }));
   router.handle("analysis:status", () => get().status());
   router.handle("analysis:set-battery", (_event, allowed) => get().setAllowOnBattery(allowed));
   router.handle("analysis:set-enabled", (_event, enabled) => get().setEnabled(enabled));
-  router.handle("analysis:download-model", () => get().download());
-  router.handle("analysis:cancel-download", () => get().cancelDownload());
-  router.handle("analysis:remove-model", () => get().removeModel());
+  router.handle("analysis:download-model", (_event, target) => get().download(target));
+  router.handle("analysis:cancel-download", (_event, target) => get().cancelDownload(target));
+  router.handle("analysis:remove-model", (_event, target) => get().removeModel(target));
   router.handle("analysis:start", (_event, options) => get().start({ retry: options?.retry === true }));
   router.handle("analysis:pause", () => get().pause());
   router.handle("analysis:clear", () => get().clearAnalysis());

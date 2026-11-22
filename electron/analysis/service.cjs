@@ -73,8 +73,6 @@ function createAnalysisService({ root, ffmpegPath, repositories, powerMonitor, m
       void closeWorker(finished);
       return;
     }
-    // Release consumed entries without shifting the remaining library on
-    // every track. A queue of N tracks now has linear dequeue cost.
     queue[queueHead++] = null;
     current = job;
     running = true;
@@ -178,13 +176,17 @@ function createAnalysisService({ root, ffmpegPath, repositories, powerMonitor, m
   powerMonitor?.on("suspend", suspend);
   powerMonitor?.on("on-battery", batteryChanged);
 
+  function checkTarget(target) {
+    if (target != null) throw new TypeError("Unknown model");
+  }
+
   return {
     status, start,
     pause: async () => { await stop(); return status(); },
     setEnabled, setAllowOnBattery,
-    download: async () => { if (!supported) throw new Error("Music analysis currently requires Apple silicon on macOS"); if (!enabled()) throw new Error("Enable experimental analysis first"); await manager.download(); return status(); },
-    cancelDownload: async () => { await manager.cancel(); return status(); },
-    removeModel: async () => { await stop(); await manager.remove(); return status(); },
+    download: async (target) => { checkTarget(target); if (!supported) throw new Error("Music analysis currently requires Apple silicon on macOS"); if (!enabled()) throw new Error("Enable experimental analysis first"); await manager.download(); return status(); },
+    cancelDownload: async (target) => { checkTarget(target); await manager.cancel(); return status(); },
+    removeModel: async (target) => { checkTarget(target); await stop(); await manager.remove(); return status(); },
     clearAnalysis: async () => { await stop(); repositories.analysis.clear(); return status(); },
     clearHistory: async () => { repositories.listening.clear(); return status(); },
     setHistoryEnabled: async (value) => {
