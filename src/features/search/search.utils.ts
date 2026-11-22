@@ -50,22 +50,70 @@ export function smartSongMetadata(song:Partial<Song>&Record<string,unknown>,inde
 export function sanitizeSongRecord(song:Partial<Song>&Record<string,unknown>,index:number):Song{const meta=smartSongMetadata(song,index);const sourcePath=String(song.filePath||(song as any).path||"");const rawUrl=String((song as any).playbackUrl||song.url||"");const sourceUrl=sourcePath?"":rawUrl;const fileExists=typeof song.fileExists==="boolean"?song.fileExists:typeof (song as any).exists==="boolean"?(song as any).exists:undefined;return{id:String(song.id||makeLocalId("song")),title:meta.title,artist:meta.artist,album:meta.album,genre:String(song.genre||"").trim(),filePath:sourcePath,url:sourceUrl,fileExists,coverPath:song.coverPath??null,coverUrl:song.coverUrl??null,coverThumbUrl:song.coverThumbUrl,coverThumbnailUrl:song.coverThumbnailUrl,thumbnailUrl:song.thumbnailUrl,coverFullUrl:song.coverFullUrl,sourceType:song.sourceType,sourceTrackId:song.sourceTrackId,sourceUrl:song.sourceUrl,sourceProvider:song.sourceProvider,sourceProviderUrl:song.sourceProviderUrl,sourceMatchScore:song.sourceMatchScore,liked:Boolean(song.liked),playCount:Math.floor(safeNumber(song.playCount,0)),duration:safeNumber(song.duration,0),dateAdded:String(song.dateAdded||new Date().toISOString()),lastPlayed:song.lastPlayed??null,volumeGain:typeof song.volumeGain==="number"&&Number.isFinite(song.volumeGain)?song.volumeGain:undefined,playbackPosition:safeNumber(song.playbackPosition,0),customVolume:typeof song.customVolume==="number"&&Number.isFinite(song.customVolume)?song.customVolume:undefined,fileSizeBytes:typeof song.fileSizeBytes==="number"&&Number.isFinite(song.fileSizeBytes)?song.fileSizeBytes:song.sizeBytes,sizeBytes:typeof song.sizeBytes==="number"&&Number.isFinite(song.sizeBytes)?song.sizeBytes:song.fileSizeBytes,bitrate:typeof song.bitrate==="number"&&Number.isFinite(song.bitrate)?song.bitrate:undefined,sampleRate:typeof song.sampleRate==="number"&&Number.isFinite(song.sampleRate)?song.sampleRate:undefined};}
 export function sanitizeSongList(input:unknown):Song[]{return Array.isArray(input)?input.filter((item):item is Partial<Song>&Record<string,unknown>=>Boolean(item&&typeof item==="object")).map(sanitizeSongRecord):[];}
 export function getMetadataRepairPatch(song:Song):Partial<Song>{const clean=sanitizeSongRecord(song,0),patch:Partial<Song>={};if(clean.title!==song.title)patch.title=clean.title;if(clean.artist!==song.artist)patch.artist=clean.artist;if(clean.album!==song.album)patch.album=clean.album;if(clean.duration!==song.duration)patch.duration=clean.duration;if(clean.playCount!==song.playCount)patch.playCount=clean.playCount;if((song.playbackPosition||0)<0||!Number.isFinite(Number(song.playbackPosition||0)))patch.playbackPosition=0;return patch;}
-export function buildSongSearchEntry(song:Song):SongSearchEntry{const raw=stripAudioExtension(fileNameFromPath(song.filePath||song.url||"")),fileName=normalizeSearchText(raw),title=normalizeSearchText(song.title),artist=normalizeSearchText(song.artist),album=normalizeSearchText(song.album),filePath=normalizeSearchText(song.filePath||song.url||""),compactTitle=compactSongKey(song.title||raw),compactArtist=compactSongKey(song.artist||""),compactAlbum=compactSongKey(song.album||"");const haystack=[title,artist,album,fileName,filePath,compactTitle,compactArtist,compactAlbum,song.liked?"liked favorite heart":""].filter(Boolean).join(" ");return{song,title,artist,album,fileName,filePath,compactTitle,compactArtist,compactAlbum,haystack};}
+type SearchFacetCache = Map<string, {normalized: string; compact: string}>;
+function searchFacet(value: string, cache?: SearchFacetCache) {
+  const key = String(value || "");
+  const hit = cache?.get(key);
+  if (hit) return hit;
+  const result = {normalized: normalizeSearchText(value), compact: compactSongKey(key)};
+  if (cache && cache.size < 4096) cache.set(key, result);
+  return result;
+}
+function makeSongSearchEntry(song: Song, facets?: SearchFacetCache): SongSearchEntry {
+  const raw = stripAudioExtension(fileNameFromPath(song.filePath || song.url || ""));
+  const fileName = normalizeSearchText(raw);
+  const title = normalizeSearchText(song.title);
+  const artistFacet = searchFacet(song.artist, facets), albumFacet = searchFacet(song.album, facets);
+  const artist = artistFacet.normalized, album = albumFacet.normalized;
+  const filePath = normalizeSearchText(song.filePath || song.url || "");
+  const compactTitle = compactSongKey(song.title || raw), compactArtist = artistFacet.compact, compactAlbum = albumFacet.compact;
+  const haystack = [title,artist,album,fileName,filePath,compactTitle,compactArtist,compactAlbum,song.liked ? "liked favorite heart" : ""].filter(Boolean).join(" ");
+  return {song,title,artist,album,fileName,filePath,compactTitle,compactArtist,compactAlbum,haystack};
+}
+export function buildSongSearchEntry(song: Song): SongSearchEntry {
+  return makeSongSearchEntry(song);
+}
 // Song state updates replace objects rather than mutating them. Cache by identity
 // so liking one track does not renormalize every unchanged track in the library.
 const songSearchEntryCache = new WeakMap<Song, SongSearchEntry>();
-export function buildSongSearchEntryCached(song: Song, previous?: SongSearchEntry): SongSearchEntry {
+export function buildSongSearchEntryCached(song: Song, previous?: SongSearchEntry, facets?: SearchFacetCache): SongSearchEntry {
   const cached = songSearchEntryCache.get(song);
   if (cached) return cached;
   const entry = previous && previous.song.title === song.title && previous.song.artist === song.artist &&
     previous.song.album === song.album && previous.song.filePath === song.filePath &&
     previous.song.url === song.url && previous.song.liked === song.liked
     ? { ...previous, song }
-    : buildSongSearchEntry(song);
+    : makeSongSearchEntry(song, facets);
   songSearchEntryCache.set(song, entry);
   return entry;
 }
 export function scoreSongSearch(entry:SongSearchEntry,search:SearchQueryInfo){if(!search.clean||!search.terms.length)return 1;let score=0;if(entry.title===search.clean)score+=280;if(entry.artist===search.clean)score+=190;if(entry.album===search.clean)score+=150;if(entry.title.startsWith(search.clean))score+=165;if(entry.artist.startsWith(search.clean))score+=110;if(entry.album.startsWith(search.clean))score+=78;if(search.compact&&entry.compactTitle.includes(search.compact))score+=100;if(search.compact&&entry.compactArtist.includes(search.compact))score+=48;if(entry.fileName.includes(search.clean))score+=58;if(entry.filePath.includes(search.clean))score+=36;if(entry.haystack.includes(search.clean))score+=44;for(const term of search.terms){if(entry.title.startsWith(term))score+=36;else if(entry.title.includes(term))score+=26;else if(entry.artist.startsWith(term))score+=22;else if(entry.artist.includes(term))score+=18;else if(entry.album.includes(term))score+=14;else if(entry.fileName.includes(term))score+=12;else if(entry.filePath.includes(term))score+=8;else if(entry.haystack.includes(term))score+=5;else return 0;}score+=Math.min(entry.song.playCount||0,60)/6;if(entry.song.liked)score+=3;return score;}
-export function rankSongsForSearch(entries:SongSearchEntry[],query:string){const search=prepareSearchQuery(query);if(!search.clean)return entries.map((entry)=>entry.song);const requiredTerm=search.terms.reduce((longest,term)=>term.length>longest.length?term:longest,"");const matches:Array<{entry:SongSearchEntry;index:number;score:number}>=[];for(let index=0;index<entries.length;index+=1){const entry=entries[index];if(requiredTerm&&!entry.haystack.includes(requiredTerm))continue;const score=scoreSongSearch(entry,search);if(score>0)matches.push({entry,index,score});}matches.sort((a,b)=>b.score-a.score||a.index-b.index);return matches.map((item)=>item.entry.song);}
+const searchCandidates = new WeakMap<SongSearchEntry[], {term: string; indices: number[]}>();
+export function rankSongsForSearch(entries: SongSearchEntry[], query: string) {
+  const search = prepareSearchQuery(query);
+  if (!search.clean) return entries.map(entry => entry.song);
+  const requiredTerm = search.terms.reduce((longest, term) => term.length > longest.length ? term : longest, "");
+  const cached = searchCandidates.get(entries);
+  const candidates = cached && requiredTerm.includes(cached.term) ? cached.indices : null;
+  const matches: Array<{entry: SongSearchEntry; index: number; score: number}> = [];
+  const limit = Math.min(8192, Math.floor(entries.length / 3));
+  let nextCandidates: number[] | null = requiredTerm && limit > 0 ? [] : null;
+  const count = candidates?.length ?? entries.length;
+  for (let offset = 0; offset < count; offset++) {
+    const index = candidates ? candidates[offset] : offset;
+    const entry = entries[index];
+    if (requiredTerm && !entry.haystack.includes(requiredTerm)) continue;
+    if (nextCandidates) {
+      if (nextCandidates.length < limit) nextCandidates.push(index);
+      else nextCandidates = null;
+    }
+    const score = scoreSongSearch(entry, search);
+    if (score > 0) matches.push({entry,index,score});
+  }
+  if (nextCandidates) searchCandidates.set(entries, {term: requiredTerm, indices: nextCandidates});
+  else searchCandidates.delete(entries);
+  matches.sort((a,b) => b.score-a.score || a.index-b.index);
+  return matches.map(item => item.entry.song);
+}
 export function prettyMeta(text:string){return lower(collapseSpaces(text))||"unknown artist";}
 export function discordArtist(text:string){const value=prettyMeta(text);return !value||value==="unknown"||value==="unknown artist"?"coderpixel :p":value;}

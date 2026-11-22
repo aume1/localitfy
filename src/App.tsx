@@ -11,7 +11,6 @@ import { useSongRadio } from "./features/player/useSongRadio";
 import { useNotForMe } from "./features/analysis/notForMe";
 import { devPerfStart, devPerfEnd } from "./shared/perf/devPerf";
 import type { PlayerEngineSource } from "./features/player/engine/PlayerEngine";
-import { useAnalyticsRuntime } from "./features/analytics/useAnalyticsRuntime";
 import { useDownloadsRuntime } from "./features/downloads/useDownloadsRuntime";
 import { getDownloadPageState } from "./features/downloads/downloadState";
 import { downloadStatusLabel, spotifyTrackStatusLabel } from "./features/downloads/download.selectors";
@@ -48,7 +47,6 @@ import CatBuddy from "./CatBuddy";
 import { runLocaltifyIdleTask } from "./app/runtime/idle";
 import { useBodyRuntimeClasses } from "./app/runtime/useBodyRuntimeClasses";
 import { useAppLifecycleRuntime } from "./app/runtime/useAppLifecycleRuntime";
-import { buildAnalyticsRecapCards, buildAnalyticsStatCards, formatAnalyticsDuration, localtifyAnalyticsNumber, localtifyAnalyticsString } from "./features/analytics/formatters";
 import { applyVisualCustomizationDefaults, migrateVisualSettings } from "./features/settings/visualCustomization";
 import { getLocaltifyPlatformInfo } from "./app/platform";
 import {
@@ -271,6 +269,10 @@ function MainModeApp() {
     librarySongElementRefs, pointerLibraryDragRef, pointerLibraryDragFrameRef
   } = useLibraryController();
 
+  const { libraryIndex, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
+    songs, deferredQuery, view, libraryFilterMode, librarySortMode, libraryRenderLimit, libraryListLengthRef, libraryRenderLimitRef
+  });
+
   const {
     updatePrompt,
     whatsNewOpen,
@@ -487,9 +489,7 @@ function MainModeApp() {
       );
     };
   }, []);
-  const currentSong = useMemo(() => {
-    return songs.find((song) => song.id === currentId) ?? null;
-  }, [songs, currentId]);
+  const currentSong = songsById.get(currentId) ?? null;
   function buildPlayerEngineSource(song: Song, url: string): PlayerEngineSource {
     return {
       id: song.id,
@@ -518,8 +518,8 @@ function MainModeApp() {
 
   const visualCurrentSong = useMemo(() => {
     if (!crossfadePreviewSongId) return currentSong;
-    return songs.find((song) => song.id === crossfadePreviewSongId) ?? currentSong;
-  }, [crossfadePreviewSongId, songs, currentSong]);
+    return songsById.get(crossfadePreviewSongId) ?? currentSong;
+  }, [crossfadePreviewSongId, songsById, currentSong]);
   const screensaverVisualSource = screensaverImage;
 
   function clearScreensaverPreviewTimer() {
@@ -592,7 +592,8 @@ function MainModeApp() {
     handlePlaylistSongAppend,
     upsertSpotifyPlaylistFromImport
   } = usePlaylistsController({
-    songs,
+    songsById,
+    songIndexById,
     bootedRef,
     changeView,
     setStatusText,
@@ -870,7 +871,8 @@ function MainModeApp() {
     platformInfo,
     playlistCount: playlists.length,
     settings,
-    songs,
+    songCount: songs.length,
+    libraryAlbumCount: libraryIndex.albumCount - Number(libraryIndex.albumOccurrences.has("unknown album")),
     updatePrompt,
     lastUpdateCheckedLabel,
     setDiagnosticsCopied
@@ -1034,9 +1036,6 @@ function MainModeApp() {
   }
 
 
-  const { libraryIndex, likedSongs, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
-    songs, deferredQuery, view, libraryFilterMode, librarySortMode, libraryRenderLimit, libraryListLengthRef, libraryRenderLimitRef
-  });
   const similarSeed = useMemo(() => resolveSimilarSeed(similarRequest, songsById, songs, playlists), [similarRequest, songsById, songs, playlists]);
   const activePlaylist = useMemo(
     () => playlists.find((playlist) => playlist.id === activePlaylistId) ?? null,
@@ -1060,8 +1059,8 @@ function MainModeApp() {
   );
 
   const selectedPlaylistSongs = useMemo(
-    () => selectedPlaylist?.songIds.map((songId) => songsById.get(songId)).filter(isPlayableSong) ?? [],
-    [selectedPlaylist, songsById]
+    () => view === "playlists" ? selectedPlaylist?.songIds.map((songId) => songsById.get(songId)).filter(isPlayableSong) ?? [] : [],
+    [selectedPlaylist, songsById, view]
   );
 
   const selectedPlaylistDuration = useMemo(
@@ -1070,7 +1069,7 @@ function MainModeApp() {
   );
 
   const playlistSummaries = useMemo<PlaylistSummary[]>(
-    () => playlists.map((playlist) => {
+    () => view === "playlists" ? playlists.map((playlist) => {
       let duration = 0;
       let songCount = 0;
       const previewSongs: Song[] = [];
@@ -1085,63 +1084,14 @@ function MainModeApp() {
       }
 
       return { playlist, previewSongs, songCount, duration };
-    }),
-    [playlists, songsById]
+    }) : [],
+    [playlists, songsById, view]
   );
 
 
-  const { analyticsAudienceSnapshot } = useAnalyticsRuntime({
-    ready,
-    view,
-    songs,
-    likedCount: likedSongs.length,
-    playlists,
-    settings,
-    isShuffle,
-    repeatMode,
-    downloadResultCount: downloadResults.length
-  });
-
-  const totalPlays = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "total_plays");
-  const libraryAlbumCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "album_count");
   const libraryArtistCount = libraryIndex.artistCount;
-  const totalLibrarySeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "total_library_seconds");
-  const averageSongSeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "average_song_seconds");
-  const playedSongCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "played_song_count");
-  const neverPlayedCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "never_played_count");
-  const likedPercent = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "liked_percent");
-  const playedPercent = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "played_percent");
-  const averagePlaysPerSong = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "average_plays_per_song");
-  const recentImportWeekCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "recent_import_week_count");
-  const missingFileCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "missing_file_count");
   const missingSongs = missingSongsForLibrary;
-  const effectiveMissingFileCount = Math.max(missingFileCount, missingSongs.length);
-  // Derive from live songs: the worker snapshot lags a round trip behind setSongs.
-  // Floor so any missing file keeps the tile below 100%.
-  const libraryHealthPercent = songs.length
-    ? Math.max(0, Math.floor(((songs.length - effectiveMissingFileCount) / songs.length) * 100))
-    : 0;
-  const monthImportCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "month_import_count");
-  const monthImportSeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "month_import_seconds");
-  const monthArtistCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "month_artist_count");
-  const yearImportCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "year_import_count");
-  const yearImportSeconds = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "year_import_seconds");
-  const yearAlbumCount = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "year_album_count");
-  const longestSongDuration = localtifyAnalyticsNumber(analyticsAudienceSnapshot, "longest_song_duration");
-  const longestSongTitle = localtifyAnalyticsString(analyticsAudienceSnapshot, "longest_song_title", "");
-
-  const libraryLengthLabel = formatAnalyticsDuration(totalLibrarySeconds);
-
-  const longestSong = useMemo(() => {
-    if (!longestSongTitle && longestSongDuration <= 0) return null;
-    return {
-      id: "analytics-longest-track",
-      title: longestSongTitle || "longest track",
-      artist: "",
-      album: "",
-      duration: longestSongDuration
-    } as Song;
-  }, [longestSongTitle, longestSongDuration]);
+  const effectiveMissingFileCount = missingSongs.length;
 
   const recentlyAdded = useMemo(() => pickRecentlyAdded(songs, 12), [songs]);
 
@@ -1159,24 +1109,6 @@ function MainModeApp() {
     }
     return picked;
   }, [recentlyAdded, songs]);
-
-  const libraryHealthLabel = !songs.length
-    ? "empty"
-    : effectiveMissingFileCount > 0
-      ? `${libraryHealthPercent}% healthy`
-      : "100% healthy";
-
-
-  const analyticsRecapCards = useMemo(() => buildAnalyticsRecapCards({
-    songCount: songs.length, monthImportCount, monthImportSeconds, monthArtistCount,
-    yearImportCount, yearImportSeconds, yearAlbumCount
-  }), [monthImportCount, monthImportSeconds, monthArtistCount, yearImportCount, yearImportSeconds, yearAlbumCount, songs.length]);
-
-  const analyticsStatCards = useMemo(() => buildAnalyticsStatCards({
-    songCount: songs.length, libraryArtistCount, libraryAlbumCount, totalPlays,
-    playedSongCount, averagePlaysPerSong, libraryHealthLabel, effectiveMissingFileCount
-  }), [songs.length, libraryArtistCount, libraryAlbumCount, totalPlays, playedSongCount, averagePlaysPerSong,
-    libraryHealthLabel, effectiveMissingFileCount]);
 
   // Keep playback progress hot-path out of React renders as much as possible.
   // The animation loop paints the progress DOM directly; React only uses this snapshot when something else renders.
@@ -2079,11 +2011,23 @@ function MainModeApp() {
         fadeFrameRef.current = null;
       }
 
-      nextAudioRef.current?.pause();
-      nextAudioRef.current = null;
+      releaseStandbyAudio();
       window.localitfy.clearDiscordActivity().catch(() => undefined);
     };
   }, []);
+
+  function releaseStandbyAudio() {
+    const audio = nextAudioRef.current;
+    nextAudioRef.current = null;
+    if (!audio) return;
+    try { audio.pause(); audio.removeAttribute("src"); audio.load(); } catch {}
+  }
+
+  useEffect(() => {
+    if ((!settings.gaplessPlayback && !settings.crossfadeEnabled) || !currentSong) {
+      if (nextAudioRef.current?.paused) releaseStandbyAudio();
+    }
+  }, [settings.gaplessPlayback, settings.crossfadeEnabled, currentSong?.id]);
 
   function getAudioEffectRuntime() {
     const runtime = audioEffectRuntimeRef.current;
@@ -2124,12 +2068,9 @@ function MainModeApp() {
 
   function applyPlaybackRateSettings(audio: HTMLAudioElement | null | undefined) {
     if (!audio) return;
-    getAudioEffectRuntime().apply(audio, getAudioEffectInput());
-  }
-
-  function syncAudioEffectGraph(audio: HTMLAudioElement | null | undefined) {
-    if (!audio || audio !== audioRef.current) return;
-    getAudioEffectRuntime().apply(audio, getAudioEffectInput());
+    const runtime = getAudioEffectRuntime();
+    if (audio === audioRef.current) runtime.apply(audio, getAudioEffectInput());
+    else runtime.applyTransport(audio, getAudioEffectInput());
   }
 
   const getTargetAudioVolume = useCallback(
@@ -2149,7 +2090,6 @@ function MainModeApp() {
 
       setAudioElementVolume(audio, safeVolume);
       applyPlaybackRateSettings(audio);
-      syncAudioEffectGraph(audio);
       audio.preload = settings.gaplessPlayback ? "auto" : "metadata";
       effectiveVolumeRef.current = safeVolume;
       return safeVolume;
@@ -2767,7 +2707,6 @@ function MainModeApp() {
       setAudioElementVolume(audio, 0);
       applyPlaybackRateSettings(audio);
       audio.preload = settings.gaplessPlayback ? "auto" : "metadata";
-      syncAudioEffectGraph(audio);
 
       await audio.play();
       if (!ownsHandoff()) return;
@@ -3170,7 +3109,6 @@ function MainModeApp() {
       setAudioElementVolume(audio, continuingCrossfadePlayback || settings.reducedMotion || !settings.crossfadeEnabled ? safeVolume : 0);
       applyPlaybackRateSettings(audio);
       audio.preload = settings.gaplessPlayback ? "auto" : "metadata";
-      syncAudioEffectGraph(audio);
       resumeAudioContextSafely();
       effectiveVolumeRef.current = safeVolume;
 
@@ -5780,7 +5718,6 @@ function MainModeApp() {
       handleLibraryAreaDrop: libraryAreaDrop,
       handleSearchInput,
       importSongs,
-      libraryAlbumCount,
       libraryArtistCount,
       libraryMissingLabel: `${effectiveMissingFileCount || missingSongs.length} missing file${(effectiveMissingFileCount || missingSongs.length) === 1 ? "" : "s"}`,
       librarySortMode,
@@ -5861,19 +5798,7 @@ function MainModeApp() {
       }
     },
     analytics: {
-      analyticsRecapCards,
-      analyticsStatCards,
-      averageSongSeconds,
       importSongs,
-      libraryHealthLabel,
-      libraryHealthPercent,
-      libraryLengthLabel,
-      likedPercent,
-      longestSong,
-      missingFileCount: effectiveMissingFileCount,
-      neverPlayedCount,
-      playedPercent,
-      recentImportWeekCount,
       songs,
       onSelectSong: (id: string) => void selectSong(id, true)
     },

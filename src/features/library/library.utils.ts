@@ -10,7 +10,7 @@ export function maybeApplyCoderpixelArtist(importedSongs: Song[], previousSongId
   const songs = importedSongs.map((song) => { const sourceKey = stableSongSourceKey(song); const isNewSong = !previousSongIds.has(song.id) && (!sourceKey || !previousSongSources.has(sourceKey)); if (!isNewSong || Math.random() >= CODERPIXEL_ARTIST_CHANCE) return song; const updatedSong = { ...song, artist: CODERPIXEL_ARTIST_EASTER_EGG }; changedSongs.push(updatedSong); return updatedSong; });
   return { songs, changedSongs };
 }
-export function cleanSongOrderIds(value: unknown, validIds?: Set<string>) {
+export function cleanSongOrderIds(value: unknown, validIds?: Pick<ReadonlySet<string>, "has">) {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
   const output: string[] = [];

@@ -740,7 +740,9 @@ function songReads(database) {
   if (!statements) {
     statements = {
       all: database.prepare("SELECT * FROM songs ORDER BY dateAdded DESC"),
-      byId: database.prepare("SELECT * FROM songs WHERE id = ?")
+      byId: database.prepare("SELECT * FROM songs WHERE id = ?"),
+      coverCandidates: database.prepare("SELECT coverPath FROM songs WHERE coverPath IS NOT NULL AND coverPath <> '' ORDER BY dateAdded DESC LIMIT ?"),
+      listeningSettings: database.prepare("SELECT key,value FROM settings WHERE key IN ('listeningHistoryEnabled','listeningHistoryClearedAt')")
     };
     songReadStatements.set(database, statements);
   }
@@ -762,6 +764,10 @@ function getSongs() {
     console.info("[localtify profile] db:getSongs", (performance.now() - started).toFixed(2) + "ms", songs.length + " songs");
   }
   return songs;
+}
+
+function getCoverCandidates(limit = 600) {
+  return songReads(ensureDb()).coverCandidates.all(Math.max(1, Math.min(1000, Number(limit) || 600)));
 }
 
 function getSong(id) {
@@ -1188,12 +1194,13 @@ module.exports = {
   listPlayEvents: (options) => playEvents.listPlayEvents(ensureDb(), options),
   recordPlayEvent: (payload) => {
     const database = ensureDb();
-    const settings = Object.fromEntries(database.prepare("SELECT key,value FROM settings WHERE key IN ('listeningHistoryEnabled','listeningHistoryClearedAt')").all().map(row=>[row.key,safeJsonParse(row.value,row.value)]));
+    const settings = Object.fromEntries(songReads(database).listeningSettings.all().map(row=>[row.key,safeJsonParse(row.value,row.value)]));
     if (settings.listeningHistoryEnabled === false || !(payload?.startedAt > Number(settings.listeningHistoryClearedAt || 0))) return false;
     return playEvents.recordPlayEvent(database, payload);
   },
   initDatabase,
   getSongs,
+  getCoverCandidates,
   getSong,
   insertSongs,
   patchSong,

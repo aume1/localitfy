@@ -92,7 +92,7 @@ test("selective search prefilter agrees with complete ranking for multilingual, 
     album: "Album "+i%13, filePath: "/Music/Disc-"+i%9+"/track_"+i+".flac", liked: i%7===0, playCount:i%61
   }));
   const entries = songs.map(exports.buildSongSearchEntry);
-  for (const query of ["miku", "mor", "mid", "cafe", "night 1", "liked album", "a-b", "夜明け", "flac", "disc 2", "unknown", "official audio", "rin 1 2", ""]) {
+  for (const query of ["miku", "mor", "mid", "cafe", "night 1", "liked album", "a-b", "夜明け", "flac", "disc 2", "unknown", "official audio", "rin 1 2", "m", "mi", "mik", "miku", "miku midnight", "miku midnight 12", "miku midnight 123", "midnight 123", ""]) {
     const prepared = exports.prepareSearchQuery(query);
     const expected = !prepared.clean ? songs : entries.map((entry,index)=>({entry,index,score:exports.scoreSongSearch(entry,prepared)}))
       .filter(x=>x.score>0).sort((a,b)=>b.score-a.score||a.index-b.index).map(x=>x.entry.song);

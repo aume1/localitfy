@@ -95,9 +95,9 @@ export function useLibraryDerivedState({songs,deferredQuery,view,libraryFilterMo
   const librarySearchIndex = libraryIndex.searchEntries;
 
   const filteredSongs = useMemo(() => {
-    if (!deferredQuery.trim()) return songs;
+    if ((view !== "library" && view !== "liked") || !deferredQuery.trim()) return songs;
     return rankSongsForSearch(librarySearchIndex, deferredQuery);
-  }, [librarySearchIndex, deferredQuery, songs]);
+  }, [librarySearchIndex, deferredQuery, songs, view]);
 
   const {likedSongs, missingSongsForLibrary, playableSongs} = useMemo(() => {
     const likedSongs: Song[] = [], missingSongsForLibrary: Song[] = [], playableSongs: Song[] = [];
@@ -113,7 +113,7 @@ export function useLibraryDerivedState({songs,deferredQuery,view,libraryFilterMo
     }
     return {likedSongs,missingSongsForLibrary,playableSongs};
   }, [songs]);
-  const mostPlayed = useMemo(() => topPlayedSongs(songs, 6)[0] ?? null, [songs]);
+  const mostPlayed = useMemo(() => topPlayedSongs(songs, 1)[0] ?? null, [songs]);
   const likedSongIds = useMemo(() => new Set(likedSongs.map(song => song.id)), [likedSongs]);
   const unsortedVisibleSongs = useMemo(() => {
     if (view === "liked") return deferredQuery.trim() ? filteredSongs.filter(song => likedSongIds.has(song.id)) : likedSongs;
@@ -121,8 +121,8 @@ export function useLibraryDerivedState({songs,deferredQuery,view,libraryFilterMo
     return filteredSongs;
   }, [view, libraryFilterMode, deferredQuery, filteredSongs, likedSongIds, likedSongs, missingSongsForLibrary]);
   const visibleSongs = useMemo(
-    () => sortLibrarySongs(unsortedVisibleSongs, librarySortMode),
-    [unsortedVisibleSongs, librarySortMode]
+    () => view === "library" || view === "liked" ? sortLibrarySongs(unsortedVisibleSongs, librarySortMode) : unsortedVisibleSongs,
+    [unsortedVisibleSongs, librarySortMode, view]
   );
   const libraryOrderLocked = librarySortMode !== "library" && (view === "library" || view === "liked");
 

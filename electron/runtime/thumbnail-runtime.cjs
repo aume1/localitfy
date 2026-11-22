@@ -16,7 +16,7 @@ const jobKey = (file, size) => JSON.stringify([file, thumbnailSize(size)]);
 function createThumbnailRuntime({
   getUserDataPath, getFileInfoCached, filePathKey, fileExists, isImageFile,
   safeMediaUrl, invalidateFileInfo, clearFileInfoCache, getFfmpegPath, getSongs,
-  getSong, getRuntimeCoverPath, publish
+  getSong, getRuntimeCoverPath, publish, getWarmupSongs = getSongs
 }) {
   const COVER_THUMBNAIL_SIZE = 256;
   const COVER_THUMBNAIL_DIR_NAME = "thumbnails";
@@ -166,7 +166,7 @@ function createThumbnailRuntime({
     coverThumbnailQueue.enqueue(jobKey(filePath, COVER_THUMBNAIL_SIZE), { lowPriority });
   }
 
-  function getCoverThumbnailUrl(filePath) {
+  function getCoverThumbnailUrl(filePath, queueMissing = true) {
     if (!filePath || !path.isAbsolute(filePath) || !isImageFile(filePath) || !fileExists(filePath)) return "";
     const key = getCoverThumbnailCacheKey(filePath);
     const cached = coverThumbnailUrlCache.get(key);
@@ -184,7 +184,7 @@ function createThumbnailRuntime({
       rememberCoverThumbnail(key, thumbnailPath);
       return url;
     }
-    queueCoverThumbnail(filePath, true);
+    if (queueMissing) queueCoverThumbnail(filePath, true);
     return "";
   }
 
@@ -282,7 +282,7 @@ function createThumbnailRuntime({
       warmTimer = null;
       try {
         const seen = new Set();
-        for (const song of getSongs()) {
+        for (const song of getWarmupSongs()) {
           const coverPath = String(song?.coverPath || "").trim();
           if (!coverPath || !path.isAbsolute(coverPath) || !isImageFile(coverPath) || !fileExists(coverPath) || seen.has(coverPath)) continue;
           seen.add(coverPath);

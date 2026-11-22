@@ -4,7 +4,7 @@ import type { Playlist } from "./playlist.types";
 
 export function cleanPlaylistArtwork(value: unknown): string | null { return typeof value === "string" && value.length <= 24576 && /^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]*={0,2}$/.test(value) ? value : null; }
 
-export function cleanPlaylistList(value: unknown, validIds?: Set<string>): Playlist[] {
+export function cleanPlaylistList(value: unknown, validIds?: Pick<ReadonlySet<string>, "has">): Playlist[] {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
   const output: Playlist[] = [];
