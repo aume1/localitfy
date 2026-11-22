@@ -1089,7 +1089,6 @@ function MainModeApp() {
   );
 
 
-  const libraryArtistCount = libraryIndex.artistCount;
   const missingSongs = missingSongsForLibrary;
   const effectiveMissingFileCount = missingSongs.length;
 
@@ -5718,7 +5717,6 @@ function MainModeApp() {
       handleLibraryAreaDrop: libraryAreaDrop,
       handleSearchInput,
       importSongs,
-      libraryArtistCount,
       libraryMissingLabel: `${effectiveMissingFileCount || missingSongs.length} missing file${(effectiveMissingFileCount || missingSongs.length) === 1 ? "" : "s"}`,
       librarySortMode,
       missingFileCount: effectiveMissingFileCount,

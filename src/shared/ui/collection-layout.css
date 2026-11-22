@@ -5,10 +5,14 @@
   padding-bottom: var(--lt-space-5);
 }
 
+.collectionBrowsePage .pageHeaderHeading { flex-basis: 100%; }
+.collectionBrowsePage .pageHeaderTools { width: 100%; justify-content: flex-start; }
+.collectionBrowsePage .pageHeaderSearch { flex: 1 1 200px; width: auto; max-width: 480px; }
+
 .collectionBrowseGrid {
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(168px, 100%), 1fr));
   gap: var(--lt-space-4);
 }
 

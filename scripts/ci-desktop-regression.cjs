@@ -355,7 +355,7 @@ server.listen(5173,async()=>{
       await assertShellChrome();
       await screenshot(win,"settings-"+mode);
       await win.webContents.executeJavaScript("document.querySelector('.sidebar [data-nav-id=library]').click()");
-      await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.libraryCollectionShortcuts') && document.querySelector('.app').dataset.workspaceArtwork==='on'").catch(()=>false),"library "+mode);
+      await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.librarySectionNav') && document.querySelector('.app').dataset.workspaceArtwork==='on'").catch(()=>false),"library "+mode);
       await screenshot(win,"library-"+mode);
       const selectionBefore = await win.webContents.executeJavaScript("document.querySelector('.playerMeta strong')?.textContent");
       await win.webContents.executeJavaScript("[...document.querySelectorAll('.libraryAction')].find(b=>b.textContent==='Select tracks').click()");
@@ -378,7 +378,7 @@ server.listen(5173,async()=>{
       assert.match(await win.webContents.executeJavaScript("document.activeElement.textContent"),/title/i,"typeahead moves keyboard focus");
       await win.webContents.executeJavaScript("document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");
       await until(()=>win.webContents.executeJavaScript("!document.querySelector('.arcDropdownMenu') && document.activeElement.classList.contains('librarySort')").catch(()=>false),"dropdown restores focus "+mode);
-      await win.webContents.executeJavaScript("document.querySelector('.libraryCollectionShortcuts button:has([data-kind=liked])').click()");
+      await win.webContents.executeJavaScript("document.querySelector('.librarySectionNav [data-library-section=liked]').click()");
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.libraryPageLiked')").catch(()=>false),"liked songs "+mode);
       await screenshot(win,"liked-"+mode);
       await win.webContents.executeJavaScript(`(()=>{const e=document.querySelector('.librarySearch');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,"no matching fixture");e.dispatchEvent(new Event("input",{bubbles:true}));})()`);

@@ -18,7 +18,7 @@ export default function SettingsView({
 }: SettingsViewProps) {
   return (
     <section data-page-section="settings" className="settingsPage settingsPageV027">
-      <PageHeader title="Settings" description="Playback, library, appearance, and connected music services" />
+      <PageHeader title="Settings" />
       <div className="settingsLayout settingsPageLayoutV027">
         <SettingsRail {...settingsRail} />
         <div className="settingsCategoryContent settingsCategoryContentV027">

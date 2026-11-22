@@ -113,9 +113,9 @@
 /* Welcome screen replaces the oversized provider/key form in Discover. */
 .discoverWelcome {
   display: flex; align-items: center; flex-wrap: wrap; gap: 18px;
-  min-width: 0; padding: clamp(20px,3vw,32px);
+  min-width: 0; padding: var(--lt-space-4);
   border: 1px solid var(--lt-border); border-radius: var(--lt-radius-panel);
-  background: var(--lt-surface-soft);
+  background: transparent;
 }
 .discoverWelcomeIcon { display: grid; flex: 0 0 46px; width: 46px; height: 46px; place-items: center;
   border: 1px solid var(--lt-border); border-radius: 13px;
@@ -135,8 +135,8 @@
 .discoverSecondaryAction:hover { background: var(--lt-fill-hover); }
 .discoverKeyNotice {
   display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
-  padding: 13px 16px; background: var(--lt-surface-soft);
-  border-left: 2px solid var(--lt-accent); color: var(--lt-muted);
+  padding: 6px 0; background: transparent;
+  border: 0; color: var(--lt-muted);
   font-size: 13px; line-height: 1.5;
 }
 .discoverKeyNotice > span { min-width: 0; flex: 1 1 240px; }

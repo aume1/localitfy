@@ -91,9 +91,8 @@
 .downloadsInputSingle { align-items: center; }
 .downloadsInputSingle .downloadsLinkIcon { margin-top: 0; }
 .downloadsInputSingle .downloadsLinkInput { min-height: 20px; height: 24px; resize: none; }
-.downloadsPrimaryRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 36px; }
+.downloadsPrimaryRow { display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 36px; }
 .downloadsPrimaryRow > button { min-width: 150px; gap: 8px; border-radius: 10px; }
-.downloadsInputHint { color: var(--lt-muted); font-size: 11px; line-height: 1.5; }
 .downloadsSpotifyStatus { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; color: var(--lt-muted); font-size: 12px; }
 .downloadsTextAction {
   border: 0;
@@ -137,7 +136,7 @@
 .downloadsActivityTitle p { margin: 0; color: var(--lt-muted); font-size: 12px; }
 .downloadsFilters { max-width: 100%; border-color: transparent; background: var(--lt-fill-subtle); }
 .downloadsActivityList { display: grid; min-width: 0; }
-.downloadsActivityRow { display: flex; align-items: center; gap: 14px; padding: 13px 2px; border-bottom: 1px solid var(--lt-border); min-width: 0; }
+.downloadsActivityRow { display: flex; align-items: center; gap: var(--lt-space-3); padding: var(--lt-space-3) 2px; border-bottom: 1px solid var(--lt-border); min-width: 0; }
 .downloadsActivityRow:first-child { border-top: 1px solid var(--lt-border); }
 .downloadsArt { position: relative; display: grid; flex: none; place-items: center; overflow: hidden; width: 52px; height: 52px; border-radius: 8px; background: var(--lt-fill); color: var(--lt-faint); }
 .downloadsArt img, .downloadsArt .coverImage { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -168,7 +167,6 @@
   .downloadsActivityHead { align-items: start; flex-direction: column; }
   .downloadsFilters { width: 100%; }
   .downloadsPrimaryRow > button { min-width: 128px; }
-  .downloadsInputHint { max-width: 240px; }
   .downloadsConversion { grid-template-columns: 1fr auto; }
   .downloadsConversion [role="progressbar"] { grid-column: 1 / -1; grid-row: 2; }
 }
@@ -177,7 +175,6 @@
   .downloadsTools { margin-left: 0; }
   .downloadsTabList [role="tab"] { min-width: 96px; }
   .downloadsInputSurface { padding: 11px 12px; }
-  .downloadsInputHint { display: none; }
   .downloadsPrimaryRow > button { flex: 1; }
   .downloadsActivityRow { gap: 10px; }
   .downloadsArt { width: 44px; height: 44px; }
