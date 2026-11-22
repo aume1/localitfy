@@ -9,7 +9,7 @@ const MAX_BODY_BYTES = 8 * 1024 * 1024;
 /** Mac features a paired phone may use while it is on the home network; the phone keeps the answers for offline use. */
 const PHONE_FEATURES = new Set([
   "lyrics:get", "lyrics:search", "lyrics:select-match", "lyrics:set-offset", "lyrics:clear-selection",
-  "analysis:daily-mixes", "analysis:similar-songs", "analysis:prompt-sound", "discover:get", "discover:artist-bio",
+  "analysis:daily-mixes", "analysis:similar-songs", "discover:get", "discover:artist-bio",
   // Read-only: the phone shows which accounts the Mac sends its plays to.
   "listening:summary", "listening:calendar-summary", "scrobble:status"
 ]);

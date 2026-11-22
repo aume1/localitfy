@@ -27,7 +27,7 @@ These instructions apply to all AI coding assistants and human contributors work
 - Preserve reproducible performance data, meaningful coverage and security gates; reduce duplicated work, not safety.
 
 ## Working with GitHub
-- Keep changes in the existing relevant pull request; avoid extra PRs or commits solely for status updates.
+- Keep changes in the existing relevant pull request; avoid extra PRs or commits solely for status updates. Continue independent implementation while CI runs, using stacked PRs where needed, and merge in dependency order after validation.
 - Use simple commit messages and keep scope narrow. Review the final diff.
 - Do not merge if meaningful CI gates fail, if critical bugs are known, or if data safety/recovery claims are unverified.
 - Report exactly what was implemented, validated, not validated and remains incomplete. No version bump or release unless explicitly requested.
