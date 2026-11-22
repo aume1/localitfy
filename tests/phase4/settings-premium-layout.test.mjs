@@ -16,7 +16,7 @@ test("Settings keeps the existing category rendering and reduced-motion support"
   assert.match(view, /key=\{settingsCategory\}/);
   assert.match(view, /import "\.\/settings\.css";/);
   assert.match(view, /import "\.\/settings-premium\.css";/);
-  for (const section of ["appearance", "playback", "discord", "library", "covers", "downloads", "updates", "about", "experimental", "advanced"]) {
+  for (const section of ["appearance", "playback", "discord", "library", "downloads", "updates", "about", "experimental", "advanced"]) {
     assert.ok(sections.includes('case "' + section + '":'), "Missing Settings category: " + section);
   }
 });

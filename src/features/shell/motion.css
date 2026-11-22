@@ -89,7 +89,6 @@ button:disabled:active {
 }
 
 
-
 .app .playlistTrackRow.virtualPlaylistTrackRow,
 .app .playlistTrackRow.virtualPlaylistTrackRow:hover {
   transition:
@@ -103,7 +102,6 @@ button:disabled:active {
 .localitfyDragPreview {
   animation: localtifyDragPreviewIn 130ms var(--motion-ease) both;
 }
-
 
 
 .settingsCategoryMotion {

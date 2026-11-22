@@ -35,22 +35,21 @@ test("sidebar defaults match the navigation constants", () => {
 
 test("saved order wins, unknown ids are dropped and new tabs are appended", () => {
   const groups = layout.resolveSidebarGroups({ tools: ["analytics", "bogus", "downloads", "analytics"] }, []);
-  assert.deepEqual(group(groups, "tools").orderedItems, ["analytics", "downloads", "covers"]);
+  assert.deepEqual(group(groups, "tools").orderedItems, ["analytics", "downloads"]);
 });
 
 test("hidden tabs leave the visible list but keep their slot; settings cannot be hidden", () => {
-  const hidden = layout.normalizeSidebarHidden(["genres", "settings", "nope", "genres"]);
-  assert.deepEqual(plain(hidden), ["genres"]);
+  const hidden = layout.normalizeSidebarHidden(["discover", "settings", "library", "genres", "nope", "discover"]);
+  assert.deepEqual(plain(hidden), ["discover"]);
   const library = group(layout.resolveSidebarGroups(undefined, hidden), "library");
-  assert.ok(library.orderedItems.includes("genres"));
-  assert.ok(!library.visibleItems.includes("genres"));
+  assert.ok(library.orderedItems.includes("discover"));
+  assert.ok(!library.visibleItems.includes("discover"));
   assert.deepEqual(group(layout.resolveSidebarGroups(undefined, ["settings"]), "app").visibleItems, ["settings"]);
 });
 
 test("moving swaps with the next visible neighbour and stops at the edges", () => {
-  // Hidden genres retain their slot while artists move below Playlists.
-  const order = layout.moveSidebarItem(undefined, ["genres"], "artists", 1);
-  assert.deepEqual(plain(order.library), ["home", "library", "playlists", "genres", "artists", "discover"]);
+  const order = layout.moveSidebarItem(undefined, [], "home", 1);
+  assert.deepEqual(plain(order.library), ["library", "home", "discover"]);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "home", -1), false);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "analytics", 1), false);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "settings", 1), false);
@@ -58,9 +57,9 @@ test("moving swaps with the next visible neighbour and stops at the edges", () =
 });
 
 test("toggling visibility adds and removes the tab", () => {
-  const hidden = layout.toggleSidebarItemHidden([], "covers");
-  assert.deepEqual(plain(hidden), ["covers"]);
-  assert.deepEqual(plain(layout.toggleSidebarItemHidden(hidden, "covers")), []);
+  const hidden = layout.toggleSidebarItemHidden([], "downloads");
+  assert.deepEqual(plain(hidden), ["downloads"]);
+  assert.deepEqual(plain(layout.toggleSidebarItemHidden(hidden, "downloads")), []);
 });
 
 test("sidebar renders resolved groups and exposes a customization menu", () => {

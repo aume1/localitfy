@@ -109,7 +109,7 @@ html.platformAndroid .phoneSheet{
   overscroll-behavior: contain;
   padding: 10px 16px calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 18px);
   border-radius: 28px 28px 0 0;
-  
+
   background: linear-gradient(var(--lt-surface-raised), var(--lt-surface-raised)), var(--lt-bg, #07070b);
   animation: phoneSheetIn 260ms cubic-bezier(0.2, 0, 0, 1) both;
 }

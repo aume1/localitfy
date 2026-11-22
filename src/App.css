@@ -2444,7 +2444,6 @@ body.localtifyBackgroundMode .ambientSurface,
 }
 
 
-
 .app .secretLayer:not(.stars):not(.yukari){
   display: none !important;
 }
@@ -2464,14 +2463,9 @@ body.localtifyBackgroundMode .ambientSurface,
 }
 
 
-
-
 body.localitfyThemePainting .app{
   contain: paint style !important;
 }
-
-
-
 
 
 .app .playlistPickerWrap.modalWrap,
@@ -2507,7 +2501,6 @@ body.localitfyThemePainting .app{
     padding: 12px !important;
   }
 }
-
 
 
 :root,
@@ -2611,9 +2604,6 @@ body,
   overscroll-behavior: contain;
   overflow-anchor: none;
 }
-
-
-
 
 
 .nav{
@@ -2895,7 +2885,6 @@ body.isResizingPlayer .app *{
   border-left: 0 !important;
   border-right: 0 !important;
 }
-
 
 
 .app .modalWrap::before{

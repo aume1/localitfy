@@ -118,9 +118,9 @@ test("shared artwork palette follows the existing ambient preference and backgro
 
 test("collection browsing prioritizes artwork and retains contextual drag targets", () => {
   const shelf = read("src/features/playlists/PlaylistsView.tsx");
-  const css = read("src/features/playlists/playlists.css");
+  const css = read("src/shared/ui/collection-layout.css");
   const collage = read("src/features/playlists/components/PlaylistCoverCollage.tsx");
-  assert.match(css, /\.playlistShelfCard \.playlistCoverCollage \{ width: 100%; aspect-ratio: 1;/);
+  assert.match(css, /\.collectionBrowseCardCover[\s\S]*?width: 100%;[\s\S]*?aspect-ratio: 1;/);
   assert.match(shelf, /playlistDragOverPlaylistId === playlist.id \? <span className="playlistShelfDropHint">Drop to add/);
   assert.match(shelf, /onDrop=\{\(event\) => handlePlaylistShelfDrop/);
   assert.match(collage, /data-count=\{tiles.length\}/);

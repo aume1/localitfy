@@ -33,8 +33,6 @@
 .playlistShelfCard.dropTarget { outline: 2px dashed rgba(var(--lt-accent-rgb), .58); outline-offset: -3px; }
 
 
-
-
 .playlistShelfDropHint { color: var(--lt-muted); font-size: var(--lt-text-sm); }
 .playlistTracksHead { min-height: 56px; }
 .playlistTracksTitleBlock { min-width: 0; }
@@ -78,7 +76,7 @@
   .playlistContentGrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 500px) {
-  
+
   .playlistTrackRow.virtualPlaylistTrackRow { grid-template-columns: 12px minmax(0,1fr) 29px; gap: 5px; padding-inline: 4px; }
   .playlistTrackDuration { display: none; }
   .playlistTrackMain { grid-template-columns: 16px 40px minmax(0,1fr); gap: 6px; }

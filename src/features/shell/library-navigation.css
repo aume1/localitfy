@@ -4,7 +4,7 @@
 }
 .librarySectionNav button {
   flex: 0 0 auto; padding: 8px 16px; border: 1px solid transparent;
-  border-radius: var(--lt-radius-control); background: transparent; color: var(--lt-muted);
+  border-radius: var(--lt-control-radius); background: transparent; color: var(--lt-muted);
   font: inherit; font-weight: 600; cursor: pointer;
 }
 .librarySectionNav button:hover { color: var(--lt-text); background: var(--lt-fill-hover); }
