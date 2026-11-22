@@ -10,7 +10,8 @@ const navigation = fs.readFileSync("src/features/shell/navigation.constants.ts",
 const shell = fs.readFileSync("src/features/shell/AppShell.tsx", "utf8");
 
 test("Artists is a lazy, feature-owned library destination", () => {
-  assert.match(navigation, /id:\s*"artists"/);
+  assert.doesNotMatch(navigation, /id:\s*"artists"/);
+  assert.match(shell, /\["artists", "Artists"\]/);
   assert.match(shell, /lazy\(\(\) => import\("\.\.\/artists\/ArtistsView"\)\)/);
   assert.match(source, /data-page-section="artists"/);
   assert.match(source, /import "\.\/artists\.css"/);
