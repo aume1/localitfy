@@ -1,8 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { Slider } from "../../shared/ui/Slider";
 
 import { clampUpperFirst as clamp } from "../../shared/utils/format";
 import { getLocaltifyPlatformInfo, type LocaltifyPlatformInfo } from "../../app/platform";
+// Liner SettingRow layout, adapted to the existing native label semantics.
+function SettingRow({ label, help, range = false, children }: { label: string; help?: string; range?: boolean; children: ReactNode }) {
+  return <label className={range ? "rangeRow" : "toggleRow"} title={range ? `${label}: ${help || ""}` : help || label}>
+    <span className={range ? "rangeRowCopy" : "toggleRowCopy"}>
+      <span className="settingsLabelLine"><strong>{label}</strong></span>
+      {help ? <small>{help}</small> : null}
+    </span>
+    {children}
+  </label>;
+}
+
 export function ToggleRow({ label, help, checked, onChange, disabled }: {
   label: string;
   help?: string;
@@ -11,15 +23,9 @@ export function ToggleRow({ label, help, checked, onChange, disabled }: {
   disabled?: boolean;
 }) {
   return (
-    <label className="toggleRow" title={help || label}>
-      <span className="toggleRowCopy">
-        <span className="settingsLabelLine">
-          <strong>{label}</strong>
-        </span>
-        {help ? <small>{help}</small> : null}
-      </span>
+    <SettingRow label={label} help={help}>
       <input type="checkbox" role="switch" checked={checked} disabled={disabled} onChange={(event) => onChange(event.currentTarget.checked)} />
-    </label>
+    </SettingRow>
   );
 }
 
@@ -52,13 +58,8 @@ export function RangeRow({ label, value, min, max, step, suffix, onChange }: {
   }
 
   return (
-    <label className="rangeRow" title={`${label}: ${shownValue}`}>
-      <span className="rangeRowCopy">
-        <span className="settingsLabelLine"><strong>{label}</strong></span>
-        <small>{shownValue}</small>
-      </span>
-      <input
-        type="range"
+    <SettingRow label={label} help={shownValue} range>
+      <Slider
         aria-label={label}
         aria-valuetext={shownValue}
         min={min}
@@ -76,7 +77,7 @@ export function RangeRow({ label, value, min, max, step, suffix, onChange }: {
         onPointerCancel={() => { pointerEditing.current = false; setDraftValue(value); setEditing(false); }}
         onBlur={(event) => { if (pointerEditing.current) commit(Number(event.currentTarget.value)); }}
       />
-    </label>
+    </SettingRow>
   );
 }
 

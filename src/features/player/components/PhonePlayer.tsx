@@ -1,3 +1,4 @@
+import { Slider } from "../../../shared/ui/Slider";
 import { Fragment, lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { TouchEvent as ReactTouchEvent } from "react";
 import { ChevronDown, ListMusic, MicVocal, MoreVertical, Repeat2, Shuffle, SkipBack, SkipForward } from "lucide-react";
@@ -150,7 +151,7 @@ export default function PhonePlayer(props: PhonePlayerProps) {
         <button type="button" className="phoneIconButton" onClick={() => playNext(true)} aria-label="next song">
           <SkipForward size={22} strokeWidth={2.2} aria-hidden="true" />
         </button>
-        <input ref={(node) => { progressInputRefs.current[MINI_SLOT] = expanded ? null : node; }} key={String(expanded)} className="phoneMiniProgress" type="range" min="0" max="100" step="0.1"
+        <Slider ref={(node) => { progressInputRefs.current[MINI_SLOT] = expanded ? null : node; }} key={String(expanded)} className="phoneMiniProgress"  min="0" max="100" step="0.1"
           defaultValue={displayedProgress} tabIndex={-1} aria-hidden="true" disabled />
       </div>
 
@@ -211,9 +212,9 @@ export default function PhonePlayer(props: PhonePlayerProps) {
           </div>
 
           <div className="phonePlayerSeek">
-            <input
+            <Slider
               ref={(node) => { progressInputRefs.current[SHEET_SLOT] = node; }}
-              type="range" min="0" max="100" step="0.1" defaultValue={displayedProgress} style={progressRangeStyle} aria-label="song progress"
+               min="0" max="100" step="0.1" defaultValue={displayedProgress} style={progressRangeStyle} aria-label="song progress"
               onPointerDown={(event) => { event.currentTarget.setPointerCapture?.(event.pointerId); startSeekPreview(event.currentTarget.value, event.currentTarget); }}
               onInput={(event) => previewSeek(event.currentTarget.value, event.currentTarget)}
               onChange={(event) => previewSeek(event.currentTarget.value, event.currentTarget)}

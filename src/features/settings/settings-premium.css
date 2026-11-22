@@ -86,7 +86,7 @@
 .settingsPage.settingsPageV027 .settingsAudioEffectsPanel .settingsSelectField { max-width: 540px; }
 .settingsPage.settingsPageV027 .settingsLayoutControls .settingsMiniGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .settingsPage.settingsPageV027 :is(.toggleRow,.rangeRow) {
-  min-height: 57px; padding: 9px 0; gap: 16px;
+  min-height: 52px; padding: 10px 0; gap: 14px;
   border-bottom: 1px solid var(--settings-edge);
 }
 .settingsPage.settingsPageV027 :is(.toggleRow,.rangeRow):last-child { border-bottom-color: transparent; }
