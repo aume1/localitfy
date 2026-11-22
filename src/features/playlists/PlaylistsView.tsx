@@ -288,9 +288,9 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
                 onDragLeave={(event) => handlePlaylistShelfDragLeave(event, playlist.id)}
                 onDrop={(event) => handlePlaylistShelfDrop(event, playlist.id)}
                 title="drop a song here to add it"
-                cover={<PlaylistCoverCollage songs={previewSongs} coverArtwork={playlist.coverArtwork} />}
+                cover={<PlaylistCoverCollage songs={previewSongs} coverArtwork={playlist.coverArtwork} className="collectionBrowseCardCover playlistCoverCollage" />}
               >
-                <span className="collectionBrowseCardMeta">
+                <span >
                   <strong>{playlist.name}</strong>
                   <small>{songCount} song{songCount === 1 ? "" : "s"}<MetaDividerDot />{formatTime(duration)}</small>
                 </span>

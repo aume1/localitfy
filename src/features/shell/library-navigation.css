@@ -9,3 +9,5 @@
 }
 .librarySectionNav button:hover { color: var(--lt-text); background: var(--lt-fill-hover); }
 .librarySectionNav button[aria-current="page"] { color: var(--lt-text); background: var(--lt-fill-selected); }
+
+.librarySectionNav button:focus-visible { outline: 2px solid var(--lt-accent); outline-offset: -2px; }

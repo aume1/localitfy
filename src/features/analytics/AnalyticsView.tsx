@@ -53,7 +53,6 @@ function breakdown(songs: Song[], summary: ListeningCalendarSummary | null) {
   const byId = new Map(songs.map(song => [song.id, song]));
   const topSongs = (summary?.bySong || []).map(({ id, ms }) => ({ song: byId.get(id) || null, id, ms })).slice(0, 5);
   const artists = new Map<string, { name: string; ms: number; song: Song | null }>();
-  const genres = new Map<string, number>();
   for (const entry of summary?.bySong || []) {
     const song = byId.get(entry.id);
     if (!song) continue;
@@ -67,12 +66,9 @@ function breakdown(songs: Song[], summary: ListeningCalendarSummary | null) {
       const existing = artists.get(key);
       artists.set(key, { name: existing?.name || name, ms: (existing?.ms || 0) + amount, song: existing?.song || song });
     });
-    const genre = String(song.genre || "").trim() || "Unknown";
-    genres.set(genre, (genres.get(genre) || 0) + entry.ms);
   }
   const topArtists = [...artists.values()].sort((a, b) => b.ms - a.ms || a.name.localeCompare(b.name)).slice(0, 5);
-  const topGenres = [...genres].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  return { topSongs, topArtists, topGenres };
+  return { topSongs, topArtists };
 }
 
 export default function AnalyticsView({
@@ -134,7 +130,7 @@ export default function AnalyticsView({
     const lines = [
       "Localtify listening recap — " + listeningPeriodName(summary),
       "Recorded listening: " + readableDuration(summary.totalMs),
-      "Plays: " + summary.sessions.toLocaleString(),
+      "Sessions: " + summary.sessions.toLocaleString(),
       "Active days: " + summary.activeDays.toLocaleString(),
       ...insight.topSongs.slice(0, 3).map((entry, i) => (i + 1) + ". " + (entry.song?.title || "Unavailable track") + " — " + readableDuration(entry.ms))
     ];
@@ -157,7 +153,7 @@ export default function AnalyticsView({
         ]} />
       </div>
     {!songs.length ? <div className="analyticsV4EmptyLibrary" role="status">
-      <span>{isAndroidApp() ? "Sync your music library from your paired computer to build a listening recap." : "Import music and start listening to build your personal recap."}</span>
+      <span>{isAndroidApp() ? "Sync your music library." : "Import music to get started."}</span>
       {!isAndroidApp() ? <button type="button" onClick={importSongs}>Import music</button> : null}
     </div> : null}
 

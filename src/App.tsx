@@ -282,7 +282,7 @@ function MainModeApp() {
     askUpdaterToInstall,
     manualUpdateCheck,
     handleUpdateLater,
-    showDebugUpdateAvailable,
+
     lastUpdateCheckedLabel
   } = useUpdatesController({
     ready,
@@ -1738,16 +1738,7 @@ function MainModeApp() {
       return;
     }
 
-    if (command === "popup1" || command === "/popup1") {
-      showDebugUpdateAvailable();
-      setQuery("");
-      return;
-    }
 
-    if (command === "/dev" || command === "dev") {
-      setQuery("");
-      return;
-    }
 
     if (command === "ppp" || command === "/ppp") {
       triggerPlayButtonSecret();
@@ -3283,7 +3274,7 @@ function MainModeApp() {
 
   function commitCovers(updates: Map<string, Partial<Song>>) {
     setSongs(old => old.map(song => updates.has(song.id) ? { ...song, ...updates.get(song.id) } : song));
-    if (editorSong && updates.has(editorSong.id)) setEditorSong({ ...editorSong, ...updates.get(editorSong.id) });
+    setEditorSong(old => old && updates.has(old.id) ? { ...old, ...updates.get(old.id) } : old);
   }
 
   async function patchSongLocal(id: string, patch: Partial<Song>) {

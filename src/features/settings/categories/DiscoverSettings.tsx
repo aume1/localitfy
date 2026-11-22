@@ -58,13 +58,13 @@ export default function DiscoverSettings({ settings, updateSetting }: Props) {
       <div><p className="eyebrow">discovery</p><h4>Discover & providers</h4></div>
       <span>Music beyond your library, on your terms</span>
     </div>
-    <SettingSection title="Music discovery" description="Search music without an account. Personalized suggestions are optional and use your library's track and artist names." icon={<Compass size={20} aria-hidden="true" />}>
+    <SettingSection title="Music discovery" description="Search music without an account." icon={<Compass size={20} aria-hidden="true" />}>
       <ToggleRow label="Enable Discover" help="When enabled, catalog and artwork searches may contact music services. Last.fm recommendations use your library metadata." checked={settings.discoverEnabled}
         onChange={value => void updateSetting("discoverEnabled", value)} />
       <p className="settingsHintText">Local music and your existing playlists remain available when Discover is off.</p>
     </SettingSection>
 
-    <SettingSection title="Last.fm recommendations" description="Localtify uses the app's configured key by default. A personal key is optional, not required for public catalog search." icon={<KeyRound size={20} aria-hidden="true" />}>
+    <SettingSection title="Last.fm recommendations" description="Optional personal API key." icon={<KeyRound size={20} aria-hidden="true" />}>
       <div className="discoverProviderStatus" role="status">
         <span className={`discoverProviderDot ${source === "default" || source === "override" ? "ready" : ""}`} aria-hidden="true" />
         <span>{sourceLabel}</span>

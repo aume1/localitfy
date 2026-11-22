@@ -232,14 +232,11 @@ export function useUpdatesController({ ready,autoUpdateEnabled,autoUpdateNotifyO
     setStatusText("Update reminder dismissed.");
   },[updatePrompt.version,setStatusText]);
 
-  const showDebugUpdateAvailable=useCallback(()=>{
-    setUpdatePrompt({visible:true,status:"available",version:"test",percent:0,message:"Test update preview",error:"",releaseNotes:"## Preview\nThis is a developer-only update banner preview."});
-  },[]);
 
   return {
     updatePrompt,whatsNewOpen,setWhatsNewOpen,whatsNewVersion,whatsNewReleaseNotes,
     openUpdateChangelog,closeWhatsNew,askUpdaterToDownload,askUpdaterToInstall,manualUpdateCheck,
     handleUpdateLater,skipAvailableUpdate:handleUpdateLater,
-    showDebugUpdateAvailable,lastUpdateCheckedLabel
+    lastUpdateCheckedLabel
   };
 }

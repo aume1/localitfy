@@ -52,14 +52,14 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
   if (!status) return <section className="settingsCategoryPage" aria-label="Experimental features"><h4>Experimental features</h4><p role="status">{error || "Loading experimental features…"}</p></section>;
   const downloading = status.download.state === "downloading";
   const ready = status.download.state === "ready";
-  const promptState = status.promptModel.download.state;
+
   const active = status.running || status.scanning;
   const batteryBlocked = status.onBattery && !status.allowOnBattery;
 
   return <section className="settingsCategoryPage settingsDeclutterPageV491" aria-label="Experimental features">
-    <div className="settingsCategoryHeader settingsCategoryHeaderCleanV491"><div><p className="eyebrow">experimental</p><h4>music analysis</h4></div><span>Local processing · early access</span></div>
+    <div className="settingsCategoryHeader settingsCategoryHeaderCleanV491"><div><h4>Music analysis</h4></div></div>
     <div className="settingsPanelCard settingsFocusPanelV491">
-      <div className="settingsPanelHeader"><div><strong>Audio similarity analysis</strong><span>Analyze your tracks, then choose Similar songs from a song’s menu to find audio matches. Results may vary. Your music and analysis stay on this device.</span></div></div>
+      <div className="settingsPanelHeader"><div><strong>Audio similarity analysis</strong><span>Find similar songs using on-device analysis.</span></div></div>
       <fieldset disabled={busy || !status.supported} className="experimentalControls">
         <ToggleRow label="Enable music analysis" help="Off by default. Enabling does not download a model or start scanning your library." checked={status.enabled} onChange={(value) => void run(async () => {
           const status = await window.localitfy.setAnalysisEnabled(value);
@@ -69,7 +69,6 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
       </fieldset>
       {!status.supported ? <p>Music analysis currently requires Apple silicon on macOS. Listening history is available on this device.</p> : null}
       <p>{status.model.name} · {megabytes(status.model.bytes)} download and installed model files</p>
-      <p>License: {status.model.license}. CPU inference uses a bundled runtime and may use several hundred MB of memory while analyzing.</p>
       <div className="settingsActionRow settingsActionRowCleanV491">
         <button type="button" className="settingsActionButton" onClick={() => void window.localitfy.openExternal(status.model.source)}>Model source</button>
         <button type="button" className="settingsActionButton" onClick={() => void window.localitfy.openExternal(status.model.licenseUrl)}>License and model details</button>
@@ -83,20 +82,7 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
       {status.download.error ? <p role="alert">{status.download.error}</p> : null}
     </div>
     <div className="settingsPanelCard settingsFocusPanelV491">
-      <div className="settingsPanelHeader"><div><strong>Playlists from a description</strong><span>Optional second download. Lets Playlists → from a prompt match descriptions like “sad piano ballads” to how your analyzed songs sound. Artist, genre and listening words work without it.</span></div></div>
-      <p>{status.promptModel.name} · {megabytes(status.promptModel.bytes)} download</p>
-      <div className="settingsActionRow settingsActionRowCleanV491">
-        {promptState !== "ready" && promptState !== "downloading" ? <button type="button" className="settingsActionButton settingsPrimaryAction" disabled={busy || !status.enabled || !status.supported} onClick={() => void run(() => window.localitfy.downloadAnalysisModel("prompt"))}>Download prompt model · {megabytes(status.promptModel.bytes)}</button> : null}
-        {promptState === "downloading" ? <button type="button" className="settingsActionButton" disabled={busy} onClick={() => void run(() => window.localitfy.cancelAnalysisDownload("prompt"))}>Cancel download</button> : null}
-        {promptState === "ready" ? <button type="button" className="settingsActionButton" disabled={busy} onClick={() => void run(() => window.localitfy.removeAnalysisModel("prompt"), "Prompt model removed.")}>Remove prompt model</button> : null}
-      </div>
-      <div role="status" aria-live="polite">
-        {promptState === "downloading" ? <><p>Downloading {megabytes(status.promptModel.download.downloadedBytes)} / {megabytes(status.promptModel.download.totalBytes)}</p><progress aria-label="Prompt model download" value={status.promptModel.download.downloadedBytes} max={status.promptModel.download.totalBytes} /></> : <p>{promptState === "ready" ? "Prompt model installed and verified. Works offline." : "Prompt model not installed."}</p>}
-      </div>
-      {status.promptModel.download.error ? <p role="alert">{status.promptModel.download.error}</p> : null}
-    </div>
-    <div className="settingsPanelCard settingsFocusPanelV491">
-      <div className="settingsPanelHeader"><div><strong>Library analysis</strong><span>Samples the beginning, middle and end of each track. Runs in a background worker, one song at a time. Battery use is off by default.</span></div></div>
+      <div className="settingsPanelHeader"><div><strong>Library analysis</strong><span>Analyze your music locally.</span></div></div>
       <fieldset disabled={busy || !status.supported} className="experimentalControls"><ToggleRow label="Allow analysis on battery power" help="Uses more battery. Turning this off while on battery pauses analysis. Enabling allows you to start or resume analysis manually." checked={status.allowOnBattery} onChange={(value) => void run(() => window.localitfy.setAnalysisOnBattery(value))} /></fieldset>
       <p role="status">{status.scanning ? "Checking library files…" : status.running ? `Analyzing · ${status.queued} tracks remaining` : status.paused ? "Analysis paused" : "Analysis finished"} · {status.analyzed} saved · {status.failures} failed</p>
       {batteryBlocked ? <p>Analysis is paused while using battery power. Connect to power or enable battery analysis.</p> : null}
@@ -115,7 +101,7 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
     </div>
     {status.enabled || settings.discoverEnabled ? <NotForMeSettings settings={settings} songs={songs} updateSetting={updateSetting} /> : null}
     <div className="settingsPanelCard settingsFocusPanelV491">
-      <div className="settingsPanelHeader"><div><strong>Lyrics</strong><span>Shows time-synced lyrics for the playing song. Open them with the microphone button in the player. A matching .lrc file next to a song is always used first.</span></div></div>
+      <div className="settingsPanelHeader"><div><strong>Lyrics</strong><span>Synced lyrics from local .lrc files or online lookup.</span></div></div>
       <fieldset className="experimentalControls">
         <ToggleRow label="Show lyrics" help="Off by default. Adds the lyrics button to the player." checked={settings.lyricsEnabled === true} onChange={(value) => void updateSetting("lyricsEnabled", value)} />
         <ToggleRow label="Look up lyrics online" help="Sends the song title, artist, album and length to LRCLIB (lrclib.net), a free community lyrics database. Results are cached on this device." checked={settings.lyricsOnlineLookup !== false} onChange={(value) => void updateSetting("lyricsOnlineLookup", value)} />
