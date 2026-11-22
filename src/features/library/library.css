@@ -1,5 +1,3 @@
-/* Library owns the Library + Liked presentation. Home remains the visual reference. */
-
 .app:has(.libraryPage) .content {
   overflow-x: hidden !important;
   background: transparent !important;

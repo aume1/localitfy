@@ -109,6 +109,7 @@ for (const file of files) {
   if (relative === "scripts/check-codebase-hygiene.mjs") continue;
   let source = "";
   try { source = fs.readFileSync(file, "utf8"); } catch { continue; }
+  if (source.includes(String.fromCodePoint(0xfffd))) violations.push(`${relative}: contains Unicode replacement characters`);
   const found = mojibakePatterns.find((pattern) => source.includes(pattern));
   if (found) violations.push(`${relative}: contains likely UTF-8 mojibake`);
 }
