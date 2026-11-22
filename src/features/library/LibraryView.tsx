@@ -2,7 +2,7 @@ import { isAndroidApp, computerName } from "../../app/platform";
 import "./library.css";
 import { lazy, Suspense, useCallback, useMemo, useState, type DragEventHandler } from "react";
 import { VirtualLibrarySongCards, VirtualSongRows, type VirtualSongRowsProps } from "./components/SongRows";
-import { Copy, FileWarning, FolderInput, ListMusic, Radio, Shuffle, Trash2, Grid2X2, List, Heart, Users } from "lucide-react";
+import { Copy, FileWarning, FolderInput, ListMusic, Radio, Shuffle, Trash2, Grid2X2, List } from "lucide-react";
 import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import type { DuplicatesMergeResult } from "./duplicates/DuplicatesDialog";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
@@ -27,7 +27,6 @@ export type LibraryViewProps = {
   handleLibraryAreaDrop: DragEventHandler<HTMLDivElement>;
   handleSearchInput: (value: string) => unknown;
   importSongs: () => unknown;
-  libraryArtistCount: number;
   libraryMissingLabel: string;
   librarySortMode: LibrarySortMode;
   missingFileCount: number;
@@ -54,7 +53,6 @@ export default function LibraryView(props: LibraryViewProps) {
     handleLibraryAreaDrop,
     handleSearchInput,
     importSongs,
-    libraryArtistCount,
     libraryMissingLabel,
     librarySortMode,
     missingFileCount,
@@ -91,7 +89,7 @@ export default function LibraryView(props: LibraryViewProps) {
           className="pageHeaderSearch librarySearch"
           value={query}
           onChange={(event) => handleSearchInput(event.currentTarget.value)}
-          placeholder={isLiked ? "search liked songs" : "search your library"}
+          placeholder={isLiked ? "Search liked songs" : "Search songs"}
           aria-label={isLiked ? "search liked songs" : "search library"}
         />
         <ArcDropdownMenu
@@ -122,13 +120,6 @@ export default function LibraryView(props: LibraryViewProps) {
           </button>
         )}
       </PageHeader>
-
-      {!isLiked && !query.trim() && !showingMissingFiles ? (
-        <nav className="libraryCollectionShortcuts" aria-label="Your collections">
-          <button type="button" onClick={() => changeView("liked", "library-collection")}><span className="libraryCollectionArtwork" data-kind="liked"><Heart size={36} fill="currentColor" /></span><strong>Liked songs</strong><small>{likedCount} songs</small></button>
-          <button type="button" onClick={() => changeView("artists", "library-collection")}><span className="libraryCollectionArtwork" data-kind="artists"><Users size={36}/></span><strong>Artists</strong><small>{libraryArtistCount} artists</small></button>
-        </nav>
-      ) : null}
 
       {!isLiked && missingFileCount > 0 ? (
         <div className="libraryMissingBanner" role="status" aria-live="polite">

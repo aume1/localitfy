@@ -238,8 +238,11 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
   }
 
   return (
-    <section data-page-section="playlists" className="playlistsPage playlistPageV029">
-      <PageHeader title="Playlists" />
+    <section data-page-section="playlists" className="playlistsPage playlistPageV029 collectionBrowsePage">
+      <PageHeader title="Playlists">
+        <input className="pageHeaderSearch" type="search" value={playlistQuery} onChange={event => setPlaylistQuery(event.currentTarget.value)} placeholder="Search playlists" aria-label="Search playlists" />
+        <span className="pageHeaderCount"><strong>{visiblePlaylists.length}</strong> playlist{visiblePlaylists.length === 1 ? "" : "s"}</span>
+      </PageHeader>
       <div className="playlistToolbar" aria-label="Playlist actions">
         <form
           className="playlistCreateForm"
@@ -268,8 +271,6 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
             <div>
               <h3>Your playlists</h3>
             </div>
-            <input className="pageHeaderSearch" type="search" value={playlistQuery}
-              onChange={event => setPlaylistQuery(event.currentTarget.value)} placeholder="Search playlists" aria-label="Search playlists" />
           </div>
 
           {playlistSummaries.length > 0 && visiblePlaylists.length === 0 ? <p role="status">No matching playlists.</p> : null}
