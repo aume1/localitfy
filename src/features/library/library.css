@@ -400,9 +400,6 @@
   .libraryPage .songArt .coverImage { width: 42px !important; height: 42px !important; }
 }
 
-.libraryCollectionShortcuts button { border-radius: var(--lt-radius-item); }
-.libraryCollectionShortcuts button:hover .libraryCollectionArtwork { filter: brightness(1.08); }
-.libraryCollectionShortcuts button:hover strong { color: var(--lt-accent); }
 .libraryPage .songRow.selected:not(.songDragging):not(.songDropTarget) { background: var(--lt-fill-selected) !important; outline: 2px solid var(--lt-border-strong); outline-offset: -2px; }
 .librarySelectionTools { display: flex; flex-wrap: wrap; gap: var(--lt-gap-control); align-items: center; }
 .librarySelectionTools .pageHeaderCount { margin-inline-end: auto; }
