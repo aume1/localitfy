@@ -172,7 +172,7 @@ export default function DownloadsView(props: DownloadsViewProps) {
   ];
 
   return <section data-page-section="downloads" className="downloadsExperience downloadsLayoutV031">
-    <PageHeader title="Downloads" description="Bring music into your library.">
+    <PageHeader title="Downloads">
       <Button variant="ghost" size="icon" aria-label="Open downloads folder"
         title="Open downloads folder" onClick={() => void window.localitfy.openDownloadsFolder(settings.downloadFolder || undefined)}>
         <FolderOpen size={17} />
@@ -198,7 +198,6 @@ export default function DownloadsView(props: DownloadsViewProps) {
               placeholder="One song or playlist link per line" spellCheck={false} rows={2} />
           </div>
           <div className="downloadsPrimaryRow">
-            <span className="downloadsInputHint">Supported links are downloaded to your selected folder.</span>
             <Button variant={downloadBusy ? "secondary" : "primary"} size="md"
               disabled={!downloadBusy && (!downloadText.trim() || working)}
               onClick={() => void (downloadBusy ? cancelCurrentDownload() : downloadAudioLinks())}>
@@ -230,7 +229,6 @@ export default function DownloadsView(props: DownloadsViewProps) {
             <button type="button" className="downloadsTextAction" onClick={() => void copyDownloadError(spotifyFetchError)}>Copy</button>
           </div> : null}
           <div className="downloadsPrimaryRow">
-            <span className="downloadsInputHint">{spotifyTracks.length ? spotifySelectedIds.size + " of " + spotifyTracks.length + " selected" : "Select tracks after fetching a link."}</span>
             <Button variant={spotifyDownloadBusy ? "secondary" : "primary"} size="md"
               disabled={!spotifyDownloadBusy && (spotifyFetchBusy || working || (spotifyTracks.length ? !spotifySelectedIds.size : !spotifyUrl.trim()))}
               onClick={() => void (spotifyDownloadBusy ? cancelCurrentDownload() : spotifyTracks.length ? downloadSpotifyTracks() : fetchSpotifyTracks())}>
@@ -241,7 +239,7 @@ export default function DownloadsView(props: DownloadsViewProps) {
           {spotifyTracks.length ? <div className="downloadsSpotifyPreview" aria-label="Spotify tracks">
             <div className="downloadsPreviewTitle">
               <strong>{spotifyTracks.length} tracks</strong>
-              <span>{spotifySelectedIds.size} selected</span>
+              <span aria-live="polite">{spotifySelectedIds.size} selected</span>
             </div>
             <div className="downloadsPreviewItems">
               {spotifyTracks.map(track => {

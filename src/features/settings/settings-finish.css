@@ -1,8 +1,8 @@
 .settingsPage.settingsPageV027 { width: min(100%, 1260px); }
 .settingsPage.settingsPageV027 .settingsLayout { grid-template-columns: 242px minmax(0,1fr); gap: clamp(18px,2.5vw,30px); }
 .settingsPage.settingsPageV027 .settingsCategoryRail {
-  padding: 14px 10px; border: 1px solid var(--lt-border); border-radius: 14px;
-  background: var(--lt-surface-soft); box-shadow: none;
+  padding: 8px 4px; border: 0; border-radius: var(--lt-radius-panel);
+  background: transparent; box-shadow: none;
 }
 .settingsPage.settingsPageV027 .settingsCategoryRail nav { gap: 8px; }
 .settingsPage.settingsPageV027 .settingsNavCaption { margin: 12px 12px 6px; font-size: 10px; letter-spacing: .09em; }
@@ -31,7 +31,7 @@
 .settingsPage.settingsPageV027 .settingsPanelCard,
 .settingsPage.settingsPageV027 .settingGroup {
   border: 1px solid transparent; border-radius: var(--lt-radius-item);
-  background: var(--lt-fill-subtle); padding: clamp(16px,2vw,22px);
+  background: transparent; padding: clamp(12px,1.5vw,18px);
   box-shadow: none;
 }
 .settingsPage.settingsPageV027 :is(.settingsPanelCard,.settingGroup) + :is(.settingsPanelCard,.settingGroup) { margin-top: 2px; }

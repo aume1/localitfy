@@ -155,9 +155,9 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
   const setup = <div className="discoverWelcome">
     <div className="discoverWelcomeIcon"><Compass size={21} aria-hidden="true" /></div>
     <div className="discoverWelcomeCopy">
-      <h2>{phone ? "Discover is configured on desktop" : "Explore music beyond your library"}</h2>
+      <h2>{phone ? "Discover is configured on desktop" : "Discover music"}</h2>
       <p>{phone ? `Configure Discover in Localtify on your ${computerName()}, then sync this phone.`
-        : "Search the public music catalog without an account. Enable suggestions when you're ready."}</p>
+        : "Enable search and recommendations."}</p>
     </div>
     {!phone ? <div className="discoverWelcomeActions">
       <button className="discoverPrimaryAction" type="button" onClick={() => void updateSetting("discoverEnabled", true)}>Enable Discover</button>
@@ -188,12 +188,11 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
   return <section className="discoverPage" aria-busy={loading}>
     <PageHeader title="Discover" description={ready && seedsLine ? seedsLine : undefined}>
       {!needsSetup && (ready || result?.status === "error") ? <button type="button" className="softButton" disabled={loading} onClick={() => void load(true)}><RefreshCw size={15} /> {loading ? "Finding music…" : "Refresh"}</button> : null}
-      {!phone ? <button type="button" className="softButton" onClick={openDiscoverSettings} aria-label="Open Discover settings"><Settings2 size={15} /> Settings</button> : null}
+      {!phone && !needsSetup ? <button type="button" className="softButton" onClick={openDiscoverSettings} aria-label="Open Discover settings"><Settings2 size={15} /> Settings</button> : null}
     </PageHeader>
     {needsSetup ? setup : null}
     {settings.discoverEnabled && result?.status === "needs-key" ? <div className="discoverKeyNotice" role="status">
-      <span>Public search is available. Personalized Last.fm recommendations need a configured app key.</span>
-      {!phone ? <button type="button" className="discoverSecondaryAction" onClick={openDiscoverSettings}>Provider settings</button> : null}
+      <span>Add a Last.fm key for personalized recommendations.</span>
     </div> : null}
 
     {settings.discoverEnabled ? <section className="discoverCatalog" aria-labelledby="discover-catalog-title">
@@ -248,7 +247,7 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
     </section> : null}
 
     {popularTracks.length ? <section className="discoverSection" aria-labelledby="discover-popular">
-      <h2 id="discover-popular" className="discoverHeading">Popular songs you don't have yet</h2>
+      <h2 id="discover-popular" className="discoverHeading">Popular songs</h2>
       <ul className="discoverShelf" tabIndex={0} aria-label="Popular songs">
         {popularTracks.map(track => <li key={trackId(track)}>
           <div className="discoverShelfArt">
