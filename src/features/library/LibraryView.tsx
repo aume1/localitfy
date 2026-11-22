@@ -27,7 +27,6 @@ export type LibraryViewProps = {
   handleLibraryAreaDrop: DragEventHandler<HTMLDivElement>;
   handleSearchInput: (value: string) => unknown;
   importSongs: () => unknown;
-  libraryAlbumCount: number;
   libraryArtistCount: number;
   libraryMissingLabel: string;
   librarySortMode: LibrarySortMode;
@@ -75,7 +74,7 @@ export default function LibraryView(props: LibraryViewProps) {
   const actions = useAppActions();
   const [selectionMode, setSelectionMode] = useState(false);
   const [selection, setSelection] = useState<Set<string>>(() => new Set());
-  const selectedSongs = useMemo(() => visibleSongs.filter(song => selection.has(song.id)), [visibleSongs, selection]);
+  const selectedSongs = useMemo(() => selection.size ? visibleSongs.filter(song => selection.has(song.id)) : [], [visibleSongs, selection]);
   const toggleSelection = useCallback((id: string) => setSelection(old => { const next = new Set(old); if (next.has(id)) next.delete(id); else next.add(id); return next; }), []);
   const exitSelection = () => { setSelectionMode(false); setSelection(new Set()); };
 

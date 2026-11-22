@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import type { AppToastKind, View } from "../shell/view.types";
 import type { LibraryDropSide, Song } from "../library/song.types";
@@ -12,7 +12,8 @@ import { cleanPlaylistArtwork, cleanPlaylistList } from "./playlist.utils";
 import { useStableCallback } from "../../shared/hooks/useStableCallback";
 
 export type PlaylistsControllerOptions = {
-  songs: Song[];
+  songsById: Map<string, Song>;
+  songIndexById: ReadonlyMap<string, number>;
   bootedRef: RefObject<boolean>;
   changeView: (view: View, source?: "nav" | "onboarding" | "settings" | "unknown") => void;
   setStatusText: Dispatch<SetStateAction<string>>;
@@ -20,7 +21,8 @@ export type PlaylistsControllerOptions = {
 };
 
 export function usePlaylistsController({
-  songs,
+  songsById,
+  songIndexById,
   bootedRef,
   changeView,
   setStatusText,
@@ -36,12 +38,10 @@ export function usePlaylistsController({
   const [renamingPlaylistId, setRenamingPlaylistId] = useState<string | null>(null);
   const [renamingPlaylistName, setRenamingPlaylistName] = useState("");
   const playlistSaveTimerRef = useRef<number | null>(null);
-  const songsById = useMemo(() => new Map(songs.map((song) => [song.id, song])), [songs]);
   useEffect(() => {
     if (!bootedRef.current) return;
-    const validSongIds = new Set(songs.map((song) => song.id));
     setPlaylists((items) => {
-      const next = cleanPlaylistList(items, validSongIds);
+      const next = cleanPlaylistList(items, songIndexById);
       const unchanged = next.length === items.length && next.every((playlist, index) => {
         const current = items[index];
         return current?.id === playlist.id &&
@@ -52,7 +52,7 @@ export function usePlaylistsController({
       });
       return unchanged ? items : next;
     });
-  }, [songs, bootedRef]);
+  }, [songIndexById, bootedRef]);
 
   // A synced phone changed playlists: take the saved list so this window never writes over it.
   useEffect(() => window.localitfy.onPlaylistsChanged?.((next) => setPlaylists(cleanPlaylistList(next))), []);

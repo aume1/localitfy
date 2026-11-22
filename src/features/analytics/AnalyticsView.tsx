@@ -13,22 +13,8 @@ import { LineChart, LineChartPlot, LineChartTooltip, type LineChartSeries } from
 import SegmentedControl from "../../vendor/arc/segmented-control/segmented-control";
 import { DropdownMenu } from "../../vendor/arc/dropdown-menu/dropdown-menu";
 
-export type AnalyticsRecapCard = { label: string; value: string; note: string; meta: string; progress?: number };
-export type AnalyticsStatCard = { label: string; value: string; note: string };
 export type AnalyticsViewProps = {
-  analyticsRecapCards: AnalyticsRecapCard[];
-  analyticsStatCards: AnalyticsStatCard[];
-  averageSongSeconds: number;
   importSongs: () => unknown;
-  libraryHealthLabel: string;
-  libraryHealthPercent: number;
-  libraryLengthLabel: string;
-  likedPercent: number;
-  longestSong: Song | null;
-  missingFileCount: number;
-  neverPlayedCount: number;
-  playedPercent: number;
-  recentImportWeekCount: number;
   songs: Song[];
   onSelectSong?: (id: string) => unknown;
 };
@@ -50,8 +36,9 @@ function listeningPeriodName(summary: ListeningCalendarSummary) {
 }
 
 function breakdown(songs: Song[], summary: ListeningCalendarSummary | null) {
+  if (!summary) return { topSongs: [], topArtists: [] };
   const byId = new Map(songs.map(song => [song.id, song]));
-  const topSongs = (summary?.bySong || []).map(({ id, ms }) => ({ song: byId.get(id) || null, id, ms })).slice(0, 5);
+  const topSongs = (summary?.bySong || []).slice(0, 5).map(({ id, ms }) => ({ song: byId.get(id) || null, id, ms }));
   const artists = new Map<string, { name: string; ms: number; song: Song | null }>();
   for (const entry of summary?.bySong || []) {
     const song = byId.get(entry.id);

@@ -146,7 +146,7 @@ const anyBudgets = [
   ["src/App.tsx", 38], ["src/features/downloads/DownloadsView.tsx", 54],
   ["src/features/playlists/PlaylistsView.tsx", 37], ["src/features/player/components/PlayerBar.tsx", 0],
   ["src/features/library/LibraryView.tsx", 0], ["src/features/artists/ArtistsView.tsx", 0], ["src/features/genres/GenresView.tsx", 0],
-  ["src/features/analytics/AnalyticsView.tsx", 0], ["src/features/analytics/analyticsSnapshot.ts", 0]
+  ["src/features/analytics/AnalyticsView.tsx", 0]
 ];
 for (const [file, maxAny] of anyBudgets) {
   const hits = countLooseAny(read(file));

@@ -31,10 +31,10 @@ jobs:
       - name: Install dependencies
         id: install
         run: npm ci
-      # Only profile the explicitly scoped Performance 4.0 branch. No recurring
+      # Only profile the explicitly scoped Performance 5.0 branch. No recurring
       # 100k-song benchmark cost on unrelated PRs or main pushes.
       - name: Profile 10k and 100k song workloads against this PR's base
-        if: ${{ startsWith(github.head_ref, 'codex/performance-4-') }}
+        if: ${{ startsWith(github.head_ref, 'codex/performance-5-') }}
         env:
           BASELINE_SHA: ${{ github.event.pull_request.base.sha }}
         shell: bash
@@ -53,11 +53,11 @@ jobs:
             done
           done
           node -e 'const fs=require("fs"); const read=(k,n,r)=>JSON.parse(fs.readFileSync("qa-performance/"+k+"-"+n+"-"+r+".json")); for(const n of [10000,100000]){for(let r=1;r<=2;r++){const a=read("baseline",n,r),b=read("current",n,r);for(let i=0;i<a.trials.length;i++){if(a.trials[i].label!==b.trials[i].label||a.trials[i].digest!==b.trials[i].digest)throw Error("Workload correctness diverged: "+n+"/"+r+"/"+i); console.log(JSON.stringify({tracks:n,round:r,workload:a.trials[i].label,baselineMs:a.trials[i].wallMs,candidateMs:b.trials[i].wallMs,baselineHeapMiB:a.trials[i].heapDeltaMiB,candidateHeapMiB:b.trials[i].heapDeltaMiB}));}}}'
-      - name: Preserve optional Performance 4.0 measurements
-        if: ${{ always() && startsWith(github.head_ref, 'codex/performance-4-') }}
+      - name: Preserve optional Performance 5.0 measurements
+        if: ${{ always() && startsWith(github.head_ref, 'codex/performance-5-') }}
         uses: actions/upload-artifact@v4
         with:
-          name: performance-4-profile
+          name: performance-5-profile
           path: qa-performance/
           if-no-files-found: warn
 
