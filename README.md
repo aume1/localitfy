@@ -11,7 +11,7 @@ A local-first desktop music player with albums, playlists, custom artwork, theme
 ## Features
 
 - Play and organize local audio with playlists, albums, search, queues, shuffle, and repeat.
-- Personalize the player with themes, covers, and a cover studio.
+- Personalize the player with themes and artwork.
 - Import music and use the available YouTube or public Spotify import tools.
 - Optional Discord Rich Presence, scrobbling, synchronized lyrics, and MusicBrainz tagging.
 - Optional local audio analysis, similarity suggestions, radio, and Daily Mixes.

@@ -146,11 +146,6 @@ function clearFileInfoCache() {
   fileInfoCache.clear();
 }
 
-function clearPixelArtCache() {
-  pixelArtDirectoryCache = { value: "", expiresAt: 0 };
-  pixelArtFilesCache = { value: [], root: "", expiresAt: 0 };
-}
-
 function getFileInfoCached(filePath) {
   const cleanPath = String(filePath || "");
   if (!cleanPath) return { exists: false, isFile: false, size: 0, mtimeMs: 0 };
