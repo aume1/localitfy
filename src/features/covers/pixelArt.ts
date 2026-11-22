@@ -1,6 +1,5 @@
 import type { PixelArtBridgeAsset, PixelArtAsset, RuntimePixelArtAsset } from "./cover.types";
 import { discordKeyFromFileName } from "../discord/discord.utils";
-export const PIXEL_COVER_FAVORITES_STORAGE_KEY = "localitfy.pixelCoverFavorites";
 export const PIXEL_COVER_EXCLUDED_STORAGE_KEY = "localitfy.pixelCoverExcluded";
 export const PIXEL_ART_CACHE_TTL_MS = 30 * 60 * 1000;
 export const PIXEL_ART_LIBRARY: PixelArtAsset[] = ["2cats.jpg","2tankpeople.jpg","4glasses.jpg","animepixell.jpg","animepixel.jpg","beach house.jpg","blackcat.jpg","blackcatlaying.jpg","callhello.jpg","catinspace.jpg","catquestion.jpg","content.png","earthglow.jpg","erikaringingyobell.jpg","gumballl.jpg","marie.jpg","mikuinfortnite.jpg","mikuuu.gif","mitapixel.jpg","peaceanime.jpg","smallcatwithwand.jpg","smallmita.jpg","somegirl.jpg","somegirllooking.jpg","spaceearth.jpg","spacemetor.gif","starpersonlookup.jpg"].map((file)=>({file,label:file.replace(/\.[a-z0-9]+$/i,"").replace(/[_-]+/g," ").replace(/\s+/g," ").trim(),discordKey:discordKeyFromFileName(file)}));

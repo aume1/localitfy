@@ -20,8 +20,8 @@ type Listener = (payload: never) => void;
 const unavailable = () => `Not available in the Android app. Use localtify on your ${computerName()} for this.`;
 
 /** Desktop-only calls that return a song list; on the phone they leave the library as it is. */
-const RETURNS_SONGS = new Set(["importSongs", "deleteSong", "clearLibrary", "randomizeAllSongCovers", "randomizeMissingSongCovers", "randomizeSelectedSongCovers", "rescanPixelArt"]);
-const RETURNS_LIST = new Set(["listPixelArt", "listPixelCovers", "listBrokenCovers", "getPendingMusicBrainzTags", "searchMusicBrainz", "getMusicBrainzAlbumTracks"]);
+const RETURNS_SONGS = new Set(["importSongs", "deleteSong", "clearLibrary"]);
+const RETURNS_LIST = new Set(["listPixelArt", "getPendingMusicBrainzTags", "searchMusicBrainz", "getMusicBrainzAlbumTracks"]);
 
 /** A lyrics choice made from the phone replaces the copy kept for offline use. */
 async function keepLyrics(id: string, answer: Promise<LyricsResult>) {
