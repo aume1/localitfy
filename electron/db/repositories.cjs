@@ -13,6 +13,7 @@ function createDatabaseRepositories(databaseModule) {
     }),
     songs: Object.freeze({
       list: requireFunction(databaseModule, "getSongs"),
+      coverCandidates: requireFunction(databaseModule, "getCoverCandidates"),
       get: requireFunction(databaseModule, "getSong"),
       insertMany: requireFunction(databaseModule, "insertSongs"),
       patch: requireFunction(databaseModule, "patchSong"),

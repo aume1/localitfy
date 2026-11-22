@@ -485,6 +485,7 @@ const thumbnailRuntime = createThumbnailRuntime({
   getFileInfoCached, filePathKey, fileExists, isImageFile, safeMediaUrl,
   invalidateFileInfo: file => fileInfoCache.delete(file), clearFileInfoCache,
   getFfmpegPath, getSongs, getSong, getRuntimeCoverPath,
+  getWarmupSongs: databaseRepositories.songs.coverCandidates,
   publish: payload => {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("covers:thumbnail-ready", payload);
   }
@@ -1601,7 +1602,7 @@ function getRuntimeCoverPath(song, pixelArtFiles = null) {
   if (savedCoverPath && fileExists(savedCoverPath) && isImageFile(savedCoverPath)) return savedCoverPath;
   return pickStablePixelCoverForSong(song, pixelArtFiles);
 }
-function shapeSong(song, pixelArtFiles = null) {
+function shapeSong(song, pixelArtFiles = null, artworkCache = null) {
   if (!song) return null;
   const exists = fileExists(song.filePath);
   const savedCoverPath = String(song.coverPath || "").trim();
@@ -1609,13 +1610,19 @@ function shapeSong(song, pixelArtFiles = null) {
   const runtimeCoverPath = savedCoverExists ? savedCoverPath : pickStablePixelCoverForSong(song, pixelArtFiles);
   const coverExists = savedCoverExists || Boolean(runtimeCoverPath && fileExists(runtimeCoverPath));
   const runtimeCoverSource = savedCoverExists ? String(song.coverSource || "unknown") : (runtimeCoverPath ? "fallback" : "none");
-  const coverUrl = coverExists ? safeMediaUrl(runtimeCoverPath) : "";
-  const coverThumbUrl = coverExists ? getCoverThumbnailUrl(runtimeCoverPath) : "";
+  let artwork = coverExists ? artworkCache?.get(runtimeCoverPath) : null;
+  if (!artwork) {
+    artwork = { coverUrl: coverExists ? safeMediaUrl(runtimeCoverPath) : "",
+      coverThumbUrl: coverExists ? getCoverThumbnailUrl(runtimeCoverPath, !artworkCache) : "" };
+    if (artworkCache && coverExists && artworkCache.size < 2048) artworkCache.set(runtimeCoverPath, artwork);
+  }
+  const { coverUrl, coverThumbUrl } = artwork;
   return { ...song, url: "", coverPath: savedCoverPath || runtimeCoverPath || "", coverSource: runtimeCoverSource, coverUpdatedAt: song.coverUpdatedAt || null, durationMs: Number(song.durationMs || (Number(song.duration || 0) * 1000) || 0), savedCoverPath, savedCoverExists, usesFallbackCover: runtimeCoverSource === "fallback" || !savedCoverExists, missingSavedCover: !savedCoverPath || (Boolean(savedCoverPath) && !savedCoverExists), coverUrl, coverThumbUrl, coverThumbnailUrl: coverThumbUrl, thumbnailUrl: coverThumbUrl, coverFullUrl: coverUrl, exists, fileExists: exists, coverExists, coverThumbnailReady: Boolean(coverThumbUrl) };
 }
 function listSongsShaped() {
   const pixelArtFiles = getPixelArtFiles();
-  return getSongs().map((song) => shapeSong(song, pixelArtFiles));
+  const artworkCache = new Map();
+  return getSongs().map((song) => shapeSong(song, pixelArtFiles, artworkCache));
 }
 function buildRandomizeMissingSongCovers() {
   const covers = getPixelArtFiles();

@@ -14,9 +14,7 @@ export type LibraryIndex = {
   sourceSongs: readonly Song[];
 };
 
-// One immutable patch tells reconciliation which position changed. Weak keys
-// avoid retaining entire previous libraries once React releases their arrays.
-const edits = new WeakMap<readonly Song[], {before: readonly Song[]; index: number}>();
+const edits = new WeakMap<readonly Song[], {before: WeakRef<readonly Song[]>; index: number}>();
 
 function artistKeys(song: Song): string[] {
   return [...new Set(splitArtistCredits(song.artist).map(name => name.toLocaleLowerCase()))];
@@ -42,7 +40,7 @@ export function reconcileLibraryIndex(songs: readonly Song[], previous?: Library
   // A known single-song patch preserves the order and all other identities
   // by construction. Fall back to the full validation for arbitrary arrays.
   const edit = previous && edits.get(songs);
-  const editedIndex = edit && previous?.sourceSongs === edit.before &&
+  const editedIndex = edit && previous?.sourceSongs === edit.before.deref() &&
     previous.searchEntries.length === songs.length &&
     previous.songIndexById.size === songs.length &&
     previous.searchEntries[edit.index]?.song.id === songs[edit.index]?.id
@@ -68,6 +66,7 @@ export function reconcileLibraryIndex(songs: readonly Song[], previous?: Library
   };
 
   const workLength = editedIndex >= 0 ? 1 : songs.length;
+  const facets = workLength > 100 ? new Map<string, {normalized: string; compact: string}>() : undefined;
   for (let offset = 0; offset < workLength; offset++) {
     const index = editedIndex >= 0 ? editedIndex : offset;
     const song = songs[index];
@@ -84,7 +83,7 @@ export function reconcileLibraryIndex(songs: readonly Song[], previous?: Library
       songsById.set(song.id, song);
       songIndexById.set(song.id, index);
     }
-    searchEntries[index] = unchanged ? oldEntry : buildSongSearchEntryCached(song, oldEntry);
+    searchEntries[index] = unchanged ? oldEntry : buildSongSearchEntryCached(song, oldEntry, facets);
     if (!oldSong || oldSong.artist !== song.artist) {
       if (oldSong) for (const key of artistKeys(oldSong)) count(artistWrite(), key, -1);
       for (const key of artistKeys(song)) count(artistWrite(), key, 1);
@@ -129,7 +128,7 @@ export function patchLibrarySong(
   if (keys.every(key => Object.prototype.hasOwnProperty.call(songs[index], key) && Object.is(songs[index][key], patch[key]))) return songs as Song[];
   const next = songs.slice();
   next[index] = { ...next[index], ...patch };
-  edits.set(next, {before:songs,index});
+  edits.set(next, {before:new WeakRef(songs),index});
   return next;
 }
 
@@ -144,6 +143,6 @@ export function replaceLibrarySong(
     Object.prototype.hasOwnProperty.call(previous, key) && Object.is(previous[key], updated[key]))) return songs as Song[];
   const next = songs.slice();
   next[index] = updated;
-  edits.set(next, {before:songs,index});
+  edits.set(next, {before:new WeakRef(songs),index});
   return next;
 }

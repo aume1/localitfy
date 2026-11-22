@@ -23,6 +23,8 @@ final class RemoteArtworkCache {
     private final File root;
     private final File localRoot, thumbnails;
     private boolean thumbnailsInitialized;
+    private long thumbnailBytes;
+    private int thumbnailCount;
     private final SharedPreferences index;
     private final Set<String> pending = new HashSet<>();
     private final Map<String,Long> retry = new LinkedHashMap<>();
@@ -75,8 +77,12 @@ final class RemoteArtworkCache {
                 if(!scaled.compress(Bitmap.CompressFormat.PNG,100,out))return new JSObject();
             }
             if(Thread.currentThread().isInterrupted()||source.length()!=length||source.lastModified()!=modified||temp.length()>2L*1024*1024)return new JSObject();
+            boolean replacing=target.isFile();
+            long previousBytes=replacing?target.length():0;
             if(!temp.renameTo(target))return new JSObject();
-            pruneThumbnails(target);
+            thumbnailBytes+=target.length()-previousBytes;
+            if(!replacing)thumbnailCount++;
+            if(thumbnailBytes>32L*1024*1024||thumbnailCount>2048)pruneThumbnails(target);
             JSObject out=new JSObject();out.put("url",url);return out;
         }finally{
             if(temp!=null)temp.delete();
@@ -87,7 +93,7 @@ final class RemoteArtworkCache {
 
     private void pruneThumbnails(File keep){
         File[] files=thumbnails.listFiles((dir,name)->name.matches("[a-f0-9]{64}\\.png")||name.endsWith(".part"));
-        if(files==null)return;
+        if(files==null){thumbnailBytes=0;thumbnailCount=0;return;}
         Arrays.sort(files,Comparator.comparingLong(File::lastModified));
         long bytes=0;int count=0;
         for(File file:files){if(file.getName().endsWith(".part")){file.delete();continue;}bytes+=file.length();count++;}
@@ -96,6 +102,7 @@ final class RemoteArtworkCache {
             if(file.equals(keep)||!file.getName().endsWith(".png"))continue;
             long length=file.length();if(file.delete()){bytes-=length;count--;}
         }
+        thumbnailBytes=bytes;thumbnailCount=count;
     }
 
     // Same download-eligible provider subset as Electron; display-only sources never enter disk cache.
