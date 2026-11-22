@@ -1,6 +1,3 @@
-// Adapted from tryliner/desktop src/features/home/ui/DailyMixCard.tsx (54eaab9).
-// Copyright (c) 2024-2026 Liner Project Contributors & feralbureau.
-// Reused under the separate authorization reported by Localtify's maintainer.
 import { memo } from "react";
 import type { DailyMix } from "./analysis.types";
 import type { Song } from "../library/song.types";
@@ -10,7 +7,6 @@ import { MetaDividerDot } from "../../shared/ui/LocaltifyViewUi";
 import { formatTime } from "../../shared/utils/format";
 import { mixTarget, useAppActions } from "../shell/appActions";
 
-/** One cover-first card, with Localtify's local artwork and play/menu actions. */
 function DailyMixCard({ mix, songs, target, artists, home = false }: {
   mix: DailyMix; songs: Song[]; target: ReturnType<typeof mixTarget>; artists: string; home?: boolean;
 }) {

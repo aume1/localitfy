@@ -1,11 +1,5 @@
-// Adapted from tryliner/desktop src/shared/ui/ScrollableRow.tsx and
-// src/shared/hooks/useHorizontalScroll.ts (54eaab9).
-// Copyright (c) 2024-2026 Liner Project Contributors & feralbureau.
-// Reused under the separate authorization reported by Localtify's maintainer.
 import { useRef, type ComponentPropsWithoutRef, type PointerEvent } from "react";
 
-/** Keep native touch/wheel scrolling. Capture mouse drags only after a
- * threshold so card clicks, keyboard activation and context menus work. */
 export function ScrollableRow({ className = "", children, ...props }: ComponentPropsWithoutRef<"div">) {
   const drag = useRef<{ id: number; x: number; left: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);

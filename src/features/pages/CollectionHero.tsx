@@ -12,7 +12,6 @@ export type CollectionHeroProps = {
   cover: ReactNode;
   coverSong: Song | null;
   round?: boolean;
-  /** Artist links, owner, rule summary… */
   byline?: ReactNode;
   stats: string;
   playable: number;
@@ -20,13 +19,11 @@ export type CollectionHeroProps = {
   onShuffle: () => unknown;
   onQueue: () => unknown;
   onMore: (event: ReactMouseEvent<HTMLElement>) => unknown;
-  /** Page-specific buttons after the shared ones (edit, more like this…). */
   children?: ReactNode;
   search?: ReactNode;
   sort?: {value: LibrarySortMode; onChange: (value: LibrarySortMode) => void; defaultLabel?: string};
 };
 
-/** Top of every album, artist, genre, playlist and mix page: artwork, title, then play · shuffle · queue · more. */
 export default function CollectionHero({ typeLabel, title, cover, round = false, byline, stats, playable, onPlay, onShuffle, onQueue, onMore, children, search, sort }: CollectionHeroProps) {
   return (
     <EntityHero cover={cover} round={round} title={<h1 title={title}>{title}</h1>}

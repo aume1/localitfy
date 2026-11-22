@@ -1,6 +1,3 @@
-// Adapted from tryliner/desktop src/shared/ui/Button.tsx (54eaab9).
-// Copyright (c) 2024-2026 Liner Project Contributors & feralbureau.
-// Reused under the separate authorization reported by Localtify's maintainer.
 import { forwardRef } from "react";
 import "./controls.css";
 

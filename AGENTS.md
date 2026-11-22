@@ -31,3 +31,4 @@ These instructions apply to all AI coding assistants and human contributors work
 - Use simple commit messages and keep scope narrow. Review the final diff.
 - Do not merge if meaningful CI gates fail, if critical bugs are known, or if data safety/recovery claims are unverified.
 - Report exactly what was implemented, validated, not validated and remains incomplete. No version bump or release unless explicitly requested.
+- Write self-explanatory source without routine explanatory, decorative, or provenance comments. Preserve required legal notices and tool/compiler directives. Keep third-party attribution in the central notices file where permitted; never remove legally required attribution. Keep PR descriptions focused on functional changes and relevant validation or licensing constraints.

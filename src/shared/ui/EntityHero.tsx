@@ -1,13 +1,9 @@
-// Adapted from tryliner/desktop src/shared/ui/EntityHero.tsx (54eaab9).
-// Copyright (c) 2024-2026 Liner Project Contributors & feralbureau.
-// Reused under the separate authorization reported by Localtify's maintainer.
 import { Fragment, type ReactNode } from "react";
 import { Surface } from "./Surface";
 export interface HeroMetaProps {
   items: ReactNode[];
 }
 
-/** One line of plain facts under the subtitle: "2019 · 12 tracks · 41 min". */
 export function HeroMeta({ items }: HeroMetaProps) {
   const visible = items.filter(
     (item) =>

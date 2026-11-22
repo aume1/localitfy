@@ -113,13 +113,10 @@ input[type="range"]::-webkit-slider-thumb{
   filter: none !important;
 }
 
-/* Embedded inputs inherit the parent field, without a second opaque surface. */
 .app [data-embedded-field] { background:transparent !important; border:0 !important; box-shadow:none !important; outline:none !important; }
 
-/* Native range: Liner's neutral track and compact controls, without a second clock. */
 .ltRange { --lt-range-track: var(--lt-border-strong); --lt-range-fill: var(--lt-accent); }
 
-/* Liner Button variants, remapped to Localtify's existing theme tokens. */
 .ltButton {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--lt-gap-control);
   border: 1px solid transparent; border-radius: var(--lt-radius-control);

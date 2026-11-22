@@ -19,7 +19,8 @@ test("elevated overlays share the same surface owner and theme tokens", () => {
 test("collections use the shared accessible icon control and transparent surface", () => {
   const hero = read("src/features/pages/CollectionHero.tsx");
   assert.match(hero, /<IconButton className="collectionIconButton"/);
-  assert.match(hero, /<Surface as="header" variant="transparent"/);
+  assert.match(hero, /<EntityHero/);
+  assert.match(read("src/shared/ui/EntityHero.tsx"), /<Surface as="header" variant="transparent"/);
   assert.match(read("src/shared/ui/IconButton.tsx"), /"aria-label": string/);
 });
 test("menu typeahead wraps repeated keys, matches prefixes and handles empty menus", () => {

@@ -15,11 +15,15 @@ test("all app-owned track dialogs share an active topmost keyboard focus trap", 
   assert.match(hook, /document\.addEventListener\("focusin", onFocusIn, true\)/);
   assert.match(hook, /document\.removeEventListener\("focusin", onFocusIn, true\)/);
   assert.match(hook, /previouslyFocused\.focus\(\{ preventScroll: true \}\)/);
-  for (const [name, component] of [["editor", editor], ["confirm", confirm]]) {
-    assert.match(component, /useModalFocus\(Boolean\(song\)\)/, name);
-    assert.match(component, /ref=\{dialogRef\} tabIndex=\{-1\}/, name);
-    assert.match(component, /aria-modal="true"/, name);
-  }
+  assert.match(editor, /useModalFocus\(Boolean\(song\)\)/);
+  assert.match(editor, /ref=\{dialogRef\} tabIndex=\{-1\}/);
+  assert.match(editor, /aria-modal="true"/);
+  assert.match(confirm, /<Dialog open\b/);
+  assert.match(confirm, /dismissible=\{!busy\}/);
+  const dialog = read("src/shared/ui/Dialog.tsx");
+  assert.match(dialog, /useModalFocus<HTMLDivElement>\(open\)/);
+  assert.match(dialog, /ref=\{dialogRef\} tabIndex=\{-1\}/);
+  assert.match(dialog, /aria-modal="true"/);
 });
 
 test("song menu has exactly one owner for Escape and scroll dismissal", () => {

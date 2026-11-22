@@ -1751,9 +1751,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
   box-shadow: none !important;
 }
 
-/* player control cleanup.
-   Fixes the visible player outline, removes the volume icon bubble,
-   and makes accent buttons readable on light/dark custom colors. */
 .playerBar{
   --player-main-readable: var(--button-text-on-accent);
   --player-progress-fill: rgb(var(--accent-rgb)) !important;
@@ -1791,7 +1788,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
   fill-opacity: 1 !important;
 }
 
-/* The volume icon should be just an icon, not a second pill/bubble. */
 .playerBar .volumeWrap{
   background: transparent !important;
   border: 0 !important;
@@ -1842,7 +1838,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
   outline-offset: 2px !important;
 }
 
-/* Play/pause path morph for the main player button. */
 .playerMorphIcon{
   width: 26px !important;
   height: 26px !important;
@@ -1876,7 +1871,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
   transform: scale(0.94) translateZ(0) !important;
 }
 
-/* Player artwork radius. */
 .playerBar{
   --player-radius-xs: 12px;
 }
@@ -1885,7 +1879,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
   border-radius: var(--player-radius-xs) !important;
 }
 
-/* Player control icon sizing. */
 .playerBar .circleButton:not(.main) .playerControlIcon,
 .playerBar .circleButton:not(.main) svg,
 .playerBar .volumeIconButton svg,
@@ -1926,7 +1919,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
   box-shadow: none !important;
 }
 
-/* Pause expensive player decoration during interaction. */
 .app .playerBar{
   --player-perf-blur: 32px;
   --player-perf-opacity: 0.42;
@@ -2014,7 +2006,6 @@ body.localtifyWindowBackgrounded .app .playerBar:hover::before,
   transition-duration: 80ms !important;
 }
 
-/* Now-playing links, like button and queue toggle. */
 .playerBar .playerMetaLink{
   display: inline;
   max-width: 100%;
@@ -2119,7 +2110,6 @@ body.localtifyWindowBackgrounded .app .playerBar:hover::before,
   text-align: center;
 }
 
-/* The persistent bar shares the listening palette without its own blurred image. */
 .app[data-player-background="coverBlur"] .playerBar[data-ambient] {
   background: transparent !important;
   border-top-color: transparent !important;

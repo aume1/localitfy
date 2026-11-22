@@ -1,4 +1,3 @@
-/* Settings layout refinements. Base control styles live in settings.css. */
 .settingsPage.settingsPageV027 {
   width: min(100%, 1120px);
   margin: 0 auto;
@@ -148,7 +147,6 @@
 .settingsPage.settingsPageV027 .settingsSidebarDisclosure .sidebarTabsGroups { gap: 12px; }
 
 
-/* Scalable, deliberate controls without the global player button treatment. */
 .settingsPage.settingsPageV027 .settingsCategoryContent,
 .settingsPage.settingsPageV027 .settingsCategoryMotion { min-width: 0; }
 .settingsPage.settingsPageV027 .settingsCategoryMotion { animation: none; transform: none; opacity: 1; }
@@ -233,7 +231,6 @@
 .settingsPageV027 .toggleRow input[type="checkbox"]::before { transition: none; }
 }
 
-/* Advanced owns its reset and feedback UI; shared panels stay theme-neutral. */
 .settingsPage.settingsPageV027 .settingsDangerMascotPanelV501 {
   gap: 16px;
 }
@@ -407,7 +404,6 @@
   }
 }
 
-/* Original compact mode previews; miniature surfaces don't affect live theme state. */
 .settingsModeGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--lt-space-3); max-width: 560px; }
 .settingsModeButton { display: grid; min-width: 0; gap: var(--lt-space-2); color: var(--lt-muted); text-align: left; font: inherit; padding: 0; background: none; border: 0; cursor: pointer; }
 .settingsModeButton[aria-pressed="true"] { color: var(--lt-text); }

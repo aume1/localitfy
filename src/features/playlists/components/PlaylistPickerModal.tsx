@@ -23,7 +23,6 @@ export default function PlaylistPickerModal({
   addSongToPlaylist, createPlaylistWithSong
 }: PlaylistPickerModalProps) {
   if (!song) return null;
-  // Smart playlists fill themselves, so songs can't be added to them by hand.
   const manualPlaylists = playlists.filter((playlist) => !playlist.rules);
   return (
     <Dialog open onClose={onClose} portal={false} animated={false} backdropClassName="modalWrap playlistPickerWrap"

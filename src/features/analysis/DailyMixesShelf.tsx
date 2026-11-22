@@ -14,7 +14,6 @@ const ARTISTS_SHOWN = 4;
 
 export type DailyMixesShelfProps = {
   songs: Song[];
-  /** Used by the mix page's "save as playlist". */
   savePlaylist: (name: string, ids: string[]) => string | null;
   openAnalysisSettings: () => void;
 };

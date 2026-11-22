@@ -51,7 +51,6 @@ export type PlayerBarProps = {
   queueDropHot: boolean;
   queueCount: number;
   queuePanelOpen: boolean;
-  /** Undefined when lyrics are turned off in settings. */
   lyricsOpen?: boolean;
   toggleLyrics: () => unknown;
   repeatButtonAriaLabel: string;
@@ -73,7 +72,6 @@ export type PlayerBarProps = {
   volumeDraft: number;
   volumeDraftRef: MutableRefObject<number>;
   volumeRangeStyle: CSSProperties;
-  /** Devices on the live connection; null when no phone is connected. */
   connect?: ConnectControls | null;
   openImmersive?: () => void;
   immersiveOpen?: boolean;

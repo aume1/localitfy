@@ -5,7 +5,6 @@ import { Surface } from "../../shared/ui/Surface";
 
 import { clampUpperFirst as clamp } from "../../shared/utils/format";
 import { getLocaltifyPlatformInfo, type LocaltifyPlatformInfo } from "../../app/platform";
-// Liner SettingRow layout, adapted to the existing native label semantics.
 function SettingRow({ label, help, range = false, children }: { label: string; help?: string; range?: boolean; children: ReactNode }) {
   return <label className={range ? "rangeRow" : "toggleRow"} title={range ? `${label}: ${help || ""}` : help || label}>
     <span className={range ? "rangeRowCopy" : "toggleRowCopy"}>
@@ -82,7 +81,6 @@ export function RangeRow({ label, value, min, max, step, suffix, onChange }: {
   );
 }
 
-/** Shared grouped settings surface, adapted from Liner SettingSection/Panel. */
 export function SettingSection({ title, description, icon, className = "", children }: {
   title: string; description?: string; icon?: ReactNode; className?: string; children: ReactNode;
 }) {

@@ -16,7 +16,6 @@ import "./phone-player.css";
 
 const LyricsView = lazy(() => import("../../lyrics/LyricsView"));
 
-// Slots in the app's progress refs; 0 and 1 belong to the Home hero and the desktop player bar.
 const MINI_SLOT = 2;
 const SHEET_SLOT = 3;
 const SWIPE_CLOSE_PX = 90;
@@ -24,7 +23,6 @@ const SWIPE_SKIP_PX = 70;
 
 export type PhonePlayerProps = PlayerBarProps & { lyrics: Omit<LyricsViewProps, "anchorRef">; backgroundStyle?: string; backgrounded?: boolean };
 
-/** The phone's player: a mini player above the tabs that opens a full-screen player with the cover or the lyrics. */
 export default function PhonePlayer(props: PhonePlayerProps) {
   const {
     ambientStyle, commitSeek, currentDuration, currentSong, displayedProgress, displayedTime, isPlaying, isSeeking, isShuffle,
@@ -65,7 +63,6 @@ export default function PhonePlayer(props: PhonePlayerProps) {
     return () => { if (expanded) window.dispatchEvent(new CustomEvent("localtifyplayersheet", { detail: false })); };
   }, [expanded]);
 
-  // Android back: lyrics first, then the full-screen player.
   useEffect(() => {
     if (!expanded) return;
     const onBack = (event: Event) => {
@@ -78,7 +75,6 @@ export default function PhonePlayer(props: PhonePlayerProps) {
     return () => window.removeEventListener("localtifyuiback", onBack);
   }, [expanded, lyrics, queuePanelOpen, toggleQueuePanel]);
 
-  // The system media controls (notification, lock screen) show and change shuffle and repeat too.
   const toggleRepeatRef = useRef(toggleRepeat);
   toggleRepeatRef.current = toggleRepeat;
   useEffect(() => {
@@ -95,7 +91,6 @@ export default function PhonePlayer(props: PhonePlayerProps) {
 
   if (!currentSong) return null;
 
-  // Down closes the player; on the cover, left plays the next song and right the previous one.
   const swipeStart = (event: ReactTouchEvent) => {
     resetDrag();
     const touch = event.touches[0];
@@ -108,7 +103,6 @@ export default function PhonePlayer(props: PhonePlayerProps) {
     const dx = touch.clientX - start.x;
     dragOffsetRef.current = Math.abs(dx) > Math.abs(touch.clientY - start.y) ? dx : 0;
     if (dragFrameRef.current !== null) return;
-    // Paint at most once per frame without re-rendering the player and lyrics.
     dragFrameRef.current = requestAnimationFrame(() => {
       dragFrameRef.current = null;
       const slot = artSlotRef.current;

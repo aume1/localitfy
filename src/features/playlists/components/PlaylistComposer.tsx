@@ -9,8 +9,6 @@ export function ComposerButton({ variant = "secondary", size = "md", className =
 }
 
 type Props = { title: string; description?: string; kind: "prompt" | "smart"; onClose: () => void; children: ReactNode };
-/** One isolated, keyboard-safe surface for both editors. beUI provides the
- * interactive buttons; the existing focus hook supports portaled Arc menus. */
 export default function PlaylistComposer({ title, description, kind, onClose, children }: Props) {
   const id = useId();
   return <Dialog open onClose={onClose} backdropClassName="playlistComposerBackdrop"

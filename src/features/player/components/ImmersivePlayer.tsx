@@ -17,7 +17,6 @@ import QueuePanel from "./QueuePanel";
 import type { QueuePanelProps } from "./QueuePanel";
 
 const LyricsView = lazy(() => import("../../lyrics/LyricsView"));
-// Slots 0–3 belong to Home, the regular desktop bar and both phone surfaces.
 const IMMERSIVE_SLOT = 4;
 const ListeningArtwork = memo(Cover);
 const ListeningBackdrop = memo(ArtworkBackdrop);
@@ -32,7 +31,6 @@ type Props = {
   onClose: () => void;
 };
 
-/** A presentation-only surface: transport, seek, queue and device state stay with the app. */
 export default function ImmersivePlayer({ player, song, queue, lyrics, backgroundStyle, backgrounded, onClose }: Props) {
   const dialog = useModalFocus<HTMLElement>(true, true);
   const stage = useRef<HTMLDivElement>(null);

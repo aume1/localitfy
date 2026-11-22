@@ -1,6 +1,3 @@
-// Adapted from tryliner/desktop src/shared/ui/Dialog.tsx (54eaab9).
-// Copyright (c) 2024-2026 Liner Project Contributors & feralbureau.
-// Reused under the separate authorization reported by Localtify's maintainer.
 import { useRef, type ReactNode, type MouseEvent, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
@@ -14,8 +11,6 @@ type Props = {
   animated?: boolean;
 };
 
-/** Liner's pointer-origin dismissal guard with Localtify's stacked focus trap.
- * Keep portaled menus functional, and never close on a drag from a field. */
 export default function Dialog({ open, onClose, children, className, backdropClassName,
   label, labelledBy, describedBy, role = "dialog", portal = true,
   dismissible = true, animated = true }: Props) {

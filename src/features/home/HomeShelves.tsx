@@ -14,7 +14,6 @@ import { isAndroidApp } from "../../app/platform";
 
 type SectionHeadProps = { id: string; title: string; action?: ReactNode };
 
-/** Section title with an optional small action on the right ("Play all", "See all"). */
 export function HomeSectionHead({ id, title, action }: SectionHeadProps) {
   return (
     <div className="homeSectionHead">
@@ -31,14 +30,11 @@ type SongRailProps = {
   currentId: string | null;
   selectSong: (songId: string, shouldPlay?: boolean) => unknown;
   playSongs?: (songIds: string[], label: string) => unknown;
-  /** Shown when the rail is empty. Without it an empty rail is left out entirely. */
   emptyText?: string;
   className?: string;
-  /** Optional "Find similar" action shown beside "Play all". */
   findSimilar?: () => unknown;
 };
 
-/** A row of song covers. Clicking a cover plays that song; "Play all" plays the row in order. */
 export function HomeSongRail({ id, title, songs, currentId, selectSong, playSongs, emptyText, className = "", findSimilar }: SongRailProps) {
   const { openSongMenu } = useAppActions();
   const headingId = `home-${id}-title`;
@@ -74,7 +70,6 @@ export function HomeSongRail({ id, title, songs, currentId, selectSong, playSong
       />
       <ScrollableRow className="homeReleaseRail" tabIndex={0} role="region" aria-labelledby={headingId}>
         {songs.map((song) => (
-          // A song card plays on click, so its round button is the same action; it is there so every card looks alike.
           <MediaCard
             key={song.id}
             className="homeReleaseCard"
@@ -104,7 +99,6 @@ type DailyMixRailProps = {
   openAnalysisSettings: () => unknown;
 };
 
-/** Today's daily mixes with locally generated artwork. Clicking a mix opens it, the round button plays it; "See all" opens the full shelf in Playlists. */
 export function HomeDailyMixRail({ day, songsById, openDailyMixes, openAnalysisSettings }: DailyMixRailProps) {
   const { result, failed } = useHomeDailyMixes(day);
   const mixes = useMemo(() => (result?.mixes ?? [])

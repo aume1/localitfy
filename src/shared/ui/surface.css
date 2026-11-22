@@ -1,4 +1,3 @@
-/* Theme primitives for status surfaces. Feature-specific geometry stays with the feature. */
 :where(.localtifySurface) {
   --surface-tone-rgb: var(--lt-accent-rgb);
   min-width: 0;
@@ -61,7 +60,6 @@
 }
 .app.reducedMotion :where(.localtifySurface-interactive) { transition: none; }
 
-/* Shared top-level overlay skin; menus and the queue own only geometry. */
 .ltOverlaySurface {
   background: var(--lt-glass-background);
   backdrop-filter: blur(var(--lt-glass-blur));

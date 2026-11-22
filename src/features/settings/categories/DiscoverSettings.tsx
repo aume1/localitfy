@@ -11,8 +11,6 @@ type Props = {
 };
 const VALID_KEY = /^[a-f0-9]{32}$/i;
 
-/** Public discovery is free to search; the Last.fm default is resolved only
- * inside Electron. Neither the key nor the .env file enters the React bundle. */
 export default function DiscoverSettings({ settings, updateSetting }: Props) {
   const [source, setSource] = useState<ProviderSource>("checking");
   const [keyDraft, setKeyDraft] = useState(settings.lastfmApiKey || "");
