@@ -22,16 +22,15 @@ const fail = (message) => failures.push(message);
 
 const rebuiltPageStyles = [
   "src/features/playlists/playlists.css",
-  "src/features/covers/covers.css", "src/features/downloads/downloads.css",
+  "src/features/downloads/downloads.css",
   "src/features/analytics/analytics.css", "src/features/settings/settings.css"
 ];
-const featureRoots = [".albumsPageV318", ".playlistsPage", ".coverStudioLayout", ".downloadsLayoutV031", ".analyticsStudioV339", ".settingsPageV027"];
+const featureRoots = [".albumsPageV318", ".playlistsPage", ".downloadsLayoutV031", ".analyticsStudioV339", ".settingsPageV027"];
 // Each rebuilt page owns its root selectors. Cross-page styling belongs in
 // explicit shared shell primitives, not in another feature's stylesheet.
 const scopedFeatureStyles = [
   ["src/features/home/home.css", ".homePage"],
   ["src/features/library/library.css", ".libraryPage"],
-  ["src/features/covers/covers.css", ".coverStudioLayout"],
   ["src/features/downloads/downloads.css", ".downloadsLayoutV031"],
   ["src/features/playlists/playlists.css", ".playlistsPage"],
   ["src/features/analytics/analytics.css", ".analyticsStudioV339"],
@@ -52,7 +51,7 @@ for (const [file, ownedRoot] of scopedFeatureStyles) {
 const resetSources = [
   ["src/features/genres/GenresView.tsx", "genres"], ["src/features/playlists/PlaylistsView.tsx", "playlists"],
   ["src/features/downloads/DownloadsView.tsx", "downloads"], ["src/features/analytics/AnalyticsView.tsx", "analytics"],
-  ["src/features/covers/CoverStudio.tsx", "covers"], ["src/features/settings/SettingsView.tsx", "settings"]
+  ["src/features/settings/SettingsView.tsx", "settings"]
 ];
 
 for (const file of rebuiltPageStyles) if (!exists(file)) fail(file + ": rebuilt page CSS is missing");
@@ -74,7 +73,7 @@ const requiredOwners = [
   ["src/features/player/components/PlayerBar.tsx", '../player.css'],
   ["src/features/settings/SettingsView.tsx", './settings.css'],
   ["src/features/playlists/PlaylistsView.tsx", './playlists.css'],
-  ["src/features/covers/CoversView.tsx", './covers.css'],
+
   ["src/features/downloads/DownloadsView.tsx", './downloads.css'],
   ["src/features/analytics/AnalyticsView.tsx", './analytics.css']
 ];
@@ -101,7 +100,7 @@ if (library.includes('data-page-state="reset"')) fail("LibraryView returned to t
 
 const shell = read("src/features/shell/AppShell.tsx");
 for (const specifier of ["./app-core.css", "./motion.css", "./effects.css", "../../styles/view-shell.css"]) if (!shell.includes('import "' + specifier + '";')) fail("AppShell missing shell CSS owner " + specifier);
-for (const modulePath of ["library/LibraryView", "artists/ArtistsView", "genres/GenresView", "playlists/PlaylistsView", "covers/CoversView", "analytics/AnalyticsView", "settings/SettingsView", "downloads/DownloadsView"]) {
+for (const modulePath of ["library/LibraryView", "artists/ArtistsView", "genres/GenresView", "playlists/PlaylistsView", "analytics/AnalyticsView", "settings/SettingsView", "downloads/DownloadsView"]) {
   if (!shell.includes('lazy(() => import("../' + modulePath + '"))')) fail("AppShell must lazy-load " + modulePath);
 }
 
@@ -146,7 +145,7 @@ for (const [file, maxBytes, maxImportant] of cssBudgets) {
 const anyBudgets = [
   ["src/App.tsx", 38], ["src/features/downloads/DownloadsView.tsx", 54],
   ["src/features/playlists/PlaylistsView.tsx", 37], ["src/features/player/components/PlayerBar.tsx", 0],
-  ["src/features/library/LibraryView.tsx", 0], ["src/features/artists/ArtistsView.tsx", 0], ["src/features/genres/GenresView.tsx", 0], ["src/features/covers/CoversView.tsx", 0],
+  ["src/features/library/LibraryView.tsx", 0], ["src/features/artists/ArtistsView.tsx", 0], ["src/features/genres/GenresView.tsx", 0],
   ["src/features/analytics/AnalyticsView.tsx", 0], ["src/features/analytics/analyticsSnapshot.ts", 0]
 ];
 for (const [file, maxAny] of anyBudgets) {

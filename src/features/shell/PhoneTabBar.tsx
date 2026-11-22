@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LayoutGrid, SlidersHorizontal } from "lucide-react";
-import { DESKTOP_ONLY_VIEWS, navItems } from "./navigation.constants";
+import { DESKTOP_ONLY_VIEWS, navItems, primaryNavigationView } from "./navigation.constants";
 import { resolveSidebarGroups } from "./sidebarLayout";
 import type { SidebarNavOrder } from "./sidebarLayout";
 import type { View } from "./view.types";
@@ -60,7 +60,7 @@ export default function PhoneTabBar({ view, changeView, sidebarNavOrder, sidebar
     if (!item) return null;
     const Icon = item.icon;
     return (
-      <button key={id} type="button" className={`phoneTab ${view === id ? "active" : ""}`} onClick={() => go(id)} aria-current={view === id ? "page" : undefined}>
+      <button key={id} type="button" className={`phoneTab ${primaryNavigationView(view) === id ? "active" : ""}`} onClick={() => go(id)} aria-current={primaryNavigationView(view) === id ? "page" : undefined}>
         <span className="phoneTabIcon" aria-hidden="true"><Icon size={22} strokeWidth={2.2} /></span>
         <span className="phoneTabLabel">{item.label}</span>
       </button>
@@ -71,7 +71,7 @@ export default function PhoneTabBar({ view, changeView, sidebarNavOrder, sidebar
     <>
       <nav className="phoneTabBar" aria-label="pages">
         {tabs.map(tabButton)}
-        <button type="button" className={`phoneTab ${!tabs.includes(view) ? "active" : ""}`} onClick={() => setMoreOpen(true)} aria-haspopup="dialog" aria-expanded={moreOpen}>
+        <button type="button" className={`phoneTab ${!tabs.includes(primaryNavigationView(view)) ? "active" : ""}`} onClick={() => setMoreOpen(true)} aria-haspopup="dialog" aria-expanded={moreOpen}>
           <span className="phoneTabIcon" aria-hidden="true"><LayoutGrid size={22} strokeWidth={2.2} /></span>
           <span className="phoneTabLabel">more</span>
         </button>
@@ -90,7 +90,7 @@ export default function PhoneTabBar({ view, changeView, sidebarNavOrder, sidebar
                 if (!item) return null;
                 const Icon = item.icon;
                 return (
-                  <button key={id} type="button" className={`phoneMoreItem ${view === id ? "active" : ""}`} onClick={() => go(id)}>
+                  <button key={id} type="button" className={`phoneMoreItem ${primaryNavigationView(view) === id ? "active" : ""}`} onClick={() => go(id)}>
                     <span className="phoneMoreIcon" aria-hidden="true"><Icon size={22} strokeWidth={2.2} /></span>
                     <span>{item.label}</span>
                   </button>

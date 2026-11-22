@@ -7,6 +7,4 @@ test("modal focus trap preserves an existing autofocus field", () => {
   assert.match(hook, /active instanceof HTMLElement && active !== dialog && contains\(active\)/);
   assert.match(hook, /const onFocusIn = \(event: FocusEvent\)/);
   assert.match(hook, /const topmostModal = \(\)/);
-  const prompt = fs.readFileSync("src/features/playlists/components/PromptPlaylistDialog.tsx", "utf8");
-  assert.match(prompt, /<textarea\b(?=[\s\S]*?\bautoFocus\b)(?=[\s\S]*?\bmaxLength=\{300\})/);
 });

@@ -25,7 +25,7 @@ export function normalizeSidebarHidden(hidden: unknown): View[] {
   const customizable = new Set<string>(
     sidebarNavGroups.filter((group) => isCustomizableGroup(group.id)).flatMap((group) => group.itemIds)
   );
-  return [...new Set(hidden.map(String))].filter((id): id is View => knownViews.has(id) && customizable.has(id));
+  return [...new Set(hidden.map(String))].filter((id): id is View => id !== "library" && knownViews.has(id) && customizable.has(id));
 }
 
 /** Saved order first, then any default items the save does not know about yet (new tabs in later versions). */
@@ -87,7 +87,7 @@ export function canMoveSidebarItem(order: SidebarNavOrder | undefined, hidden: u
 
 export function toggleSidebarItemHidden(hidden: unknown, view: View): View[] {
   const current = normalizeSidebarHidden(hidden);
-  if (!sidebarGroupForView(view)) return current;
+  if (view === "library" || !sidebarGroupForView(view)) return current;
   return current.includes(view) ? current.filter((id) => id !== view) : [...current, view];
 }
 

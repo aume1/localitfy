@@ -88,9 +88,6 @@ export default function LibraryView(props: LibraryViewProps) {
   return (
     <section data-page-section="library" className={`libraryPage ${isLiked ? "libraryPageLiked" : ""}`}>
       <PageHeader title={isLiked ? "Liked songs" : "Library"}>
-        <nav className="libraryNavigation" aria-label="Library collections">
-          {([{ id: "library", title: "Songs" }, { id: "liked", title: "Liked" }, { id: "playlists", title: "Playlists" }, { id: "artists", title: "Artists" }, { id: "genres", title: "Genres" }] as const).map(item => <button key={item.id} type="button" aria-current={view === item.id ? "page" : undefined} onClick={() => changeView(item.id, "library-navigation")}>{item.title}</button>)}
-        </nav>
         <input
           className="pageHeaderSearch librarySearch"
           value={query}

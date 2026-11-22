@@ -1,4 +1,3 @@
-/* Immersive listening is a single, theme-aware application-window surface. */
 .immersiveEntry{
   padding: 0;
   border: 0;
@@ -192,8 +191,27 @@
 .immersiveSeek input, .immersiveVolume input{
   width: 100%;
   min-width: 0;
+  height: 24px;
+  margin: 0;
   accent-color: var(--lt-accent);
+  appearance: none;
+  background: transparent;
 }
+.immersiveSeek .ltRange::-webkit-slider-runnable-track,
+.immersiveVolume .ltRange::-webkit-slider-runnable-track {
+  height: var(--lt-progress-height); border-radius: 999px;
+  background: linear-gradient(90deg, var(--lt-range-fill) var(--volume-percent, var(--range-progress, 0%)), var(--lt-range-track) var(--volume-percent, var(--range-progress, 0%)));
+  transition: transform var(--lt-control-motion) var(--lt-ease-out);
+}
+.immersiveSeek .ltRange::-webkit-slider-thumb,
+.immersiveVolume .ltRange::-webkit-slider-thumb {
+  appearance: none; width: 13px; height: 13px; margin-top: -4px;
+  border: 0; border-radius: 50%; background: var(--lt-range-fill);
+  opacity: 0; transition: opacity var(--lt-control-motion) var(--lt-ease-out);
+}
+.immersivePlayer .ltRange:is(:hover,:focus-visible,:active)::-webkit-slider-thumb { opacity: 1; }
+.immersivePlayer .ltRange:is(:hover,:active)::-webkit-slider-runnable-track { transform: scaleY(1.25); }
+
 .immersiveTimes{
   font-variant-numeric: tabular-nums;
 }

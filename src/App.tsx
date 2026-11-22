@@ -282,7 +282,7 @@ function MainModeApp() {
     askUpdaterToInstall,
     manualUpdateCheck,
     handleUpdateLater,
-    showDebugUpdateAvailable,
+
     lastUpdateCheckedLabel
   } = useUpdatesController({
     ready,
@@ -414,7 +414,7 @@ function MainModeApp() {
   function changeView(nextView: View, _source: "nav" | "onboarding" | "settings" | "unknown" = "nav") {
     setLyricsOpen(false);
     // Old runtime callers may still provide the retired album destination.
-    if (String(nextView) === "albums") nextView = "library";
+    if (["albums", "covers"].includes(String(nextView))) nextView = "library";
     if (view === nextView) return;
 
     if (viewSwitchTimerRef.current !== null) {
@@ -576,8 +576,6 @@ function MainModeApp() {
     renamingPlaylistName,
     setRenamingPlaylistName,
     createPlaylist,
-    saveSmartPlaylist,
-    listeningCounts,
     createPlaylistWithSong,
     createPlaylistFromSongs,
     removePlaylist,
@@ -1036,7 +1034,7 @@ function MainModeApp() {
   }
 
 
-  const { libraryIndex, filteredSongs, likedSongs, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
+  const { libraryIndex, likedSongs, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
     songs, deferredQuery, view, libraryFilterMode, librarySortMode, libraryRenderLimit, libraryListLengthRef, libraryRenderLimitRef
   });
   const similarSeed = useMemo(() => resolveSimilarSeed(similarRequest, songsById, songs, playlists), [similarRequest, songsById, songs, playlists]);
@@ -1253,50 +1251,8 @@ function MainModeApp() {
     }
   }, [currentSong?.id, currentDuration, currentSong?.duration, syncProgressDom]);
 
-  const {
-    pixelArtAssets,
-    setPixelArtAssets,
-    pixelArtBusy,
-    pixelArtPool,
-    loadPixelArtAssets,
-    getRuntimePixelArtForSong,
-    coverGalleryMood,
-    setCoverGalleryMood,
-    coverSelectedSongIds,
-    setCoverSelectedSongIds,
-    coverMoodCounts,
-    filteredCoverGalleryAssets,
-    selectedCoverSongs,
-    coverPickerSongList,
-    missingCoverSongs,
-    coverStats,
-    rescanPixelArtFolder,
-    randomizeMissingCoversAction,
-    cleanupCoverCacheAction,
-    randomizeCoverForSong,
-    chooseCoverFromPc,
-    randomizeAllCovers,
-    togglePixelCoverExcluded,
-    toggleCoverSongSelection,
-    selectCurrentSongForCovers,
-    selectVisibleSongsForCovers,
-    applyCoverAssetToSelection,
-    randomizeSelectedCovers
-  } = useCoversController({
-    songs,
-    songsById,
-    filteredSongs,
-    query,
-    currentSong,
-    view,
-    settingsCategory,
-    replaceSong,
-    commitSongs: commitSongsWithEditor,
-    setStatusText,
-    showAppToast,
-    onCoverAssetsChanged: () => {
-      discordAssetBySongRef.current = {};
-    }
+  const { pixelArtAssets, setPixelArtAssets, pixelArtBusy, pixelArtPool, loadPixelArtAssets, getRuntimePixelArtForSong, randomizeAllCovers } = useCoversController({
+    songs, commitCovers, setStatusText, showAppToast
   });
 
   const discordPreview = useMemo(() => buildDiscordPreview({
@@ -1782,16 +1738,7 @@ function MainModeApp() {
       return;
     }
 
-    if (command === "popup1" || command === "/popup1") {
-      showDebugUpdateAvailable();
-      setQuery("");
-      return;
-    }
 
-    if (command === "/dev" || command === "dev") {
-      setQuery("");
-      return;
-    }
 
     if (command === "ppp" || command === "/ppp") {
       triggerPlayButtonSecret();
@@ -3325,18 +3272,9 @@ function MainModeApp() {
     }
   }
 
-  function commitSongsWithEditor(nextSongs: Song[]) {
-    setSongs(nextSongs);
-    if (editorSong) {
-      setEditorSong(nextSongs.find((song) => song.id === editorSong.id) || editorSong);
-    }
-  }
-
-  function openCoversViewWithCurrentSong() {
-    if (currentSong && !coverSelectedSongIds.includes(currentSong.id)) {
-      setCoverSelectedSongIds([currentSong.id]);
-    }
-    changeView("covers", "unknown");
+  function commitCovers(updates: Map<string, Partial<Song>>) {
+    setSongs(old => old.map(song => updates.has(song.id) ? { ...song, ...updates.get(song.id) } : song));
+    setEditorSong(old => old && updates.has(old.id) ? { ...old, ...updates.get(old.id) } : old);
   }
 
   async function patchSongLocal(id: string, patch: Partial<Song>) {
@@ -3371,16 +3309,10 @@ function MainModeApp() {
   }
 
 
-  function openMetadataCleanPreview(scope: "all" | "selected" = "all") {
+  function openMetadataCleanPreview() {
     if (!songs.length || libraryScanBusy) return;
 
-    if (scope === "selected" && !coverSelectedSongIds.length) {
-      showAppToast("select songs in cover studio first", "info");
-      setLibraryScanMessage("select songs in cover studio first");
-      return;
-    }
-
-    const preview = createMetadataCleanPreview(songs, coverSelectedSongIds, scope);
+    const preview = createMetadataCleanPreview(songs, [], "all");
     setMetadataCleanPreview(preview);
 
     if (!preview.changedCount) {
@@ -3423,11 +3355,7 @@ function MainModeApp() {
   }
 
   function cleanLibraryMetadataAction() {
-    openMetadataCleanPreview("all");
-  }
-
-  function cleanSelectedMetadataAction() {
-    openMetadataCleanPreview("selected");
+    openMetadataCleanPreview();
   }
 
   function cancelMetadataCleanPreviewAction() {
@@ -5250,14 +5178,6 @@ function MainModeApp() {
     setEditorSong(null);
   }
 
-  async function randomizeCover() {
-    await randomizeCoverForSong(editorSong);
-  }
-
-  async function pickCover() {
-    await chooseCoverFromPc(editorSong);
-  }
-
   function dismissOnboarding() {
     markOnboardingSeenForThisRelease();
 
@@ -5608,8 +5528,6 @@ function MainModeApp() {
         libraryScanBusy={libraryScanBusy}
         cleanLibraryMetadataAction={cleanLibraryMetadataAction}
         repairMovedSongsAction={repairMovedSongsAction}
-        cleanSelectedMetadataAction={cleanSelectedMetadataAction}
-        metadataSelectedCount={coverSelectedSongIds.length}
         metadataCleanPreview={metadataCleanPreview}
         applyMetadataCleanPreviewAction={applyMetadataCleanPreviewAction}
         cancelMetadataCleanPreviewAction={cancelMetadataCleanPreviewAction}
@@ -5621,7 +5539,6 @@ function MainModeApp() {
         pixelArtAssets={pixelArtAssets}
         pixelArtBusy={pixelArtBusy}
         randomizeAllCovers={randomizeAllCovers}
-        rescanPixelArtFolder={rescanPixelArtFolder}
         downloadFolderLabel={downloadFolderLabel}
         chooseDownloadFolder={chooseDownloadFolder}
         APP_VERSION={APP_VERSION}
@@ -5723,7 +5640,6 @@ function MainModeApp() {
     homeHiddenSections: settings.homeHiddenSections
   }), [settings.heroExpanded, settings.volume, settings.homeSectionOrder, settings.homeHiddenSections]);
   const homeOpenAnalysis = useStableCallback(() => { setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); });
-  const homeOpenCovers = useStableCallback(openCoversViewWithCurrentSong);
   const homeOpenMixes = useStableCallback(() => nav.go("playlists"));
   const homePlaySongs = useStableCallback(playCollectionSongs);
   const homeSelectSong = useStableCallback(selectSong);
@@ -5844,7 +5760,6 @@ function MainModeApp() {
       nowPlayingSongMotionClass,
       nowPlayingTransitionKey,
       openAnalysisSettings: homeOpenAnalysis,
-      openCoversViewWithCurrentSong: homeOpenCovers,
       openDailyMixes: homeOpenMixes,
       openSimilarSongs: setSimilarRequest,
       playableSongCount: playableSongs.length,
@@ -5933,33 +5848,7 @@ function MainModeApp() {
       songs,
       startPlaylistSongDragAction,
       startRenamePlaylist,
-      saveSmartPlaylist,
-      listeningCounts, addSongToPlaylist, notForMe
-    },
-    covers: {
-      applyCoverAssetToSelection,
-      coverGalleryMood,
-      coverMoodCounts,
-      coverPickerSongList,
-      coverSelectedSongIds,
-      coverStats,
-      currentSong: visualCurrentSong,
-      filteredCoverGalleryAssets,
-      importSongs,
-      pixelArtBusy,
-      randomizeSelectedCovers,
-      rescanPixelArtFolder,
-      selectCurrentSongForCovers,
-      selectVisibleSongsForCovers,
-      selectedCoverSongs,
-      setCoverGalleryMood,
-      setCoverSelectedSongIds,
-      songs,
-      toggleCoverSongSelection,
-      togglePixelCoverExcluded,
-      missingCoverSongs,
-      cleanupCoverCache: cleanupCoverCacheAction,
-      randomizeMissingCovers: randomizeMissingCoversAction
+      addSongToPlaylist, notForMe
     },
     discover: {
       settings, updateSetting, notForMe, songs, selectLocalSong: (id: string) => void selectSong(id, true),
@@ -6162,9 +6051,6 @@ function MainModeApp() {
       songEditor: {
         song: editorSong,
         onClose: () => setEditorSong(null),
-        pixelArtBusy: Boolean(pixelArtBusy),
-        randomizeCover,
-        pickCover,
         editTitle,
         setEditTitle,
         editArtist,

@@ -154,7 +154,6 @@
 .settingsPage .metadataCleanerPreviewItemV425 { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 12px; min-width: 0; padding: 10px; border: 1px solid var(--settings-edge); border-radius: var(--lt-radius-item); }
 .settingsPage .metadataCleanerPreviewItemV425 > span { min-width: 0; display: grid; gap: 3px; overflow-wrap: anywhere; }
 .settingsPage .metadataCleanerPreviewItemV425 :is(small,em) { color: var(--settings-muted); font-size: 11px; }
-.settingsPage .settingsReleaseList { padding-left: 20px; color: var(--settings-muted); font-size: 12px; line-height: 1.6; }
 .settingsPage .folderPickerRow { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .settingsPage .folderPickerRow code { min-width: 0; flex: 1 1 240px; overflow-wrap: anywhere; color: var(--settings-text); font-size: 12px; }
 @media (max-width: 1080px) {

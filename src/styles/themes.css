@@ -1,10 +1,9 @@
-/* Fixed palettes are CSS-owned. Runtime state selects only data-theme. */
 .app[data-theme="dark"] {
   --bg: #000000;
-  --surface: #151518;
+  --surface: #0a0a0a;
   --surface-2: #19191c;
   --surface-3: #232326;
-  --lt-bg-elevated: #111214;
+  --lt-bg-elevated: #141414;
   --lt-surface-soft: var(--lt-fill);
   --lt-fill-subtle: rgba(var(--lt-accent-rgb), .04);
   --lt-fill: rgba(var(--lt-accent-rgb), .07);

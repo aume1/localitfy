@@ -1,9 +1,10 @@
+import "../../shared/ui/collection-layout.css";
 import "./playlists.css";
 import "./playlist-oled.css";
 import { isAndroidApp } from "../../app/platform";
 import DailyMixesShelf, { type DailyMixesShelfProps } from "../analysis/DailyMixesShelf";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Check, Copy, ImagePlus, Pencil, Plus, Radio, SlidersHorizontal, Sparkles, Trash2, WandSparkles, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { Check, Copy, ImagePlus, Pencil, Plus, Radio, Trash2, X } from "lucide-react";
 import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import { notForMeTest, type NotForMeMarks } from "../analysis/notForMe";
 import PlaylistRecommendations from "./components/PlaylistRecommendations";
@@ -18,14 +19,11 @@ import { formatTime } from "../../shared/utils/format";
 import type { Playlist } from "./playlist.types";
 import type { Song } from "../library/song.types";
 import { filterCollectionSongs, sortLibrarySongs, type LibrarySortMode } from "../library/librarySort";
-import { describeSmartRules, type ListeningCounts, type SmartRules } from "./smartPlaylist";
 import { MediaCard } from "../../shared/ui/MediaCard";
 import { playlistTarget, playableIds, useAppActions } from "../shell/appActions";
 import { PageAtmosphere } from "../covers/pageAtmosphere";
 import CollectionHero from "../pages/CollectionHero";
 
-const SmartPlaylistDialog = lazy(() => import("./components/SmartPlaylistDialog"));
-const PromptPlaylistDialog = lazy(() => import("./components/PromptPlaylistDialog"));
 
 export type PlaylistsViewProps = {
   dailyMixes: DailyMixesShelfProps;
@@ -67,8 +65,6 @@ export type PlaylistsViewProps = {
   songs: any;
   startPlaylistSongDragAction: any;
   startRenamePlaylist: any;
-  saveSmartPlaylist: (playlistId: string | null, name: string, rules: SmartRules) => string | null;
-  listeningCounts: ListeningCounts;
   /** The playlist page being shown; null shows every playlist. */
   detailPlaylistId?: string | null;
   addSongToPlaylist: (playlistId: string, songId: string) => unknown;
@@ -110,9 +106,6 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
     startPlaylistSongDragAction,
     startRenamePlaylist
   } = props;
-  // undefined: closed; null: creating a new smart playlist.
-  const [smartEditing, setSmartEditing] = useState<Playlist | null | undefined>(undefined);
-  const [prompting, setPrompting] = useState(false);
   const [playlistQuery, setPlaylistQuery] = useState("");
   const [trackQuery, setTrackQuery] = useState("");
   const [trackSort,setTrackSort]=useState<LibrarySortMode>("library");
@@ -134,25 +127,6 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
   useEffect(() => { setTrackQuery(""); setTrackSort("library"); setCoverError(""); }, [detailId]);
   const sortedDetailSongs = useMemo(()=>sortLibrarySongs(detailSongs,trackSort),[detailSongs,trackSort]);
   const filteredDetailSongs = useMemo(()=>filterCollectionSongs(sortedDetailSongs,trackQuery),[sortedDetailSongs,trackQuery]);
-  const smartDialog = smartEditing !== undefined ? (
-    <Suspense fallback={null}>
-      <SmartPlaylistDialog playlist={smartEditing} songs={songs} listeningCounts={props.listeningCounts}
-        onSave={(playlistId, name, rules) => {
-          const id = props.saveSmartPlaylist(playlistId, name, rules);
-          if (id && !playlistId) actions.nav.open({ kind: "playlist", id });
-          return id;
-        }} onClose={() => setSmartEditing(undefined)} />
-    </Suspense>
-  ) : null;
-
-  const promptDialog = prompting ? (
-    <Suspense fallback={null}>
-      <PromptPlaylistDialog songs={songs} currentId={currentId} hidden={hidden} playSongs={props.playSongs}
-        selectSong={props.selectSong} savePlaylist={props.dailyMixes.savePlaylist}
-        openAnalysisSettings={() => { setPrompting(false); props.dailyMixes.openAnalysisSettings(); }} onClose={() => setPrompting(false)} />
-    </Suspense>
-  ) : null;
-
   if (detailId) {
     if (!detailPlaylist) {
       return (
@@ -171,11 +145,10 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
       <section data-page-section="playlists" className="playlistsPage playlistPageV029 playlistDetailPage">
       <PageAtmosphere songs={detailSongs} custom={detailPlaylist.coverArtwork} />
         <CollectionHero
-          typeLabel={detailPlaylist.rules ? "smart playlist" : "playlist"}
+          typeLabel="playlist"
           title={detailPlaylist.name}
           cover={<PlaylistCoverCollage songs={detailSongs} coverArtwork={detailPlaylist.coverArtwork} className="collectionHeroCover playlistCoverCollage" />}
           coverSong={target.coverSong}
-          byline={detailPlaylist.rules ? <span className="smartPlaylistSummary">{describeSmartRules(detailPlaylist.rules)}</span> : undefined}
           stats={`${detailSongs.length} song${detailSongs.length === 1 ? "" : "s"} · ${formatTime(detailSongs.reduce((total, song) => total + (Number(song.duration) || 0), 0))}`}
           playable={playableIds(detailSongs).length}
           onPlay={() => void playPlaylist(detailPlaylist, false)}
@@ -200,11 +173,6 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           }} />
           <button className="collectionIconButton" type="button" disabled={coverBusy} aria-label="Upload playlist artwork" title="Upload playlist artwork" onClick={() => coverInput.current?.click()}><ImagePlus size={16} /></button>
           {detailPlaylist.coverArtwork ? <button className="collectionIconButton" type="button" disabled={coverBusy} aria-label="Reset playlist artwork" title="Reset playlist artwork" onClick={() => props.setPlaylistArtwork(detailPlaylist.id, null)}><X size={16} /></button> : null}
-          {detailPlaylist.rules ? (
-            <button className="collectionIconButton" type="button" onClick={() => setSmartEditing(detailPlaylist)} aria-label="edit rules" title="Edit rules">
-              <SlidersHorizontal size={16} strokeWidth={2.2} aria-hidden="true" />
-            </button>
-          ) : null}
         </CollectionHero>
         {coverError ? <p role="alert">{coverError}</p> : null}
 
@@ -247,8 +215,8 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           {trackQuery.trim() && !filteredDetailSongs.length ? <p role="status">No matching tracks.</p> : <VirtualPlaylistTrackList
             selectedPlaylistId={detailPlaylist.id}
             list={filteredDetailSongs}
-            editable={!detailPlaylist.rules}
-            reorderable={!detailPlaylist.rules && !trackQuery.trim() && trackSort==="library"}
+            editable={true}
+            reorderable={!trackQuery.trim() && trackSort==="library"}
             currentId={currentId}
             isPlaying={isPlaying}
             draggedSongId={draggedSongId}
@@ -260,20 +228,18 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
             onOpenContextMenu={openPlaylistSongContextMenuAction}
             onRemoveSong={removePlaylistSongAction}
           />}
-          {!detailPlaylist.rules && detailSongs.length > 0 ? (
+          {detailSongs.length > 0 ? (
             <PlaylistRecommendations playlist={detailPlaylist} songs={songs as Song[]} playlists={playlists} currentId={currentId} hidden={hidden}
               addSongToPlaylist={props.addSongToPlaylist} selectSong={props.selectSong} />
           ) : null}
         </section>
-        {smartDialog}
-        {promptDialog}
       </section>
     );
   }
 
   return (
     <section data-page-section="playlists" className="playlistsPage playlistPageV029">
-      <PageHeader title="Playlists" description="Build a collection for every mood." />
+      <PageHeader title="Playlists" />
       <div className="playlistToolbar" aria-label="Playlist actions">
         <form
           className="playlistCreateForm"
@@ -293,16 +259,6 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           />
           <Button className="playlistAction playlistActionPrimary" type="submit"><ActionLabel icon={Plus}>Create playlist</ActionLabel></Button>
         </form>
-        <div className="playlistSecondaryActions">
-          <Button variant="secondary" className="playlistAction playlistActionSecondary" type="button" onClick={() => setSmartEditing(null)} disabled={!songs.length}
-            title="A playlist that fills itself from rules and your listening history">
-            <ActionLabel icon={Sparkles}>Smart playlist</ActionLabel>
-          </Button>
-          <Button variant="secondary" className="playlistAction playlistActionSecondary" type="button" onClick={() => setPrompting(true)} disabled={!songs.length}
-            title="Describe a playlist, then choose the songs to keep">
-            <ActionLabel icon={WandSparkles}>From a prompt</ActionLabel>
-          </Button>
-        </div>
       </div>
 
       <DailyMixesShelf {...props.dailyMixes} />
@@ -317,11 +273,11 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           </div>
 
           {playlistSummaries.length > 0 && visiblePlaylists.length === 0 ? <p role="status">No matching playlists.</p> : null}
-          <div className="playlistShelfGrid">
+          <div className="collectionBrowseGrid">
             {playlistSummaries.length ? visiblePlaylists.map(({ playlist, previewSongs, songCount, duration }, index) => (
               <MediaCard
                 key={playlist.id}
-                className={`playlistShelfCard ${activePlaylistId === playlist.id ? "playing" : ""} ${playlistDragOverPlaylistId === playlist.id ? "dropTarget" : ""}`}
+                className={`collectionBrowseCard playlistShelfCard ${activePlaylistId === playlist.id ? "playing" : ""} ${playlistDragOverPlaylistId === playlist.id ? "dropTarget" : ""}`}
                 style={{ "--playlist-stagger": Math.min(index, 12) } as CSSProperties}
                 openLabel={`open ${playlist.name}`}
                 playLabel={`play ${playlist.name}`}
@@ -332,11 +288,11 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
                 onDragLeave={(event) => handlePlaylistShelfDragLeave(event, playlist.id)}
                 onDrop={(event) => handlePlaylistShelfDrop(event, playlist.id)}
                 title="drop a song here to add it"
-                cover={<PlaylistCoverCollage songs={previewSongs} coverArtwork={playlist.coverArtwork} />}
+                cover={<PlaylistCoverCollage songs={previewSongs} coverArtwork={playlist.coverArtwork} className="collectionBrowseCardCover playlistCoverCollage" />}
               >
-                <span className="playlistShelfMeta">
+                <span >
                   <strong>{playlist.name}</strong>
-                  <small>{playlist.rules ? <>smart<MetaDividerDot /></> : null}{songCount} song{songCount === 1 ? "" : "s"}<MetaDividerDot />{formatTime(duration)}</small>
+                  <small>{songCount} song{songCount === 1 ? "" : "s"}<MetaDividerDot />{formatTime(duration)}</small>
                 </span>
                 {playlistDragOverPlaylistId === playlist.id ? <span className="playlistShelfDropHint">Drop to add</span> : null}
               </MediaCard>
@@ -347,8 +303,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
                 tone={songs.length ? "info" : "warning"}
                 eyebrow="playlists"
                 title="No playlists yet"
-                message={songs.length ? "Create a tiny mix and give your favorite songs a cozy corner." : "Import songs first, then make a playlist for gaming, studying, edits, or night drives."}
-                detail={songs.length ? "Tip: you can also drag songs into a playlist card." : "Playlists are local and private."}
+                message={songs.length ? "Create a playlist." : "Import music to get started."}
                 actions={songs.length ? (
                   <button className="mainAction" type="button" onClick={() => {
                     createPlaylist(newPlaylistName.trim() || "my mix");
@@ -364,8 +319,6 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
         </section>
 
       </div>
-      {smartDialog}
-      {promptDialog}
     </section>
   );
 }

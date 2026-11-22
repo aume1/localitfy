@@ -31,7 +31,6 @@ export type HomeViewProps = {
   nowPlayingSongMotionClass: string;
   nowPlayingTransitionKey: string;
   openAnalysisSettings: () => unknown;
-  openCoversViewWithCurrentSong: () => unknown;
   openDailyMixes: () => unknown;
   openSimilarSongs: (request: SimilarSeedRequest) => unknown;
   playableSongCount: number;
@@ -61,7 +60,6 @@ export default function HomeView(props: HomeViewProps) {
     nowPlayingSongMotionClass,
     nowPlayingTransitionKey,
     openAnalysisSettings,
-    openCoversViewWithCurrentSong,
     openDailyMixes,
     playableSongCount,
     playerError,
@@ -204,7 +202,6 @@ export default function HomeView(props: HomeViewProps) {
             sectionOrder={settings.homeSectionOrder}
             hiddenSections={settings.homeHiddenSections}
             updateHomeLayout={updateHomeLayout}
-            openCovers={android ? undefined : openCoversViewWithCurrentSong}
             onClose={closeCustomize}
           />
           </Suspense>

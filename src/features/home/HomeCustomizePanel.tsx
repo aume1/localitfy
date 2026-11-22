@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ArrowDown, ArrowUp, Eye, EyeOff, Images, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, RotateCcw } from "lucide-react";
 import {
   canMoveHomeSection, defaultHiddenHomeSections, homeSections, isHomeLayoutCustomized, moveHomeSection, normalizeHomeHidden,
   resolveHomeSectionOrder, toggleHomeSectionHidden, type HomeLayoutPatch
@@ -9,12 +9,11 @@ export type HomeCustomizePanelProps = {
   sectionOrder: unknown;
   hiddenSections: unknown;
   updateHomeLayout: (patch: HomeLayoutPatch) => unknown;
-  openCovers?: () => unknown;
   onClose: () => void;
 };
 
 /** Popover under the Customize Home button for reordering, hiding and showing Home sections. */
-export default function HomeCustomizePanel({ sectionOrder, hiddenSections, updateHomeLayout, openCovers, onClose }: HomeCustomizePanelProps) {
+export default function HomeCustomizePanel({ sectionOrder, hiddenSections, updateHomeLayout, onClose }: HomeCustomizePanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const order = resolveHomeSectionOrder(sectionOrder);
   const hidden = new Set(normalizeHomeHidden(hiddenSections));
@@ -100,10 +99,6 @@ export default function HomeCustomizePanel({ sectionOrder, hiddenSections, updat
         })}
       </ol>
 
-      {openCovers ? <button className="homeCustomizeLink" type="button" onClick={() => { onClose(); void openCovers(); }}>
-        <Images size={12} strokeWidth={2.2} aria-hidden="true" />
-        Change song covers
-      </button> : null}
     </div>
   );
 }

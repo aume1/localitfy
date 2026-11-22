@@ -16,7 +16,7 @@ test("Settings keeps the existing category rendering and reduced-motion support"
   assert.match(view, /key=\{settingsCategory\}/);
   assert.match(view, /import "\.\/settings\.css";/);
   assert.match(view, /import "\.\/settings-premium\.css";/);
-  for (const section of ["appearance", "playback", "discord", "library", "covers", "downloads", "updates", "about", "experimental", "advanced"]) {
+  for (const section of ["appearance", "playback", "discord", "library", "downloads", "updates", "about", "experimental", "advanced"]) {
     assert.ok(sections.includes('case "' + section + '":'), "Missing Settings category: " + section);
   }
 });
@@ -142,30 +142,14 @@ test("Library uses an unfilled list with theme-aware hover and active rows", () 
   assert.match(read("src/App.css"), /\.songDropTarget::before\s*\{/);
 });
 
-test("Covers keeps interactive tools while replacing fixed blue surfaces", () => {
-  const css = read("src/features/covers/covers.css");
-  const studio = read("src/features/covers/CoverStudio.tsx");
-  const view = read("src/features/covers/CoversView.tsx");
-  assert.match(css, /--cover-surface: var\(--lt-surface-soft\)/);
-  assert.match(css, /--cover-text: var\(--lt-text\)/);
-  assert.doesNotMatch(css, /#0d1d26|#112630|#dce8ed/);
-  assert.match(studio, /coverMaintenanceMenu/);
-  assert.match(studio, /VirtualCoverGalleryGrid/);
-  assert.match(studio, /randomizeSelectedCovers/);
-  assert.match(view, /coverStudioEmptyNotice/);
-  assert.doesNotMatch(view, /LocaltifyStateCard/);
-});
 
 
-test("Library, Covers and Spotify review fixes remain in place", () => {
+test("Library and Spotify review fixes remain in place", () => {
   const library = read("src/features/library/library.css");
-  const covers = read("src/features/covers/CoverStudio.tsx");
   const downloads = read("src/features/downloads/downloads.css");
   assert.match(library, /\.songMeta small \{\s*color: var\(--lt-muted\)/);
   assert.match(library, /\.songInfo \{\s*color: var\(--lt-text\)/);
   assert.match(library, /\.songRow \{[\s\S]*?color: var\(--lt-text\)/);
-  assert.match(covers, /Fix missing \{missingCoverSongs\.length/);
-  assert.doesNotMatch(covers, /Fix missing \$\{/);
   assert.match(downloads, /\.downloadsInputSurface\s*\{[\s\S]*?min-width: 0/);
   assert.match(downloads, /\.downloadsSpotifyPreview\s*\{[\s\S]*?min-width: 0/);
 });

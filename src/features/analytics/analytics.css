@@ -1,4 +1,3 @@
-/* Analytics 4.0: one editorial listening recap, not a collection of cards. */
 .analyticsExperienceV4 { min-width:0; display:grid; grid-template-columns:minmax(0,1fr); gap:clamp(18px,2vw,28px); padding-bottom:var(--lt-space-5); color:var(--lt-text); }
 .analyticsExperienceV4 *, .analyticsExperienceV4 *::before { box-sizing:border-box; }
 .analyticsV4Controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-start; min-width:0; padding:1px 0 3px; }
@@ -22,7 +21,6 @@
 .analyticsV4History { min-width:0; display:grid; grid-template-columns:minmax(0,1fr); gap:16px; }
 .analyticsV4Chart { min-width:0; padding:16px 20px 2px; color:var(--lt-text); }
 .analyticsV4Chart [data-slot="line-chart"] { width:100%; min-width:0; }
-.analyticsV4FinePrint,.analyticsV4Footer { margin:0; color:var(--lt-muted); font-size:11px; line-height:1.55; }
 .analyticsV4Rankings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(20px,3vw,46px); }
 .analyticsV4Ranking { display:grid; min-width:0; gap:18px; align-content:start; }
 .analyticsV4Ranking ol { margin:0; padding:0; list-style:none; display:grid; gap:3px; }
@@ -37,33 +35,11 @@
 .analyticsV4TrackName > span { font-size:11px; color:var(--lt-muted); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .analyticsV4Duration { font-size:11px; color:var(--lt-muted); flex:0 0 auto; font-variant-numeric:tabular-nums; }
 .analyticsV4Empty,.analyticsV4Loading,.analyticsV4Notice { margin:0; padding:20px 0; color:var(--lt-muted); font-size:13px; }
-.analyticsV4Notice button,.analyticsV4Import { border:1px solid var(--lt-border); background:var(--lt-surface-soft); color:var(--lt-text); border-radius:var(--lt-radius-item); padding:10px 14px; cursor:pointer; }
-.analyticsV4Library { min-width:0; border-top:1px solid var(--lt-border); border-bottom:1px solid var(--lt-border); padding:16px 0; }
-.analyticsV4Library summary { display:flex; align-items:center; justify-content:space-between; gap:16px; cursor:pointer; font-size:14px; font-weight:620; }
-.analyticsV4Library summary span+span { font-size:11px; color:var(--lt-muted); font-weight:400; }
-.analyticsV4LibraryGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:24px 18px; padding:25px 0 12px; }
-.analyticsV4LibraryGrid div { min-width:0; display:grid; gap:6px; }
-.analyticsV4LibraryGrid strong { font-size:17px; font-weight:650; overflow-wrap:anywhere; }
-.analyticsV4LibraryGrid span { color:var(--lt-muted); font-size:11px; }
-.analyticsV4Import { display:flex; align-items:center; gap:9px; }
-.analyticsV4Warning { color:var(--lt-muted); font-size:12px; }
-.analyticsV4Footer { display:flex; align-items:center; gap:7px; }
+.analyticsV4Notice button{ border:1px solid var(--lt-border); background:var(--lt-surface-soft); color:var(--lt-text); border-radius:var(--lt-radius-item); padding:10px 14px; cursor:pointer; }
 .analyticsExperienceV4 button:focus-visible,.analyticsExperienceV4 summary:focus-visible { outline:2px solid var(--lt-accent); outline-offset:3px; }
 @media (max-width:1050px) { .analyticsV4Overview { align-items:start; } .analyticsV4Metrics { width:100%; max-width:500px; } }
 @media (max-width:750px) { .analyticsV4Rankings { grid-template-columns:1fr; } .analyticsV4Controls { justify-content:flex-start; } .analyticsV4Overview { gap:22px; } }
 @media (max-width:480px) { .analyticsV4Metrics { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; } .analyticsV4Controls { gap:7px; } .analyticsV4PeriodNav span { min-width:85px; max-width:135px; } .analyticsV4Ranking li { gap:9px; } .analyticsV4Artwork { flex-basis:42px; width:42px; height:42px; } }
-
-.analyticsV4DayData { min-width:0; color:var(--lt-muted); font-size:11px; }
-.analyticsV4DayData summary { width:fit-content; cursor:pointer; font-weight:550; }
-.analyticsV4DayData > div { max-width:100%; overflow-x:auto; margin-top:9px; }
-.analyticsV4DayData table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; text-align:left; }
-.analyticsV4DayData th,.analyticsV4DayData td { padding:7px 9px; border-bottom:1px solid var(--lt-border); white-space:nowrap; text-align:left; }
-.analyticsV4LibraryRecaps,.analyticsV4GenreList { border-top:1px solid var(--lt-border); padding-top:19px; margin-top:15px; min-width:0; }
-.analyticsV4LibraryRecaps h3,.analyticsV4GenreList h3 { margin:6px 0 0; font-size:13px; font-weight:630; }
-.analyticsV4LibraryRecaps .analyticsV4LibraryGrid { padding:15px 0 10px; }
-.analyticsV4GenreList { display:grid; gap:9px; }
-.analyticsV4GenreList > div { display:flex; align-items:center; justify-content:space-between; gap:15px; color:var(--lt-muted); font-size:12px; }
-.analyticsV4GenreList strong { font-weight:650; color:var(--lt-text); font-variant-numeric:tabular-nums; }
 
 .analyticsV4ChartLegend { display:flex; gap:19px; flex-wrap:wrap; align-items:center; margin-top:5px; font-size:11px; color:var(--lt-muted); }
 .analyticsV4ChartLegend span::before { content:""; display:inline-block; width:15px; vertical-align:middle; margin-right:7px; border-top:2px solid var(--lt-accent); }

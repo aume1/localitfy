@@ -58,7 +58,7 @@ export function genreTarget(name: string, songs: readonly Song[]): CollectionTar
 }
 
 export function playlistTarget(playlist: Playlist, songs: readonly Song[]): CollectionTarget {
-  return { kind: "playlist", id: playlist.id, title: playlist.name, subtitle: `${playlist.rules ? "smart playlist" : "playlist"} · ${trackCount(songs.length)}`, songs, coverSong: firstCover(songs), playlist };
+  return { kind: "playlist", id: playlist.id, title: playlist.name, subtitle: `playlist · ${trackCount(songs.length)}`, songs, coverSong: firstCover(songs), playlist };
 }
 
 export function mixTarget(mix: { id: string; name: string }, songs: readonly Song[]): CollectionTarget {

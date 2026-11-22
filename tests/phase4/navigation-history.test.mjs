@@ -73,11 +73,15 @@ test("every collection card opens on click, plays from its button and has the sh
   assert.doesNotMatch(card, /role="button"/);
   assert.match(card, /event\.stopPropagation\(\); void onPlay\(\);/, "the play button does not also open the page");
   for (const file of ["src/features/artists/ArtistsView.tsx", "src/features/genres/GenresView.tsx",
-    "src/features/home/HomeShelves.tsx", "src/features/playlists/PlaylistsView.tsx"]) {
+    "src/features/analysis/DailyMixCard.tsx", "src/features/playlists/PlaylistsView.tsx"]) {
     const source = read(file);
     assert.match(source, /<MediaCard/, file);
     assert.match(source, /actions\.openCollectionMenu\(event,/, file);
   }
+  const shelves = read("src/features/home/HomeShelves.tsx");
+  assert.match(shelves, /<DailyMixCard\b/);
+  assert.match(shelves, /<MediaCard\b/);
+  assert.match(read("src/features/analysis/DailyMixesShelf.tsx"), /<DailyMixCard\b/);
 });
 
 test("songs play on click and open the song menu on right-click everywhere", () => {

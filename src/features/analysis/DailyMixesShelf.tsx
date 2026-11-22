@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import Button from "../../shared/ui/Button";
 import type { Song } from "../library/song.types";
 import type { DailyMix, DailyMixesResult } from "./analysis.types";
-import { MixCoverArtwork } from "../covers/MixCoverArtwork";
 import { CollectionLoading } from "../../shared/ui/CollectionLoading";
-import { MediaCard } from "../../shared/ui/MediaCard";
-import { MetaDividerDot } from "../../shared/ui/LocaltifyViewUi";
-import { formatTime } from "../../shared/utils/format";
 import { prettyMeta } from "../search";
-import { mixTarget, useAppActions } from "../shell/appActions";
+import { mixTarget } from "../shell/appActions";
+import DailyMixCard from "./DailyMixCard";
 import { splitArtistCredits } from "../artists/artistCredits";
 import "./daily-mixes.css";
 
@@ -16,7 +14,6 @@ const ARTISTS_SHOWN = 4;
 
 export type DailyMixesShelfProps = {
   songs: Song[];
-  /** Used by the mix page's "save as playlist". */
   savePlaylist: (name: string, ids: string[]) => string | null;
   openAnalysisSettings: () => void;
 };
@@ -59,7 +56,7 @@ export default function DailyMixesShelf(props: DailyMixesShelfProps) {
   return <section className="dailyMixes" aria-labelledby="daily-mixes-title" aria-busy={loading}>
     <div className="panelHead dailyMixesHeader">
       <div><h3 id="daily-mixes-title">Daily mixes</h3></div>
-      <button type="button" className="softButton dailyMixesRefresh" disabled={loading} onClick={() => void load(true)}><RefreshCw size={15} />{loading ? "Building mixes…" : "Refresh mixes"}</button>
+      <Button variant="secondary" size="sm" className="dailyMixesRefresh" disabled={loading} onClick={() => void load(true)}><RefreshCw size={15} />{loading ? "Building mixes…" : "Refresh mixes"}</Button>
     </div>
     {error ? <p className="dailyMixesNotice" role="alert">{error} <button type="button" className="softButton" disabled={loading} onClick={() => void load()}>Retry</button></p> : null}
     {loading && !result ? <CollectionLoading label="Finding groups of similar sounds…" /> : null}
@@ -71,22 +68,9 @@ export default function DailyMixesShelf(props: DailyMixesShelfProps) {
   </section>;
 }
 
-/** A mix card like a saved playlist's: click opens the mix, the round button plays it, right-click opens its menu. */
 function MixCard({ mix, songsById }: { mix: DailyMix; songsById: Map<string, Song> }) {
-  const actions = useAppActions();
   const songs = mix.songIds.flatMap((id) => { const song = songsById.get(id); return song && song.fileExists !== false ? [song] : []; });
-  const target = mixTarget(mix, songs);
-  const artists = [...new Set(songs.flatMap((song) => song.artist?.trim() ? splitArtistCredits(song.artist).map((name) => prettyMeta(name)) : []))];
-  return (
-    <MediaCard className="playlistShelfCard dailyMixCard" coverClassName="mediaCardPlayCentered" openLabel={`open ${mix.name}`} playLabel={`play ${mix.name}`}
-      onOpen={() => actions.openCollection(target)} onPlay={() => actions.playCollection(target)}
-      onContextMenu={(event) => actions.openCollectionMenu(event, target)}
-      cover={<MixCoverArtwork songs={songs} />}>
-      <span className="playlistShelfMeta">
-        <strong>{mix.name}</strong>
-        <span className="dailyMixArtists">{artists.slice(0, ARTISTS_SHOWN).join(", ") || "your analyzed music"}{artists.length > ARTISTS_SHOWN ? " and more" : ""}</span>
-        <small>{songs.length} song{songs.length === 1 ? "" : "s"}<MetaDividerDot />{formatTime(songs.reduce((sum, song) => sum + (song.duration || 0), 0))}</small>
-      </span>
-    </MediaCard>
-  );
+  const artists = [...new Set(songs.flatMap(song => song.artist?.trim() ? splitArtistCredits(song.artist).map(name => prettyMeta(name)) : []))];
+  return <DailyMixCard mix={mix} songs={songs} target={mixTarget(mix, songs)}
+    artists={(artists.slice(0, ARTISTS_SHOWN).join(", ") || "your analyzed music") + (artists.length > ARTISTS_SHOWN ? " and more" : "")} />;
 }

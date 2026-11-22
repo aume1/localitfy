@@ -1,11 +1,3 @@
-/*
- * Localtify canonical motion layer.
- *
- * Motion owns timing and transient transforms only. Layout belongs to feature
- * styles, renderer-busy degradation belongs to performance.css, and pointer
- * geometry/proximity motion has been retired.
- */
-
 .app{
   --motion-instant: 80ms;
   --motion-fast: 150ms;
@@ -61,7 +53,7 @@ button:disabled:active {
   transform: none;
 }
 
-/* Page/modal entrances are one-shot; dense rows never get mount animations. */
+
 .settingsPage,
 .content > .pageTransition {
   animation: localtifyPageIn var(--motion-normal) var(--motion-ease) both;
@@ -69,7 +61,6 @@ button:disabled:active {
 .settingsPanelCard,
 .settingsPageCard,
 .editorModal,
-.coverStudioShell,
 .queuePanel,
 .playlistPanel {
   animation: localtifyPanelIn 260ms var(--motion-ease) both;
@@ -84,7 +75,7 @@ button:disabled:active {
   animation: localtifyFadeIn 160ms ease-out both;
 }
 
-/* Now-playing transitions avoid animated blur/filter; transform + opacity are cheaper. */
+
 .nowPlayingCopySwap,
 .nowPlayingMiniCopySwap,
 .nowPlayingMiniTitleSwap,
@@ -98,7 +89,6 @@ button:disabled:active {
 }
 
 
-/* Playlist virtual rows own their Y transform in playlists.css; never override it here. */
 .app .playlistTrackRow.virtualPlaylistTrackRow,
 .app .playlistTrackRow.virtualPlaylistTrackRow:hover {
   transition:
@@ -114,14 +104,13 @@ button:disabled:active {
 }
 
 
-/* Settings category content gets one container transition instead of animating every child. */
 .settingsCategoryMotion {
   min-width: 0;
   width: 100%;
   animation: localtifyPanelIn 220ms var(--motion-ease) both;
 }
 
-/* Small icon feedback uses simple transforms, not SVG stroke animations. */
+
 .navLucideIcon,
 .settingsLucideIcon {
   transform-box: fill-box;
@@ -141,7 +130,7 @@ button:disabled:active {
   transform: translate3d(0, -1px, 0) scale(1.05);
 }
 
-/* Busy/background states never keep transient compositor hints alive. */
+
 body.localitfyThemePainting .app .coverAura::before,
 body.localitfyThemePainting .app .ambientSurface::before,
 .app.themeSettling .coverAura::before,

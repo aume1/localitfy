@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
-import { useModalFocus } from "../../../shared/hooks/useModalFocus";
+import Dialog from "../../../shared/ui/Dialog";
+import Button from "../../../shared/ui/Button";
 import { MascotStateArt } from "../../../shared/ui/LocaltifyViewUi";
 import { displaySongPickerSublineV444, displaySongTitleV444 } from "../../library/trackDisplay";
 import type { Song } from "../../library/song.types";
@@ -21,13 +22,11 @@ export default function PlaylistPickerModal({
   song, name, setName, onClose, playlists, songsById,
   addSongToPlaylist, createPlaylistWithSong
 }: PlaylistPickerModalProps) {
-  const dialogRef = useModalFocus(Boolean(song));
   if (!song) return null;
-  // Smart playlists fill themselves, so songs can't be added to them by hand.
-  const manualPlaylists = playlists.filter((playlist) => !playlist.rules);
+  const manualPlaylists = playlists;
   return (
-    <div className="modalWrap playlistPickerWrap" onClick={onClose}>
-      <div ref={dialogRef} tabIndex={-1} className="playlistPickerModal playlistPickerModalV444" role="dialog" aria-modal="true" aria-label="Add song to playlist" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === "Escape" && !event.defaultPrevented) onClose(); }}>
+    <Dialog open onClose={onClose} portal={false} animated={false} backdropClassName="modalWrap playlistPickerWrap"
+      className="playlistPickerModal playlistPickerModalV444" label="Add song to playlist">
         <div className="modalHead playlistPickerHead">
           <div>
             <p className="eyebrow">add to playlist</p>
@@ -56,9 +55,8 @@ export default function PlaylistPickerModal({
         </div>
         <form className="playlistPickerCreate" onSubmit={(event) => { event.preventDefault(); if (name.trim()) createPlaylistWithSong(song.id, name); }}>
           <input value={name} onChange={(event) => setName(event.currentTarget.value)} placeholder="new playlist name" aria-label="New playlist name" />
-          <button className="mainAction" type="submit" disabled={!name.trim()}>create and add</button>
+          <Button className="mainAction" type="submit" disabled={!name.trim()}>create and add</Button>
         </form>
-      </div>
-    </div>
+    </Dialog>
   );
 }

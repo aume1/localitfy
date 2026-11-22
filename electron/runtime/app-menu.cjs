@@ -3,7 +3,7 @@ const REPOSITORY_URL = "https://github.com/meshahid973/localtify";
 // View shortcuts follow the sidebar order; ⌘, already opens Settings.
 const MENU_VIEWS = [
   ["home", "Home"], ["library", "Library"], ["liked", "Liked Songs"], ["artists", "Artists"], ["genres", "Genres"],
-  ["playlists", "Playlists"], ["downloads", "Downloads"], ["covers", "Covers"], ["analytics", "Analytics"]
+  ["playlists", "Playlists"], ["downloads", "Downloads"], ["analytics", "Analytics"]
 ];
 
 /**

@@ -6,14 +6,14 @@ import type { Song } from "../library/song.types";
 import { CollectionLoading } from "../../shared/ui/CollectionLoading";
 import { useHomeDailyMixes } from "./useHomeDailyMixes";
 import { pageArtworkSources, usePageAtmosphere } from "../covers/pageAtmosphere";
-import { MixCoverArtwork } from "../covers/MixCoverArtwork";
 import { MediaCard } from "../../shared/ui/MediaCard";
+import { ScrollableRow } from "../../shared/ui/ScrollableRow";
+import DailyMixCard from "../analysis/DailyMixCard";
 import { mixTarget, useAppActions } from "../shell/appActions";
 import { isAndroidApp } from "../../app/platform";
 
 type SectionHeadProps = { id: string; title: string; action?: ReactNode };
 
-/** Section title with an optional small action on the right ("Play all", "See all"). */
 export function HomeSectionHead({ id, title, action }: SectionHeadProps) {
   return (
     <div className="homeSectionHead">
@@ -30,14 +30,11 @@ type SongRailProps = {
   currentId: string | null;
   selectSong: (songId: string, shouldPlay?: boolean) => unknown;
   playSongs?: (songIds: string[], label: string) => unknown;
-  /** Shown when the rail is empty. Without it an empty rail is left out entirely. */
   emptyText?: string;
   className?: string;
-  /** Optional "Find similar" action shown beside "Play all". */
   findSimilar?: () => unknown;
 };
 
-/** A row of song covers. Clicking a cover plays that song; "Play all" plays the row in order. */
 export function HomeSongRail({ id, title, songs, currentId, selectSong, playSongs, emptyText, className = "", findSimilar }: SongRailProps) {
   const { openSongMenu } = useAppActions();
   const headingId = `home-${id}-title`;
@@ -71,9 +68,8 @@ export function HomeSongRail({ id, title, songs, currentId, selectSong, playSong
           </span>
         ) : null}
       />
-      <div className="homeReleaseRail" tabIndex={0} role="region" aria-labelledby={headingId}>
+      <ScrollableRow className="homeReleaseRail" tabIndex={0} role="region" aria-labelledby={headingId}>
         {songs.map((song) => (
-          // A song card plays on click, so its round button is the same action; it is there so every card looks alike.
           <MediaCard
             key={song.id}
             className="homeReleaseCard"
@@ -91,7 +87,7 @@ export function HomeSongRail({ id, title, songs, currentId, selectSong, playSong
             </span>
           </MediaCard>
         ))}
-      </div>
+      </ScrollableRow>
     </section>
   );
 }
@@ -103,9 +99,7 @@ type DailyMixRailProps = {
   openAnalysisSettings: () => unknown;
 };
 
-/** Today's daily mixes with locally generated artwork. Clicking a mix opens it, the round button plays it; "See all" opens the full shelf in Playlists. */
 export function HomeDailyMixRail({ day, songsById, openDailyMixes, openAnalysisSettings }: DailyMixRailProps) {
-  const actions = useAppActions();
   const { result, failed } = useHomeDailyMixes(day);
   const mixes = useMemo(() => (result?.mixes ?? [])
     .map((mix) => ({ ...mix, songs: mix.songIds.flatMap((id) => { const song = songsById.get(id); return song && (song.filePath || song.url) && song.fileExists !== false ? [song] : []; }) }))
@@ -129,23 +123,14 @@ export function HomeDailyMixRail({ day, songsById, openDailyMixes, openAnalysisS
         action={mixes.length ? <button className="homeSectionAction" type="button" onClick={() => void openDailyMixes()}>See all</button> : null}
       />
       {mixes.length ? (
-        <div className="homeReleaseRail homeMixRail" tabIndex={0} role="region" aria-labelledby="home-daily-mixes-title">
+        <ScrollableRow className="homeReleaseRail homeMixRail" tabIndex={0} role="region" aria-labelledby="home-daily-mixes-title">
           {mixes.map((mix) => {
             const artists = [...new Set(mix.songs.map((song) => song.artist).filter(Boolean))];
             const target = mixTarget(mix, mix.songs);
-            return (
-              <MediaCard key={mix.id} className="homeReleaseCard" openLabel={`open ${mix.name}`} playLabel={`play ${mix.name}`}
-                onOpen={() => actions.openCollection(target)} onPlay={() => actions.playCollection(target)}
-                onContextMenu={(event) => actions.openCollectionMenu(event, target)}
-                cover={<MixCoverArtwork songs={mix.songs} className="homeReleaseCoverWrap" />}>
-                <span className="homeReleaseCopy">
-                  <strong>{mix.name}</strong>
-                  <small>{artists.slice(0, 2).map((artist) => prettyMeta(artist)).join(", ") || `${mix.songs.length} tracks`}</small>
-                </span>
-              </MediaCard>
-            );
+            return <DailyMixCard key={mix.id} mix={mix} songs={mix.songs} target={target}
+              artists={artists.slice(0, 2).map((artist) => prettyMeta(artist)).join(", ") || `${mix.songs.length} tracks`} home />;
           })}
-        </div>
+        </ScrollableRow>
       ) : (
         <div className="homeShelfNotice">
           <span>Analyze at least five tracks and Localtify will build fresh mixes from your library every day.</span>

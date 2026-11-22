@@ -1,3 +1,4 @@
+import { Slider } from "../../../shared/ui/Slider";
 import { Fragment, lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { TouchEvent as ReactTouchEvent } from "react";
 import { ChevronDown, ListMusic, MicVocal, MoreVertical, Repeat2, Shuffle, SkipBack, SkipForward } from "lucide-react";
@@ -15,7 +16,6 @@ import "./phone-player.css";
 
 const LyricsView = lazy(() => import("../../lyrics/LyricsView"));
 
-// Slots in the app's progress refs; 0 and 1 belong to the Home hero and the desktop player bar.
 const MINI_SLOT = 2;
 const SHEET_SLOT = 3;
 const SWIPE_CLOSE_PX = 90;
@@ -23,7 +23,6 @@ const SWIPE_SKIP_PX = 70;
 
 export type PhonePlayerProps = PlayerBarProps & { lyrics: Omit<LyricsViewProps, "anchorRef">; backgroundStyle?: string; backgrounded?: boolean };
 
-/** The phone's player: a mini player above the tabs that opens a full-screen player with the cover or the lyrics. */
 export default function PhonePlayer(props: PhonePlayerProps) {
   const {
     ambientStyle, commitSeek, currentDuration, currentSong, displayedProgress, displayedTime, isPlaying, isSeeking, isShuffle,
@@ -64,7 +63,6 @@ export default function PhonePlayer(props: PhonePlayerProps) {
     return () => { if (expanded) window.dispatchEvent(new CustomEvent("localtifyplayersheet", { detail: false })); };
   }, [expanded]);
 
-  // Android back: lyrics first, then the full-screen player.
   useEffect(() => {
     if (!expanded) return;
     const onBack = (event: Event) => {
@@ -77,7 +75,6 @@ export default function PhonePlayer(props: PhonePlayerProps) {
     return () => window.removeEventListener("localtifyuiback", onBack);
   }, [expanded, lyrics, queuePanelOpen, toggleQueuePanel]);
 
-  // The system media controls (notification, lock screen) show and change shuffle and repeat too.
   const toggleRepeatRef = useRef(toggleRepeat);
   toggleRepeatRef.current = toggleRepeat;
   useEffect(() => {
@@ -94,7 +91,6 @@ export default function PhonePlayer(props: PhonePlayerProps) {
 
   if (!currentSong) return null;
 
-  // Down closes the player; on the cover, left plays the next song and right the previous one.
   const swipeStart = (event: ReactTouchEvent) => {
     resetDrag();
     const touch = event.touches[0];
@@ -107,7 +103,6 @@ export default function PhonePlayer(props: PhonePlayerProps) {
     const dx = touch.clientX - start.x;
     dragOffsetRef.current = Math.abs(dx) > Math.abs(touch.clientY - start.y) ? dx : 0;
     if (dragFrameRef.current !== null) return;
-    // Paint at most once per frame without re-rendering the player and lyrics.
     dragFrameRef.current = requestAnimationFrame(() => {
       dragFrameRef.current = null;
       const slot = artSlotRef.current;
@@ -150,7 +145,7 @@ export default function PhonePlayer(props: PhonePlayerProps) {
         <button type="button" className="phoneIconButton" onClick={() => playNext(true)} aria-label="next song">
           <SkipForward size={22} strokeWidth={2.2} aria-hidden="true" />
         </button>
-        <input ref={(node) => { progressInputRefs.current[MINI_SLOT] = expanded ? null : node; }} key={String(expanded)} className="phoneMiniProgress" type="range" min="0" max="100" step="0.1"
+        <Slider ref={(node) => { progressInputRefs.current[MINI_SLOT] = expanded ? null : node; }} key={String(expanded)} className="phoneMiniProgress" min="0" max="100" step="0.1"
           defaultValue={displayedProgress} tabIndex={-1} aria-hidden="true" disabled />
       </div>
 
@@ -211,9 +206,9 @@ export default function PhonePlayer(props: PhonePlayerProps) {
           </div>
 
           <div className="phonePlayerSeek">
-            <input
+            <Slider
               ref={(node) => { progressInputRefs.current[SHEET_SLOT] = node; }}
-              type="range" min="0" max="100" step="0.1" defaultValue={displayedProgress} style={progressRangeStyle} aria-label="song progress"
+              min="0" max="100" step="0.1" defaultValue={displayedProgress} style={progressRangeStyle} aria-label="song progress"
               onPointerDown={(event) => { event.currentTarget.setPointerCapture?.(event.pointerId); startSeekPreview(event.currentTarget.value, event.currentTarget); }}
               onInput={(event) => previewSeek(event.currentTarget.value, event.currentTarget)}
               onChange={(event) => previewSeek(event.currentTarget.value, event.currentTarget)}

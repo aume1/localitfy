@@ -2,9 +2,9 @@ import { useEffect, useRef } from "react";
 import type { View } from "./view.types";
 import type { NavigationHistory } from "./useNavigationHistory";
 
-const MENU_VIEWS = new Set<View>(["home", "library", "liked", "artists", "genres", "playlists", "discover", "downloads", "covers", "analytics", "settings"]);
+const MENU_VIEWS = new Set<View>(["home", "library", "liked", "artists", "genres", "playlists", "discover", "downloads", "analytics", "settings"]);
 // Page search fields. Playlists reuses the header input for naming a new playlist, so it has no search.
-const SEARCH_SELECTOR = ".content :is(.librarySearch, .pageHeaderSearch:not(.playlistCreateForm *), .coverStudioSearchInput, #settings-section-search)";
+const SEARCH_SELECTOR = ".content :is(.librarySearch, .pageHeaderSearch:not(.playlistCreateForm *), #settings-section-search)";
 
 export type AppMenuActions = {
   changeView: (view: View) => void;

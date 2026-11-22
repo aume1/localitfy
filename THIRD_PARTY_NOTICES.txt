@@ -25,3 +25,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Liner desktop UI adaptations
+Source: https://github.com/tryliner/desktop
+Upstream revision: 54eaab9ade697b95756c68b6901a24b0a27949e4
+Copyright (c) 2024-2026 Liner Project Contributors & feralbureau.
+All rights reserved.
+Upstream license: https://github.com/tryliner/desktop/blob/54eaab9ade697b95756c68b6901a24b0a27949e4/LICENSE
+Adapted UI paths:
+- src/shared/ui/Button.tsx, Dialog.tsx, EntityHero.tsx, ScrollableRow.tsx, Slider.tsx, controls.css, surface.css
+- src/features/analysis/DailyMixCard.tsx
+- src/features/settings/settings.shared.tsx
+- src/styles/tokens.css, themes.css
+Separate reuse authorization has been reported by the maintainer; its written scope and any required redistribution conditions must be confirmed before release. The upstream public license alone does not grant redistribution rights.

@@ -1,11 +1,10 @@
-/* Theme primitives for status surfaces. Feature-specific geometry stays with the feature. */
 :where(.localtifySurface) {
   --surface-tone-rgb: var(--lt-accent-rgb);
   min-width: 0;
   border: 1px solid var(--lt-border);
   border-radius: var(--lt-radius-panel);
   color: var(--lt-text);
-  background: var(--lt-fill);
+  background: var(--lt-fill-subtle);
 }
 
 :where(.localtifySurface-accent) {
@@ -61,7 +60,6 @@
 }
 .app.reducedMotion :where(.localtifySurface-interactive) { transition: none; }
 
-/* Shared top-level overlay skin; menus and the queue own only geometry. */
 .ltOverlaySurface {
   background: var(--lt-glass-background);
   backdrop-filter: blur(var(--lt-glass-blur));

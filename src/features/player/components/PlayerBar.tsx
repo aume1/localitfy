@@ -1,3 +1,4 @@
+import { Slider } from "../../../shared/ui/Slider";
 import { Fragment } from "react";
 import type { CSSProperties, Dispatch, DragEventHandler, MouseEvent as ReactMouseEvent, MutableRefObject, PointerEventHandler, SetStateAction } from "react";
 import { ListMusic, MicVocal, Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
@@ -50,7 +51,6 @@ export type PlayerBarProps = {
   queueDropHot: boolean;
   queueCount: number;
   queuePanelOpen: boolean;
-  /** Undefined when lyrics are turned off in settings. */
   lyricsOpen?: boolean;
   toggleLyrics: () => unknown;
   repeatButtonAriaLabel: string;
@@ -72,7 +72,6 @@ export type PlayerBarProps = {
   volumeDraft: number;
   volumeDraftRef: MutableRefObject<number>;
   volumeRangeStyle: CSSProperties;
-  /** Devices on the live connection; null when no phone is connected. */
   connect?: ConnectControls | null;
   openImmersive?: () => void;
   immersiveOpen?: boolean;
@@ -257,9 +256,8 @@ export default function PlayerBar(props: PlayerBarProps) {
 
               <div className="progressRow progressResetSweep" key={`progress-${nowPlayingTransitionKey}-${Boolean(props.immersiveOpen)}`}>
                 <span ref={(node) => { progressTimeLabelRefs.current[1] = props.immersiveOpen ? null : node; }}>{formatTime(displayedTime)}</span>
-                <input
+                <Slider
                   ref={(node) => { progressInputRefs.current[1] = props.immersiveOpen ? null : node; }}
-                  type="range"
                   min="0"
                   max="100"
                   step="0.1"
@@ -328,8 +326,7 @@ export default function PlayerBar(props: PlayerBarProps) {
                       <VolumeX className="playerControlIcon" size={17} strokeWidth={2.2} aria-hidden="true" />
                     )}
                   </button>
-                  <input
-                    type="range"
+                  <Slider
                     min="0"
                     max="100"
                     step="1"

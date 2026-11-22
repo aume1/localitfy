@@ -72,7 +72,6 @@ export default function ArtistsView({ songs }: ArtistsViewProps) {
     <section data-page-section="artists" className="collectionBrowsePage artistsPage" aria-label="artists">
       <PageHeader
         title="Artists"
-        description="Artists in your library"
       >
         <input
           className="pageHeaderSearch"
@@ -119,9 +118,8 @@ export default function ArtistsView({ songs }: ArtistsViewProps) {
         <LocaltifyStateCard
           centered
           tone="info"
-          eyebrow="artists"
           title={songs.length ? "No artists found" : "No artists yet"}
-          message={songs.length ? "Try a different artist name." : "Import songs and Localitfy will build your artist shelf from their metadata."}
+          message={songs.length ? "Try a different artist name." : "Import music to get started."}
           actions={query ? <button type="button" className="softButton" onClick={() => setQuery("")}>clear search</button> : undefined}
         />
       )}

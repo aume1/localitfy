@@ -1,6 +1,6 @@
 import "./analytics.css";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Ellipsis, Music2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ellipsis } from "lucide-react";
 import { isAndroidApp } from "../../app/platform";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { Cover } from "../covers/Cover";
@@ -53,7 +53,6 @@ function breakdown(songs: Song[], summary: ListeningCalendarSummary | null) {
   const byId = new Map(songs.map(song => [song.id, song]));
   const topSongs = (summary?.bySong || []).map(({ id, ms }) => ({ song: byId.get(id) || null, id, ms })).slice(0, 5);
   const artists = new Map<string, { name: string; ms: number; song: Song | null }>();
-  const genres = new Map<string, number>();
   for (const entry of summary?.bySong || []) {
     const song = byId.get(entry.id);
     if (!song) continue;
@@ -67,18 +66,13 @@ function breakdown(songs: Song[], summary: ListeningCalendarSummary | null) {
       const existing = artists.get(key);
       artists.set(key, { name: existing?.name || name, ms: (existing?.ms || 0) + amount, song: existing?.song || song });
     });
-    const genre = String(song.genre || "").trim() || "Unknown";
-    genres.set(genre, (genres.get(genre) || 0) + entry.ms);
   }
   const topArtists = [...artists.values()].sort((a, b) => b.ms - a.ms || a.name.localeCompare(b.name)).slice(0, 5);
-  const topGenres = [...genres].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  return { topSongs, topArtists, topGenres };
+  return { topSongs, topArtists };
 }
 
 export default function AnalyticsView({
-  songs, importSongs, missingFileCount, neverPlayedCount, recentImportWeekCount,
-  averageSongSeconds, libraryLengthLabel, libraryHealthLabel, libraryHealthPercent,
-  longestSong, playedPercent, likedPercent, onSelectSong, analyticsRecapCards, analyticsStatCards
+  songs, importSongs, onSelectSong
 }: AnalyticsViewProps) {
   const actions = useAppActions();
   const [range, setRange] = useState<ListeningCalendarRange>("month");
@@ -136,7 +130,7 @@ export default function AnalyticsView({
     const lines = [
       "Localtify listening recap — " + listeningPeriodName(summary),
       "Recorded listening: " + readableDuration(summary.totalMs),
-      "Listening events: " + summary.sessions.toLocaleString(),
+      "Sessions: " + summary.sessions.toLocaleString(),
       "Active days: " + summary.activeDays.toLocaleString(),
       ...insight.topSongs.slice(0, 3).map((entry, i) => (i + 1) + ". " + (entry.song?.title || "Unavailable track") + " — " + readableDuration(entry.ms))
     ];
@@ -144,7 +138,7 @@ export default function AnalyticsView({
   }
 
   return <section data-page-section="analytics" className="analyticsExperienceV4" aria-label="Listening analytics">
-    <PageHeader title="Analytics" description="Your listening, in perspective." />
+    <PageHeader title="Analytics" />
       <div className="analyticsV4Controls">
         <SegmentedControl options={RANGE_OPTIONS} value={range} onValueChange={selectRange} label="Listening period" />
         <div className="analyticsV4PeriodNav" aria-label="Navigate listening periods">
@@ -159,18 +153,18 @@ export default function AnalyticsView({
         ]} />
       </div>
     {!songs.length ? <div className="analyticsV4EmptyLibrary" role="status">
-      <span>{isAndroidApp() ? "Sync your music library from your paired computer to build a listening recap." : "Import music and start listening to build your personal recap."}</span>
+      <span>{isAndroidApp() ? "Sync your music library." : "Import music to get started."}</span>
       {!isAndroidApp() ? <button type="button" onClick={importSongs}>Import music</button> : null}
     </div> : null}
 
-    {loading ? <div className="analyticsV4Loading" role="status">Loading your listening recap…</div> :
+    {loading ? <div className="analyticsV4Loading" role="status">Loading…</div> :
       failed || !summary ? <div className="analyticsV4Notice" role="status">
-        <p>Listening history is unavailable. {isAndroidApp() ? "Connect to your paired computer to refresh this period." : "Check your listening history settings and try again."}</p>
+        <p>Listening history unavailable.</p>
         <button type="button" onClick={() => setRevision(value => value + 1)}>Try again</button>
       </div> : <>
         <div className="analyticsV4Overview">
           <div className="analyticsV4Total">
-            <span>Recorded listening time</span>
+            <span>Listening time</span>
             <strong>{readableDuration(summary.totalMs)}</strong>
             <small>{listeningPeriodName(summary)}{summary.partial ? " · period in progress" : ""}</small>
           </div>
@@ -185,7 +179,7 @@ export default function AnalyticsView({
         </div>
 
         <section className="analyticsV4History" aria-label="Listening history">
-          <div className="analyticsV4SectionHeading"><h2>Listening history</h2><p>Recorded minutes · UTC</p></div>
+          <div className="analyticsV4SectionHeading"><h2>Listening history</h2><p>Minutes · UTC</p></div>
           {summary.totalMs || summary.comparison.totalMs ? (
             <div className="analyticsV4Chart">
               <LineChart
@@ -201,17 +195,7 @@ export default function AnalyticsView({
               </LineChart>
               <div className="analyticsV4ChartLegend" aria-label="Chart series"><span>This period</span><span>Previous period</span></div>
             </div>
-          ) : <p className="analyticsV4Empty">No recorded listening in this period yet.</p>}
-          <details className="analyticsV4DayData"><summary>Inspect exact UTC {summary.range==="year"?"months":"days"}</summary>
-            <div><table><caption>Recorded listening, attributed to the UTC date each event began</caption>
-              <thead><tr><th scope="col">Current UTC period</th><th scope="col">Recorded</th><th scope="col">Previous UTC period</th><th scope="col">Recorded</th></tr></thead>
-              <tbody>{categories.map((_,index)=><tr key={index}>
-                <th scope="row">{summary.byBucket[index]?.id||"—"}</th><td>{summary.byBucket[index]?readableDuration(summary.byBucket[index].ms):"—"}</td>
-                <td>{summary.comparison.byBucket[index]?.id||"—"}</td><td>{summary.comparison.byBucket[index]?readableDuration(summary.comparison.byBucket[index].ms):"—"}</td>
-              </tr>)}</tbody>
-            </table></div>
-          </details>
-          <p className="analyticsV4FinePrint">Comparison curves show the full preceding period; {summary.partial?"percentage change compares equivalent elapsed time":"percentage change compares complete periods"}. Months may have different lengths. Events are grouped by UTC start date. Older unrecorded playback is not estimated.{isAndroidApp() ? " Phone plays not yet synced to your computer are excluded." : ""} Last snapshot: {new Date(summary.generatedAt).toLocaleString()}.</p>
+          ) : <p className="analyticsV4Empty">No listening history.</p>}
         </section>
 
         <div className="analyticsV4Rankings">
@@ -225,7 +209,7 @@ export default function AnalyticsView({
                 <span>{song?.artist || "No longer in the library"}</span>
               </div>
               <span className="analyticsV4Duration">{readableDuration(ms)}</span>
-            </li>)}</ol> : <p className="analyticsV4Empty">Your most-listened tracks will appear here.</p>}
+            </li>)}</ol> : <p className="analyticsV4Empty">No tracks yet.</p>}
           </section>
           <section className="analyticsV4Ranking" aria-label="Top artists">
             <h2>Top artists</h2>
@@ -237,41 +221,10 @@ export default function AnalyticsView({
                 <span>Artist</span>
               </div>
               <span className="analyticsV4Duration">{readableDuration(ms)}</span>
-            </li>)}</ol> : <p className="analyticsV4Empty">Your most-listened artists will appear here.</p>}
+            </li>)}</ol> : <p className="analyticsV4Empty">No artists yet.</p>}
           </section>
         </div>
       </>}
 
-    <details className="analyticsV4Library">
-      <summary><span>Library details</span><span>Imports, favorites &amp; health</span></summary>
-      <div className="analyticsV4LibraryGrid">
-        <div><strong>{songs.length.toLocaleString()}</strong><span>Tracks in library</span></div>
-        <div><strong>{libraryLengthLabel}</strong><span>Total library length</span></div>
-        <div><strong>{recentImportWeekCount.toLocaleString()}</strong><span>Imported this week</span></div>
-        <div><strong>{playedPercent}%</strong><span>Tracks played</span></div>
-        <div><strong>{likedPercent}%</strong><span>Tracks liked</span></div>
-        <div><strong>{neverPlayedCount.toLocaleString()}</strong><span>Never played</span></div>
-        <div><strong>{missingFileCount.toLocaleString()}</strong><span>Missing files</span></div>
-        <div><strong>{libraryHealthPercent}%</strong><span>{libraryHealthLabel}</span></div>
-        <div><strong>{averageSongSeconds ? formatAnalyticsDuration(averageSongSeconds) : "—"}</strong><span>Average track</span></div>
-        <div><strong>{longestSong ? formatAnalyticsDuration(longestSong.duration) : "—"}</strong><span>Longest track{longestSong?" · "+longestSong.title:""}</span></div>
-      </div>
-      <section className="analyticsV4LibraryRecaps">
-        <h3>Monthly &amp; yearly library imports</h3>
-        <div className="analyticsV4LibraryGrid">{analyticsRecapCards.filter(card=>card.label!=="all-time listening").map(card=><div key={card.label}>
-          <strong>{card.value}</strong><span>{card.label} · {card.note} · {card.meta}</span>
-        </div>)}</div>
-        <h3>Additional library statistics</h3>
-        <div className="analyticsV4LibraryGrid">{analyticsStatCards.filter(card=>card.label!=="listened").map(card=><div key={card.label}>
-          <strong>{card.value}</strong><span>{card.label} · {card.note}</span>
-        </div>)}</div>
-      </section>
-      {insight.topGenres.length?<section className="analyticsV4GenreList"><h3>Top genres by recorded listening</h3>
-        {insight.topGenres.map(([genre,ms])=><div key={genre}><span>{genre}</span><strong>{readableDuration(ms)}</strong></div>)}
-      </section>:null}
-      {!songs.length && !isAndroidApp() ? <button type="button" onClick={importSongs} className="analyticsV4Import"><Music2 size={16}/> Import music</button> : null}
-      {missingFileCount ? <p className="analyticsV4Warning">{missingFileCount} library file{missingFileCount===1?" is":"s are"} missing on disk. Repair them from Library settings.</p> : null}
-    </details>
-    <p className="analyticsV4Footer"><ArrowLeft size={13}/> Local-first listening history. You control your data.</p>
   </section>;
 }

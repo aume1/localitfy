@@ -65,23 +65,23 @@
 .libraryPage .pageHeader { align-items: center; }
 .libraryPage .pageHeaderHeading { flex-basis: 100%; }
 .libraryPage .pageHeaderTools { justify-content: flex-start; }
-.libraryNavigation, .libraryViewMode {
+.libraryViewMode {
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--lt-space-2);
 }
-.libraryNavigation { margin-inline-end: auto; }
-.libraryNavigation button, .libraryViewMode button {
+
+.libraryViewMode button {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: var(--lt-menu-item-height); padding: 0 var(--lt-space-3);
   border: 0; border-radius: var(--lt-radius-item);
   background: var(--lt-surface-soft); color: var(--lt-muted); font: inherit; cursor: pointer;
 }
-.libraryNavigation button[aria-current="page"], .libraryViewMode button[aria-pressed="true"] {
+.libraryViewMode button[aria-pressed="true"] {
   background: var(--lt-text); color: var(--lt-bg);
 }
-.libraryNavigation button:hover:not([aria-current="page"]), .libraryViewMode button:hover:not([aria-pressed="true"]) {
+.libraryViewMode button:hover:not([aria-pressed="true"]) {
   background: var(--lt-surface-raised); color: var(--lt-text);
 }
-.libraryNavigation button:focus-visible, .libraryViewMode button:focus-visible, .libraryCollectionShortcuts button:focus-visible {
+.libraryViewMode button:focus-visible, .libraryCollectionShortcuts button:focus-visible {
   outline: 2px solid var(--lt-accent); outline-offset: 2px;
 }
 .libraryCollectionShortcuts {

@@ -31,7 +31,7 @@ test("shell interactions are calm, theme-aware and retain the existing native co
   assert.match(view, /\.sidebar \.navItem\.active \{[^}]*background: var\(--lt-fill-selected\)/);
   assert.match(view, /\.navText strong \{[\s\S]*?font-size: var\(--lt-text-base\)/);
   assert.match(nav, /title=\{item\.label\}/);
-  assert.match(nav, /aria-current=\{view === item\.id \? "page" : undefined\}/);
+  assert.match(nav, /aria-current=\{primaryNavigationView\(view\) === item\.id \? "page" : undefined\}/);
   const bar = read("src/features/player/player.css");
   assert.match(bar, /\.playerMeta strong\{[^}]*color: var\(--lt-text\)/);
   assert.match(bar, /\.playerMeta p\{[^}]*color: var\(--lt-muted\)/);

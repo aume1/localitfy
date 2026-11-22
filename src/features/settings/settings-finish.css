@@ -1,4 +1,3 @@
-/* Shared settings surface refinements. Theme tokens continue to own colors. */
 .settingsPage.settingsPageV027 { width: min(100%, 1260px); }
 .settingsPage.settingsPageV027 .settingsLayout { grid-template-columns: 242px minmax(0,1fr); gap: clamp(18px,2.5vw,30px); }
 .settingsPage.settingsPageV027 .settingsCategoryRail {
@@ -31,8 +30,8 @@
 .settingsPage.settingsPageV027 .settingsCategoryHeader { min-height: 62px; margin-bottom: 0; }
 .settingsPage.settingsPageV027 .settingsPanelCard,
 .settingsPage.settingsPageV027 .settingGroup {
-  border: 1px solid var(--lt-border); border-radius: 13px;
-  background: var(--settings-surface); padding: clamp(16px,2vw,22px);
+  border: 1px solid transparent; border-radius: var(--lt-radius-item);
+  background: var(--lt-fill-subtle); padding: clamp(16px,2vw,22px);
   box-shadow: none;
 }
 .settingsPage.settingsPageV027 :is(.settingsPanelCard,.settingGroup) + :is(.settingsPanelCard,.settingGroup) { margin-top: 2px; }

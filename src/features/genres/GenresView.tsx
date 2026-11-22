@@ -52,9 +52,7 @@ export default function GenresView({ songs }: GenresViewProps) {
   return (
     <section data-page-section="genres" className="collectionBrowsePage genresPage" aria-label="genres">
       <PageHeader
-        eyebrow="local genres"
         title="Genres"
-        description="Read directly from your music tags. Multi-genre tracks appear in every matching genre."
       >
         <input className="pageHeaderSearch" value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder="search genres" aria-label="search genres" />
         <ArcDropdownMenu<GenreSortMode> className="genresSort" ariaLabel="Sort genres" value={sortMode} items={GENRE_SORT_ITEMS} onValueChange={setSortMode} />
@@ -90,9 +88,8 @@ export default function GenresView({ songs }: GenresViewProps) {
         <LocaltifyStateCard
           centered
           tone="info"
-          eyebrow="genres"
           title={loadingTags && !query ? "Reading genre tags" : songs.length ? "No genres found" : "No genres yet"}
-          message={loadingTags && !query ? "Checking the genre tags in your local library." : hiddenBySize ? `No genre with ${minTracks}+ tracks matches. Lower the minimum to see smaller genres.` : songs.length ? "Try a different genre, or add genre tags to your music files." : "Import songs and Localtify will build this shelf from their genre tags."}
+          message={loadingTags && !query ? "Checking the genre tags in your local library." : hiddenBySize ? `No genre with ${minTracks}+ tracks matches. Lower the minimum to see smaller genres.` : songs.length ? "Try a different genre, or add genre tags to your music files." : "Import music to get started."}
           actions={query || hiddenBySize ? (
             <>
               {query ? <button type="button" className="softButton" onClick={() => setQuery("")}>clear search</button> : null}

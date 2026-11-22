@@ -16,14 +16,14 @@ import { AppActionsContext, playableIds, type AppActions } from "./appActions";
 import { useCollectionActions } from "./useCollectionActions";
 import { CollectionLoading } from "../../shared/ui/CollectionLoading";
 import { PageErrorBoundary } from "./PageErrorBoundary";
-import { MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
-import type { MascotStateKey } from "../../shared/ui/LocaltifyViewUi";
 const WhatsNewModal = lazy(() => import("../updates/WhatsNewModal"));
 import { clamp } from "../../shared/utils/format";
 import type { AppShellProps } from "./appShell.contract";
 import type { Song } from "../library/song.types";
 import { useDownloadTagPrompt } from "../tagging/useDownloadTagPrompt";
 import SidebarNav from "./SidebarNav";
+import { libraryViews } from "./navigation.constants";
+import "./library-navigation.css";
 import { isAndroidApp } from "../../app/platform";
 import {
   APP_VERSION
@@ -51,7 +51,6 @@ const ArtistPage = lazy(() => import("../pages/SongGroupPage").then((module) => 
 const GenrePage = lazy(() => import("../pages/SongGroupPage").then((module) => ({ default: module.GenrePage })));
 const MixPage = lazy(() => import("../pages/MixPage"));
 const PlaylistsView = lazy(() => import("../playlists/PlaylistsView"));
-const CoversView = lazy(() => import("../covers/CoversView"));
 const AnalyticsView = lazy(() => import("../analytics/AnalyticsView"));
 const DiscoverView = lazy(() => import("../discover/DiscoverView"));
 const SettingsView = lazy(() => import("../settings/SettingsView"));
@@ -67,7 +66,7 @@ export type { AppShellProps } from "./appShell.contract";
 export default function AppShell(props: AppShellProps) {
   const {
     frame, updates, screensaver, effects, navigation,
-    home, library, artists, genres, playlists, covers, analytics, discover, settingsView, downloads,
+    home, library, artists, genres, playlists, analytics, discover, settingsView, downloads,
     playerBar, modals, playbackAudio, collections
   } = props;
 
@@ -126,9 +125,6 @@ export default function AppShell(props: AppShellProps) {
     show={showTopUpdateRibbon} updatePrompt={updatePrompt} appVersion={APP_VERSION} reducedMotion={settings.reducedMotion}
     onDownload={askUpdaterToDownload} onInstall={askUpdaterToInstall} onCheckAgain={manualUpdateCheck}
     onWhatsNew={onWhatsNew} onDismiss={onDismiss}/></Suspense>:null;
-  const mascotDebugMode =
-    typeof window !== "undefined" &&
-    window.localStorage.getItem("localtify:mascotDebug") === "1";
 
 
   return (
@@ -239,41 +235,15 @@ export default function AppShell(props: AppShellProps) {
 
           <section className="content" ref={contentRef}>
             {isAndroidApp()&&updateBanner?<div className="androidUpdateNotice">{updateBanner}</div>:null}
-            {mascotDebugMode ? (
-              <section className="mascotDebugPanelV498" aria-label="Mascot state debug gallery">
-                <div className="panelHead mascotDebugHeadV498">
-                  <div>
-                    <p className="eyebrow">mascot debug</p>
-                    <h3>all mascot states</h3>
-                  </div>
-                  <button
-                    className="softButton"
-                    type="button"
-                    onClick={() => {
-                      window.localStorage.removeItem("localtify:mascotDebug");
-                      window.location.reload();
-                    }}
-                  >
-                    hide
-                  </button>
-                </div>
-
-                <div className="mascotDebugGridV498">
-                  {(["empty", "happy", "question", "info", "warning", "danger", "error", "loading"] as MascotStateKey[]).map((state) => (
-                    <div className="mascotDebugCardV498" key={state}>
-                      <MascotStateArt state={state} />
-                      <strong>{state}</strong>
-                      <small>{state}-state.png</small>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
             <div
               className={`pageTransition pageTransition-${view}`}
               data-view={view}
             >
+              {libraryViews.includes(view) ? <nav className="librarySectionNav" aria-label="Library sections">
+                {([["library", "Songs"], ["artists", "Artists"], ["genres", "Genres"], ["playlists", "Playlists"], ["liked", "Liked"]] as const).map(([id, label]) =>
+                  <button key={id} type="button" data-library-section={id} aria-current={view === id ? "page" : undefined} onClick={() => nav.go(id)}>{label}</button>
+                )}
+              </nav> : null}
               <PageErrorBoundary key={view + ":" + (detail?.id ?? "")}>
               {view === "home" ? <HomeView {...home} /> : null}
 
@@ -288,7 +258,6 @@ export default function AppShell(props: AppShellProps) {
                 {view === "playlists" ? (detail?.kind === "mix"
                   ? <MixPage key={detail.id} mixId={detail.id} {...pageProps} savePlaylist={playlists.dailyMixes.savePlaylist} />
                   : <PlaylistsView {...playlists} detailPlaylistId={detail?.kind === "playlist" ? detail.id : null} />) : null}
-                {view === "covers" ? <CoversView {...covers} /> : null}
                 {view === "analytics" ? <AnalyticsView {...analytics} /> : null}
                 {view === "discover" ? <DiscoverView {...discover} /> : null}
                 {view === "settings" ? <SettingsView {...settingsView} /> : null}
