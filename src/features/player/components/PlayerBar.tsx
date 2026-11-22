@@ -260,7 +260,6 @@ export default function PlayerBar(props: PlayerBarProps) {
                 <span ref={(node) => { progressTimeLabelRefs.current[1] = props.immersiveOpen ? null : node; }}>{formatTime(displayedTime)}</span>
                 <Slider
                   ref={(node) => { progressInputRefs.current[1] = props.immersiveOpen ? null : node; }}
-                  
                   min="0"
                   max="100"
                   step="0.1"
@@ -330,7 +329,6 @@ export default function PlayerBar(props: PlayerBarProps) {
                     )}
                   </button>
                   <Slider
-                    
                     min="0"
                     max="100"
                     step="1"

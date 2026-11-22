@@ -151,7 +151,7 @@ export default function PhonePlayer(props: PhonePlayerProps) {
         <button type="button" className="phoneIconButton" onClick={() => playNext(true)} aria-label="next song">
           <SkipForward size={22} strokeWidth={2.2} aria-hidden="true" />
         </button>
-        <Slider ref={(node) => { progressInputRefs.current[MINI_SLOT] = expanded ? null : node; }} key={String(expanded)} className="phoneMiniProgress"  min="0" max="100" step="0.1"
+        <Slider ref={(node) => { progressInputRefs.current[MINI_SLOT] = expanded ? null : node; }} key={String(expanded)} className="phoneMiniProgress" min="0" max="100" step="0.1"
           defaultValue={displayedProgress} tabIndex={-1} aria-hidden="true" disabled />
       </div>
 
@@ -214,7 +214,7 @@ export default function PhonePlayer(props: PhonePlayerProps) {
           <div className="phonePlayerSeek">
             <Slider
               ref={(node) => { progressInputRefs.current[SHEET_SLOT] = node; }}
-               min="0" max="100" step="0.1" defaultValue={displayedProgress} style={progressRangeStyle} aria-label="song progress"
+              min="0" max="100" step="0.1" defaultValue={displayedProgress} style={progressRangeStyle} aria-label="song progress"
               onPointerDown={(event) => { event.currentTarget.setPointerCapture?.(event.pointerId); startSeekPreview(event.currentTarget.value, event.currentTarget); }}
               onInput={(event) => previewSeek(event.currentTarget.value, event.currentTarget)}
               onChange={(event) => previewSeek(event.currentTarget.value, event.currentTarget)}

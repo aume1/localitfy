@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Slider } from "../../shared/ui/Slider";
+import { Surface } from "../../shared/ui/Surface";
 
 import { clampUpperFirst as clamp } from "../../shared/utils/format";
 import { getLocaltifyPlatformInfo, type LocaltifyPlatformInfo } from "../../app/platform";
@@ -79,6 +80,16 @@ export function RangeRow({ label, value, min, max, step, suffix, onChange }: {
       />
     </SettingRow>
   );
+}
+
+/** Shared grouped settings surface, adapted from Liner SettingSection/Panel. */
+export function SettingSection({ title, description, icon, className = "", children }: {
+  title: string; description?: string; icon?: ReactNode; className?: string; children: ReactNode;
+}) {
+  return <Surface as="div" className={`settingsPanelCard ${className}`.trim()}>
+    <div className="settingsPanelHeader"><div><strong>{title}</strong>{description ? <span>{description}</span> : null}</div>{icon}</div>
+    {children}
+  </Surface>;
 }
 
 export type ChoiceOption = { id: string; label?: string; name?: string; note?: string };

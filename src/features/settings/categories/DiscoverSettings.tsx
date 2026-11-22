@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Compass, ExternalLink, KeyRound, RefreshCw } from "lucide-react";
 import type { Settings } from "../settings.types";
-import { ToggleRow } from "../settings.shared";
+import { ToggleRow, SettingSection } from "../settings.shared";
+import Button from "../../../shared/ui/Button";
 
 type ProviderSource = "default" | "override" | "missing" | "checking" | "error";
 type Props = {
@@ -59,25 +60,17 @@ export default function DiscoverSettings({ settings, updateSetting }: Props) {
       <div><p className="eyebrow">discovery</p><h4>Discover & providers</h4></div>
       <span>Music beyond your library, on your terms</span>
     </div>
-    <div className="settingsPanelCard">
-      <div className="settingsPanelHeader">
-        <div><strong>Music discovery</strong><span>Search music without an account. Personalized suggestions are optional and use your library's track and artist names.</span></div>
-        <Compass size={20} aria-hidden="true" />
-      </div>
+    <SettingSection title="Music discovery" description="Search music without an account. Personalized suggestions are optional and use your library's track and artist names." icon={<Compass size={20} aria-hidden="true" />}>
       <ToggleRow label="Enable Discover" help="When enabled, catalog and artwork searches may contact music services. Last.fm recommendations use your library metadata." checked={settings.discoverEnabled}
         onChange={value => void updateSetting("discoverEnabled", value)} />
       <p className="settingsHintText">Local music and your existing playlists remain available when Discover is off.</p>
-    </div>
+    </SettingSection>
 
-    <div className="settingsPanelCard">
-      <div className="settingsPanelHeader">
-        <div><strong>Last.fm recommendations</strong><span>Localtify uses the app's configured key by default. A personal key is optional, not required for public catalog search.</span></div>
-        <KeyRound size={20} aria-hidden="true" />
-      </div>
+    <SettingSection title="Last.fm recommendations" description="Localtify uses the app's configured key by default. A personal key is optional, not required for public catalog search." icon={<KeyRound size={20} aria-hidden="true" />}>
       <div className="discoverProviderStatus" role="status">
         <span className={`discoverProviderDot ${source === "default" || source === "override" ? "ready" : ""}`} aria-hidden="true" />
         <span>{sourceLabel}</span>
-        <button className="settingsTinyButton" type="button" onClick={() => void refreshProviderStatus()} aria-label="Refresh provider status"><RefreshCw size={14} /></button>
+        <Button variant="secondary" size="icon" className="settingsTinyButton" type="button" onClick={() => void refreshProviderStatus()} aria-label="Refresh provider status"><RefreshCw size={14} /></Button>
       </div>
       {source === "missing" ? <p className="settingsHintText">The application has no configured default key. Your copy can still search public music, but personalized Last.fm recommendations need an application key.</p> : null}
       <details className="settingsDisclosure discoverProviderAdvanced" open={editingKey} onToggle={event => setEditingKey(event.currentTarget.open)}>
@@ -90,21 +83,20 @@ export default function DiscoverSettings({ settings, updateSetting }: Props) {
           </label>
           <p className="settingsHintText">Only enter a Last.fm API key, never the shared secret. This override is saved in your local settings.</p>
           <div className="settingsActionRow discoverProviderActions">
-            <button type="button" className="settingsActionButton settingsPrimaryAction" disabled={saving || !VALID_KEY.test(keyDraft)}
-              onClick={() => void saveOverride(keyDraft)}>Use this key</button>
-            {settings.lastfmApiKey ? <button type="button" className="settingsActionButton" disabled={saving}
-              onClick={() => { setKeyDraft(""); void saveOverride(""); }}>Use app default</button> : null}
-            <button type="button" className="settingsActionButton" onClick={() => void window.localitfy.openExternal("https://www.last.fm/api/account/create")}>
+            <Button variant="primary" size="sm" type="button" className="settingsActionButton settingsPrimaryAction" disabled={saving || !VALID_KEY.test(keyDraft)}
+              onClick={() => void saveOverride(keyDraft)}>Use this key</Button>
+            {settings.lastfmApiKey ? <Button variant="secondary" size="sm" type="button" className="settingsActionButton" disabled={saving}
+              onClick={() => { setKeyDraft(""); void saveOverride(""); }}>Use app default</Button> : null}
+            <Button variant="secondary" size="sm" type="button" className="settingsActionButton" onClick={() => void window.localitfy.openExternal("https://www.last.fm/api/account/create")}>
               Get an API key <ExternalLink size={14} />
-            </button>
+            </Button>
           </div>
         </div>
       </details>
-    </div>
+    </SettingSection>
 
-    <div className="settingsPanelCard">
-      <div className="settingsPanelHeader"><div><strong>Data and privacy</strong><span>Discover is opt-in. Third-party music searches receive the terms you choose; personalized requests may send track and artist names.</span></div></div>
+    <SettingSection title="Data and privacy" description="Discover is opt-in. Third-party music searches receive the terms you choose; personalized requests may send track and artist names.">
       <p className="settingsHintText">Default keys bundled with an installed desktop app are public identifiers, not protected secrets. Truly private credentials require a server-side proxy.</p>
-    </div>
+    </SettingSection>
   </section>;
 }

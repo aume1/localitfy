@@ -87,7 +87,9 @@ test("Home shelves size against available content width and deduplicate mix artw
   assert.match(css, /\.homeListenGrid \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /@container \(max-width: 460px\)/);
   assert.match(css, /\.homeMixRail \{ grid-auto-columns:/);
-  assert.match(source, /<MixCoverArtwork songs=\{mix.songs\} className="homeReleaseCoverWrap"/);
+  assert.match(source, /<DailyMixCard key=\{mix.id\}/);
+  const mixCard = read("src/features/analysis/DailyMixCard.tsx");
+  assert.match(mixCard, /<MixCoverArtwork songs=\{songs\} className=\{home \? "homeReleaseCoverWrap"/);
   assert.match(read("src/features/covers/MixCoverArtwork.tsx"), /pickHomeMixArtwork\(songs\)/);
   assert.doesNotMatch(css, /homeMixCollage/);
   assert.match(source, /className="homeReleaseCover" preferThumbnail/);

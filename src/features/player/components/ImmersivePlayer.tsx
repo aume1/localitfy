@@ -122,7 +122,7 @@ export default function ImmersivePlayer({ player, song, queue, lyrics, backgroun
       </div>
 
       <div className="immersiveSeek" key={player.nowPlayingTransitionKey}>
-        <Slider  min="0" max="100" step="0.1" defaultValue={displayedProgress} style={progressRangeStyle}
+        <Slider min="0" max="100" step="0.1" defaultValue={displayedProgress} style={progressRangeStyle}
           aria-label="Song progress" disabled={duration <= 0}
           ref={node => { progressInputRefs.current[IMMERSIVE_SLOT] = node; }}
           onPointerDown={event => { event.currentTarget.setPointerCapture?.(event.pointerId); startSeekPreview(event.currentTarget.value, event.currentTarget); }}
@@ -152,7 +152,7 @@ export default function ImmersivePlayer({ player, song, queue, lyrics, backgroun
         <div className="immersiveVolume">
           <IconButton type="button" className="immersiveIcon" onClick={toggleMute}
             aria-label={settings.volume > 0 ? "Mute volume" : "Restore volume"}>{settings.volume > 0 ? <Volume2 size={18} aria-hidden="true" /> : <VolumeX size={18} aria-hidden="true" />}</IconButton>
-          <Slider  min="0" max="100" step="1" value={volumeDraft} style={volumeRangeStyle} aria-label="Volume level"
+          <Slider min="0" max="100" step="1" value={volumeDraft} style={volumeRangeStyle} aria-label="Volume level"
             onPointerDown={event => { event.currentTarget.setPointerCapture?.(event.pointerId); volumeDraftRef.current = Number(event.currentTarget.value); setIsVolumeDragging(true); previewVolume(event.currentTarget.value, event.currentTarget); }}
             onInput={event => previewVolume(event.currentTarget.value, event.currentTarget)}
             onChange={event => previewVolume(event.currentTarget.value, event.currentTarget)}

@@ -112,7 +112,7 @@
   height: 3px;
   margin: 0;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--lt-accent) var(--range-progress, 0%), var(--lt-border) var(--range-progress, 0%));
+  background: linear-gradient(90deg, var(--lt-range-fill, var(--lt-accent)) var(--range-progress, 0%), var(--lt-range-track, var(--lt-border)) var(--range-progress, 0%));
   appearance: none;
   pointer-events: none;
   opacity: 1;

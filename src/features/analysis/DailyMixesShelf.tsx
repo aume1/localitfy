@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import Button from "../../shared/ui/Button";
 import type { Song } from "../library/song.types";
 import type { DailyMix, DailyMixesResult } from "./analysis.types";
 import { CollectionLoading } from "../../shared/ui/CollectionLoading";
@@ -56,7 +57,7 @@ export default function DailyMixesShelf(props: DailyMixesShelfProps) {
   return <section className="dailyMixes" aria-labelledby="daily-mixes-title" aria-busy={loading}>
     <div className="panelHead dailyMixesHeader">
       <div><h3 id="daily-mixes-title">Daily mixes</h3></div>
-      <button type="button" className="softButton dailyMixesRefresh" disabled={loading} onClick={() => void load(true)}><RefreshCw size={15} />{loading ? "Building mixes…" : "Refresh mixes"}</button>
+      <Button variant="secondary" size="sm" className="dailyMixesRefresh" disabled={loading} onClick={() => void load(true)}><RefreshCw size={15} />{loading ? "Building mixes…" : "Refresh mixes"}</Button>
     </div>
     {error ? <p className="dailyMixesNotice" role="alert">{error} <button type="button" className="softButton" disabled={loading} onClick={() => void load()}>Retry</button></p> : null}
     {loading && !result ? <CollectionLoading label="Finding groups of similar sounds…" /> : null}
