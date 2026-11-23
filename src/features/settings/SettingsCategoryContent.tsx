@@ -1,4 +1,10 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
+import type { Song } from "../library/song.types";
+import type { SettingsCategory } from "./settings.types";
+import type { AppearanceSettingsProps } from "./categories/AppearanceSettings";
+import type { DiscordSettingsProps } from "./categories/DiscordSettings";
+import type { LibrarySettingsProps } from "./categories/LibrarySettings";
+import type { AdvancedSettingsProps } from "./categories/AdvancedSettings";
 import AppearanceSettings from "./categories/AppearanceSettings";
 import PlaybackSettings from "./categories/PlaybackSettings";
 import DiscordSettings from "./categories/DiscordSettings";
@@ -8,21 +14,51 @@ import DiscoverSettings from "./categories/DiscoverSettings";
 import UpdateSettings from "./categories/UpdateSettings";
 import AboutSettings from "./categories/AboutSettings";
 import ExperimentalSettings from "./categories/ExperimentalSettings";
+import LyricsSettings from "./categories/LyricsSettings";
 import AdvancedSettings from "./categories/AdvancedSettings";
-import { detectSettingsPlatform } from "./settings.shared";
-import type { PlatformInfoLike } from "./settings.shared";
 
-// Temporary flat-prop adapter for App.tsx. Feature components below receive only
-// the data they own; this adapter disappears when App becomes composition-only.
-type LegacySettingsAdapterProps = { settingsCategory: string; setSettingsCategory?: (value: string) => void; [key: string]: any };
+type SettingsCategoryContentProps =
+  Pick<LibrarySettingsProps,
+    "settings" | "updateSetting" | "libraryScanBusy" |
+    "cleanLibraryMetadataAction" | "repairMovedSongsAction" | "metadataCleanPreview" |
+    "applyMetadataCleanPreviewAction" | "cancelMetadataCleanPreviewAction" |
+    "undoLastMetadataCleanAction" | "metadataUndoCount" | "rebuildSearchIndexAction" |
+    "libraryScanMessage" | "pixelArtBusy" | "randomizeAllCovers"
+  > &
+  Pick<AdvancedSettingsProps,
+    "diagnosticsInfo" | "diagnosticsCopied" | "copyDiagnosticsInfo" | "updatePrompt" |
+    "manualUpdateCheck" | "askUpdaterToInstall" | "libraryRenderLimitRef" |
+    "setLibraryRenderLimit" | "platformInfo" | "resetDiscordSettings" |
+    "resetAppearanceSettings" | "resetPlayerLayoutSettings" |
+    "resetLibraryLayoutSettings" | "resetAllSettingsSafely"
+  > & {
+    songs: readonly Song[];
+    settingsCategory: SettingsCategory;
+    setSettingsCategory?: (category: SettingsCategory) => void;
+    APP_VERSION: string;
+    INITIAL_LIBRARY_RENDER_LIMIT: number;
+    coverColorSyncOptions: AppearanceSettingsProps["coverColorSyncOptions"];
+    selectedCoverColorSyncMode: AppearanceSettingsProps["selectedCoverColorSyncMode"];
+    updateCoverColorSyncMode: AppearanceSettingsProps["updateCoverColorSyncMode"];
+    discordPreview: DiscordSettingsProps["discordPreview"];
+    discordStyleOptions: DiscordSettingsProps["discordStyleOptions"];
+    discordSecondLineOptions: DiscordSettingsProps["discordSecondLineOptions"];
+    discordArtModeOptions: DiscordSettingsProps["discordArtModeOptions"];
+    discordCleanupOptions: LibrarySettingsProps["cleanupOptions"];
+    downloadFolderLabel: string;
+    chooseDownloadFolder: () => void | Promise<void>;
+    askUpdaterToDownload: () => unknown;
+    openUpdateChangelog: () => unknown;
+    lastUpdateCheckedLabel: string;
+  };
 
-const SettingsCategoryContent = memo(function SettingsCategoryContent(p: LegacySettingsAdapterProps) {
-  const fallbackPlatform = useMemo(() => detectSettingsPlatform(), []);
-  const platformInfo = { ...fallbackPlatform, ...(p.platformInfo || {}) } as Required<PlatformInfoLike>;
+const SettingsCategoryContent = memo(function SettingsCategoryContent(p: SettingsCategoryContentProps) {
+  const platformInfo = p.platformInfo;
 
   switch (p.settingsCategory) {
     case "appearance": return <AppearanceSettings settings={p.settings} updateSetting={p.updateSetting} coverColorSyncOptions={p.coverColorSyncOptions} selectedCoverColorSyncMode={p.selectedCoverColorSyncMode} updateCoverColorSyncMode={p.updateCoverColorSyncMode} openAdvanced={() => p.setSettingsCategory?.("advanced")} />;
     case "playback": return <PlaybackSettings settings={p.settings} updateSetting={p.updateSetting} />;
+    case "lyrics": return <LyricsSettings settings={p.settings} songs={p.songs || []} updateSetting={p.updateSetting} />;
     case "discord": return <DiscordSettings settings={p.settings} updateSetting={p.updateSetting} discordPreview={p.discordPreview} discordStyleOptions={p.discordStyleOptions} discordSecondLineOptions={p.discordSecondLineOptions} discordArtModeOptions={p.discordArtModeOptions} />;
     case "covers":
     case "library":

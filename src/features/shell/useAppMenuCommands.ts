@@ -2,16 +2,16 @@ import { useEffect, useRef } from "react";
 import type { View } from "./view.types";
 import type { NavigationHistory } from "./useNavigationHistory";
 
-const MENU_VIEWS = new Set<View>(["home", "library", "liked", "artists", "genres", "playlists", "discover", "downloads", "analytics", "settings"]);
+const MENU_VIEWS = new Set<View>(["home", "library", "albums", "liked", "artists", "genres", "playlists", "discover", "downloads", "analytics", "settings"]);
 // Page search fields. Playlists reuses the header input for naming a new playlist, so it has no search.
 const SEARCH_SELECTOR = ".content :is(.librarySearch, .pageHeaderSearch:not(.playlistCreateForm *), #settings-section-search)";
 
 export type AppMenuActions = {
   changeView: (view: View) => void;
-  nav: Pick<NavigationHistory, "gesture">;
+  nav: Pick<NavigationHistory, "gesture" | "go">;
   openSettings: () => void;
   importSongs: () => unknown;
-  openFeedback: () => void;
+  importAlbumFolder: () => unknown;
   checkForUpdates: () => unknown;
 };
 
@@ -57,8 +57,8 @@ export function useAppMenuCommands(actions: AppMenuActions) {
         void current.importSongs();
         break;
       case "import-album-folder":
-        current.changeView("library");
-        void current.importSongs();
+        current.nav.go("albums");
+        void current.importAlbumFolder();
         break;
       case "new-playlist":
         current.changeView("playlists");
@@ -70,9 +70,6 @@ export function useAppMenuCommands(actions: AppMenuActions) {
       case "find":
         if (!document.querySelector(SEARCH_SELECTOR)) current.changeView("library");
         focusWhenReady(SEARCH_SELECTOR);
-        break;
-      case "feedback":
-        current.openFeedback();
         break;
       case "check-updates":
         void current.checkForUpdates();

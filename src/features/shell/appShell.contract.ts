@@ -2,6 +2,7 @@ import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import type { HomeViewProps } from "../home/HomeView";
 import type { LibraryViewProps } from "../library/LibraryView";
 import type { ArtistsViewProps } from "../artists/ArtistsView";
+import type { AlbumsViewProps } from "../albums/AlbumsView";
 import type { GenresViewProps } from "../genres/GenresView";
 import type { PlaylistsViewProps } from "../playlists/PlaylistsView";
 import type { AnalyticsViewProps } from "../analytics/AnalyticsView";
@@ -71,6 +72,9 @@ export type ShellCollectionsContract = {
   queueSongs: (songIds: string[], label: string) => unknown;
   playPlaylist: (playlist: Playlist, shuffle: boolean) => unknown;
   openSimilar: (request: SimilarSeedRequest) => unknown;
+  playlists: Playlist[];
+  addAlbumToPlaylist: (playlistId: string, songIds: string[]) => unknown;
+  createPlaylistFromAlbum: (name: string, songIds: string[]) => unknown;
 };
 
 export type ShellModalContract = {
@@ -81,7 +85,7 @@ export type ShellModalContract = {
 export type AppShellProps = {
   frame: ShellFrameContract; updates: ShellUpdateContract; screensaver: ShellScreensaverContract;
   effects: ShellEffectsContract; navigation: ShellNavigationContract;
-  home: HomeViewProps; library: LibraryViewProps; artists: ArtistsViewProps; genres: GenresViewProps; playlists: PlaylistsViewProps;
+  home: HomeViewProps; library: LibraryViewProps; albums: AlbumsViewProps; artists: ArtistsViewProps; genres: GenresViewProps; playlists: PlaylistsViewProps;
   analytics: AnalyticsViewProps; discover: DiscoverViewProps; settingsView: SettingsViewProps;
   downloads: DownloadsViewProps; playerBar: PlayerBarProps; modals: ShellModalContract;
   playbackAudio: PlaybackAudioElementProps; collections: ShellCollectionsContract;

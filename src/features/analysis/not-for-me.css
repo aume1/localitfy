@@ -31,7 +31,7 @@
   width: 100%;
   min-height: 36px;
   padding: 0 12px 0 32px;
-  border: 1px solid var(--lt-border, rgba(255, 255, 255, .12));
+  border: 1px solid var(--lt-border);
   border-radius: 10px;
   background: var(--lt-surface-raised);
   color: var(--lt-text);

@@ -42,6 +42,26 @@ test("the Last.fm client sends names only, caches answers on disk and spaces its
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
+test("provider status distinguishes configured credentials from a real Last.fm check", async () => {
+  const handlers = new Map();
+  const settings = { discoverEnabled: true, lastfmApiKey: KEY };
+  let calls = 0;
+  registerDiscoverIpc({ handle: (name, handler) => handlers.set(name, handler) }, {
+    getSongs: () => [], getSettings: () => settings,
+    fetch: async () => { calls++; return { ok: true, status: 200, json: async () => ({ track: { name: "One More Time" } }) }; }
+  });
+  const get = payload => handlers.get("discover:get")({}, payload);
+  assert.deepEqual(await get({ configuration: true }), { status: "configuration", lastfmSource: "override" });
+  assert.equal(calls, 0, "opening Settings must not contact Last.fm");
+  assert.deepEqual(await get({ configuration: true, verify: true }),
+    { status: "configuration", lastfmSource: "override", lastfmCheck: "ok" });
+  assert.equal(calls, 1);
+  settings.lastfmApiKey = "";
+  const missing = await get({ configuration: true, verify: true });
+  assert.deepEqual(missing, { status: "configuration", lastfmSource: "missing" });
+  assert.equal(calls, 1);
+});
+
 test("a rejected key and rate limiting become readable errors", async () => {
   for (const [code, expected] of [[10, "bad-key"], [29, "rate-limited"]]) {
     const { fetch } = fakeFetch(() => ({ error: code, message: "nope" }));
@@ -361,7 +381,8 @@ test("Discover permits opt-in with a blank key and sends explicit catalog search
   assert.match(view, /openDiscoverSettings/);
   assert.match(view, /getDiscoveries\(\{ catalog: \{ kind: catalogKind, term \} \}\)/);
   assert.match(view, /catalogRequestRef.current/);
-  assert.match(android, /payload\?\.artwork \? cachedArtworkFromMac\(payload.artwork\) : payload\?\.catalog \? fromMac<DiscoverResult>/);
+  assert.match(android, /payload\?\.artwork \? cachedArtworkFromMac\(payload.artwork\) : payload\?\.verify \? fromMac<DiscoverResult>/);
+  assert.match(android, /payload\?\.catalog \? fromMac<DiscoverResult>/);
 });
 
 test("artwork uses validated releases and rejects ambiguous tracks", async () => {
@@ -452,6 +473,36 @@ test("direct music catalog is explicit, preferred, and falls back after provider
   assert.deepEqual(calls.slice(1),[["direct","recording","Track"],["fallback","recording","Track"]]);
 });
 
+
+test("irrelevant direct catalog hits fall back to structured MusicBrainz search", async () => {
+  const handlers = new Map();
+  const settings = { discoverEnabled: true };
+  const calls = [];
+  const direct = [{ id: "ytmusic:abcdefghijk", title: "Unrelated Tune", artist: "Unrelated", url: "https://www.youtube.com/watch?v=abcdefghijk" }];
+  registerDiscoverIpc({ handle: (name, handler) => handlers.set(name, handler) }, {
+    getSongs: () => [],
+    getSettings: () => settings,
+    searchYouTubeMusic: async (kind, term) => { calls.push(["direct", kind, term]); return direct; },
+    musicBrainzClient: {
+      searchCatalog: async (kind, term) => {
+        calls.push(["fallback", kind, term]);
+        return kind === "recording"
+          ? [{ id: "12345678-1234-1234-1234-123456789abc", title: "Track", "artist-credit": [{ name: "Artist" }] }]
+          : [{ id: "22345678-1234-1234-1234-123456789abc", name: "Artist" }];
+      }
+    }
+  });
+  const get = catalog => handlers.get("discover:get")({}, { catalog });
+  const recording = await get({ kind: "recording", term: "Track" });
+  assert.equal(recording.status, "catalog");
+  assert.deepEqual(recording.items.map(item => item.title), ["Track"]);
+  const artist = await get({ kind: "artist", term: "Artist" });
+  assert.deepEqual(artist.items.map(item => item.title), ["Artist"]);
+  assert.deepEqual(calls, [
+    ["direct", "recording", "Track"], ["fallback", "recording", "Track"],
+    ["direct", "artist", "Artist"], ["fallback", "artist", "Artist"]
+  ]);
+});
 
 test("related music uses an explicit validated seed and observes discovery opt-out",async()=>{
  const handlers=new Map(),settings={discoverEnabled:false};let calls=0;

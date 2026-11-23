@@ -552,8 +552,11 @@ function getSpotifyTrackId(track = {}) {
 }
 
 function getSpotifyTrackUrl(track = {}) {
-  const chosen = require("./discover/track-identity.cjs").selectedYouTubeUrl(getSpotifyTrackId(track));
+  const identities = require("./discover/track-identity.cjs");
+  const chosen = identities.selectedYouTubeUrl(getSpotifyTrackId(track));
   if (chosen) return chosen;
+  const catalog = identities.musicBrainzRecordingUrl(getSpotifyTrackId(track));
+  if (catalog) return catalog;
   const explicit = String(track.spotifyUrl || track.url || "").trim();
   const trackId = getSpotifyTrackId(track);
   if (/^https:\/\/open\.spotify\.com\/track\//i.test(explicit)) return explicit;
@@ -928,7 +931,7 @@ async function downloadSpotifyBatch(tracks, destinationDirectory, onProgress, op
   const savedJobs = [];
   for (const track of tracks) {
     const id = getSpotifyTrackId(track) || crypto.createHash("sha256").update(JSON.stringify([track.title || track.name, track.artist || track.artists])).digest("hex").slice(0, 22);
-    savedJobs.push(await prepareDownloadJob({ source: "spotify", url: require("./discover/track-identity.cjs").selectedYouTubeUrl(id) || `https://open.spotify.com/track/${id}`, folder: destinationDirectory, options,
+    savedJobs.push(await prepareDownloadJob({ source: "spotify", url: getSpotifyTrackUrl({ ...track, id }), folder: destinationDirectory, options,
       track: { ...track, id, title: String(track.title || track.name || "unknown"), artist: String(track.artist || track.artists || "") } }));
   }
 

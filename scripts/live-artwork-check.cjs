@@ -8,6 +8,11 @@ const {lastfmArtwork} = require("../electron/discover/artwork.cjs");
 const {createAudioDbArtwork} = require("../electron/discover/audiodb.cjs");
 const {createMusicBrainzClient,coverThumbUrl} = require("../electron/musicbrainz/client.cjs");
 const {createYouTubeMusicSearch} = require("../electron/discover/youtube-music.cjs");
+const {createStoreSearch} = require("../electron/discover/catalog.cjs");
+const {createLyricsService} = require("../electron/lyrics/service.cjs");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 
 const now = () => Date.now();
 const checks = [];
@@ -75,6 +80,26 @@ async function main() {
     const image=await imageAvailable(result.coverUrl).catch(()=>false);
     return {status:image?"ok":"image-unavailable",metadata:true,image};
   }));
+  jobs.push(check("Apple music catalog",async()=>{
+    const items=await createStoreSearch()(expectedArtist+" "+expectedTitle);
+    const found=items.some(item=>norm(item.title)===norm(expectedTitle)&&norm(item.artist)===norm(expectedArtist));
+    return {status:found?"ok":"no-exact-match",metadata:found,image:false,
+      detail:"Catalog metadata only; artwork and previews intentionally omitted"};
+  }));
+  jobs.push(check("LRCLIB",async()=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),"localtify-live-lyrics-"));
+    try {
+      const service=createLyricsService({cacheDir:dir,
+        userAgent:"Localtify/0.5.1 (https://github.com/meshahid973/localtify)",
+        readEmbedded:async()=>null,requestSpacingMs:0,retryDelayMs:600});
+      const result=await service.get({title:expectedTitle,artist:expectedArtist,
+        album:"Discovery",duration:320,filePath:""},{online:true});
+      return {status:result.status==="error"?"error":
+        ["synced","plain","instrumental"].includes(result.status)?"ok":"no-exact-match",
+        metadata:["synced","plain","instrumental"].includes(result.status),image:false,
+        detail:result.error||result.status};
+    }finally {fs.rmSync(dir,{recursive:true,force:true});}
+  }));
   jobs.push(check("MusicBrainz and Cover Art Archive",async()=>{
     const client=createMusicBrainzClient({
       userAgent:"Localtify/0.5.1 (https://github.com/meshahid973/localtify)",
@@ -107,6 +132,10 @@ async function main() {
     const image=await imageAvailable(result.coverUrl).catch(()=>false);
     return {status:image?"ok":"image-unavailable",metadata:true,image};
   }));
+  checks.push({provider:"Spotify",status:"skipped-auth-required",
+    metadata:false,image:false,detail:"Personal OAuth or authorized session is required"});
+  checks.push({provider:"Discord RPC",status:"skipped-local-runtime",
+    metadata:false,image:false,detail:"Requires a running local Discord client"});
   if(!process.env.LOCALTIFY_LASTFM_API_KEY)checks.push({
     provider:"Last.fm",status:"skipped-key-required",metadata:false,image:false,detail:"Operator API key not configured"
   });

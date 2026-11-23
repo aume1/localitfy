@@ -1,4 +1,4 @@
-import { Heart, ListEnd, Pencil, Play, Plus, Radio, SkipForward, Tags, ThumbsDown, Trash2, UserRound, UserX } from "lucide-react";
+import { Heart, ListEnd, Pencil, Play, Plus, Radio, SkipForward, Tags, ThumbsDown, Trash2, UserRound, UserX, Disc3 } from "lucide-react";
 import { isAndroidApp } from "../../../app/platform";
 import { Cover } from "../../covers/Cover";
 import { ContextMenuLayer } from "../../../shared/ui/ContextMenuLayer";
@@ -22,6 +22,8 @@ export type SongContextMenuProps = {
   toggleLike: (songId: string) => unknown;
   askRemoveSong: (songId: string) => unknown;
   goToArtist: (artistName: string) => unknown;
+  goToAlbum?: (albumId: string) => unknown;
+  getAlbumId?: (songId: string) => string | null;
   /** Present while music analysis is on, since only recommendations use it. */
   notForMe?: { marks: NotForMeMarks; toggle: (kind: NotForMeKind, value: string) => unknown };
   /** Present while MusicBrainz tagging is on. */
@@ -40,6 +42,8 @@ export default function SongContextMenu({
   toggleLike,
   askRemoveSong,
   goToArtist,
+  goToAlbum,
+  getAlbumId,
   notForMe,
   findOnMusicBrainz
 }: SongContextMenuProps) {
@@ -48,6 +52,7 @@ export default function SongContextMenu({
   if (!song) return null;
   const artistNames = splitArtistCredits(song.artist).slice(0, MAX_ARTIST_LINKS);
   const leadArtist = song.artist?.trim() ? artistNames[0] : "";
+  const albumId = getAlbumId?.(song.id);
 
   return (
     <ContextMenuLayer anchor={state} identity={state.songId} label="song actions" onClose={onClose}>
@@ -71,6 +76,9 @@ export default function SongContextMenu({
           <span className="songContextMenuIcon"><ListEnd size={13} strokeWidth={3} /></span> add to queue
         </button>
         <div className="songContextMenuDivider" aria-hidden="true" />
+        {albumId && goToAlbum ? <button type="button" role="menuitem" onClick={() => { onClose(); goToAlbum(albumId); }}>
+          <span className="songContextMenuIcon"><Disc3 size={13} strokeWidth={3} /></span> go to album
+        </button> : null}
         <button type="button" role="menuitem" onClick={() => { onClose(); openPlaylistPicker(song); }}>
           <span className="songContextMenuIcon"><Plus size={13} strokeWidth={3} /></span> add to playlist
         </button>

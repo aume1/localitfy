@@ -200,3 +200,17 @@ test("playlist artwork changes merge without losing independent name or track ch
 test("playlist sync removes duplicate IDs without dropping unique concurrent additions",()=>{
   assert.deepEqual(Array.from(merge.mergeSongIds(["a","b"],["a","a","b","c"],["a","d"])),["a","d","c"]);
 });
+
+test("snapshot captures playlists before file metadata awaits", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "localtify-sync-snapshot-"));
+  try {
+    const library = fakeLibrary(dir);
+    const sync = createSyncServer({ repositories: library.repositories, coverPath: () => "", statePath: path.join(dir, "state.json") });
+    const pending = sync.snapshotAsync();
+    library.songs.push({ ...library.songs[0], id: "b", title: "B" });
+    library.repositories.playlists.save([playlist("p", ["a", "b"])]);
+    const snapshot = await pending;
+    assert.deepEqual(snapshot.songs.map(row => row.id), ["a"]);
+    assert.deepEqual(snapshot.playlists[0].songIds, ["a"], "playlists must share the song snapshot's starting point");
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});

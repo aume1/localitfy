@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Compass, ExternalLink, KeyRound, RefreshCw } from "lucide-react";
 import type { Settings } from "../settings.types";
 import { ToggleRow, SettingSection } from "../settings.shared";
@@ -16,32 +16,51 @@ export default function DiscoverSettings({ settings, updateSetting }: Props) {
   const [keyDraft, setKeyDraft] = useState(settings.lastfmApiKey || "");
   const [editingKey, setEditingKey] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [lastfmCheck, setLastfmCheck] = useState<string | null>(null);
+  const requestVersion = useRef(0);
 
-  useEffect(() => setKeyDraft(settings.lastfmApiKey || ""), [settings.lastfmApiKey]);
-  async function refreshProviderStatus() {
-    try {
-      const response = await window.localitfy.getDiscoveries({ configuration: true });
-      setSource(response.status === "configuration" ? response.lastfmSource : "error");
-    } catch {
-      setSource("error");
-    }
-  }
   useEffect(() => {
+    const version = ++requestVersion.current;
     let cancelled = false;
+    setKeyDraft(settings.lastfmApiKey || "");
+    setLastfmCheck(null);
+    setChecking(false);
+    setSource("checking");
     void window.localitfy.getDiscoveries({ configuration: true })
       .then(response => {
-        if (!cancelled) setSource(response.status === "configuration" ? response.lastfmSource : "error");
+        if (!cancelled && requestVersion.current === version)
+          setSource(response.status === "configuration" ? response.lastfmSource : "error");
       })
-      .catch(() => { if (!cancelled) setSource("error"); });
+      .catch(() => {
+        if (!cancelled && requestVersion.current === version) setSource("error");
+      });
     return () => { cancelled = true; };
-  }, []);
-
+  }, [settings.lastfmApiKey]);
+  async function refreshProviderStatus() {
+    if (checking) return;
+    const version = ++requestVersion.current;
+    setChecking(true);
+    setLastfmCheck(null);
+    try {
+      const response = await window.localitfy.getDiscoveries({ configuration: true, verify: true });
+      if (requestVersion.current !== version) return;
+      setSource(response.status === "configuration" ? response.lastfmSource : "error");
+      setLastfmCheck(response.status === "configuration" ? response.lastfmCheck || null : "error");
+    } catch {
+      if (requestVersion.current === version) {
+        setSource("error");
+        setLastfmCheck("network");
+      }
+    } finally {
+      if (requestVersion.current === version) setChecking(false);
+    }
+  }
   async function saveOverride(value: string) {
     if (saving || (value && !VALID_KEY.test(value))) return;
     setSaving(true);
     try {
       await updateSetting("lastfmApiKey", value);
-      await refreshProviderStatus();
       setEditingKey(false);
     } finally {
       setSaving(false);
@@ -52,24 +71,34 @@ export default function DiscoverSettings({ settings, updateSetting }: Props) {
     : source === "override" ? "Custom key is active"
     : source === "missing" ? "No Last.fm key configured"
     : source === "checking" ? "Checking the desktop provider" : "Provider status unavailable";
+  const connectionLabel = lastfmCheck === "ok" ? "Last.fm connection verified."
+    : lastfmCheck === "no-match" ? "Last.fm responded, but the sample track was not found."
+    : lastfmCheck === "bad-key" ? "Last.fm rejected this key. Check the configured API key."
+    : lastfmCheck === "rate-limited" ? "Last.fm is rate-limiting requests. Try again later."
+    : lastfmCheck === "network" ? "Could not reach Last.fm from this device."
+    : lastfmCheck === "http" ? "Last.fm returned an HTTP error."
+    : lastfmCheck ? "Last.fm validation could not complete." : "";
 
   return <section className="settingsCategoryPage discoverProviderSettings" aria-label="Discover and providers">
     <div className="settingsCategoryHeader">
       <div><p className="eyebrow">discovery</p><h4>Discover & providers</h4></div>
       <span>Music beyond your library, on your terms</span>
     </div>
-    <SettingSection title="Music discovery" description="Search music without an account." icon={<Compass size={20} aria-hidden="true" />}>
+    <SettingSection id="settings-discover-enabled" title="Music discovery" description="Search music without an account." icon={<Compass size={20} aria-hidden="true" />}>
       <ToggleRow label="Enable Discover" help="When enabled, catalog and artwork searches may contact music services. Last.fm recommendations use your library metadata." checked={settings.discoverEnabled}
         onChange={value => void updateSetting("discoverEnabled", value)} />
       <p className="settingsHintText">Local music and your existing playlists remain available when Discover is off.</p>
     </SettingSection>
 
-    <SettingSection title="Last.fm recommendations" description="Optional personal API key." icon={<KeyRound size={20} aria-hidden="true" />}>
+    <SettingSection id="settings-discover-lastfm" title="Last.fm recommendations" description="Optional personal API key." icon={<KeyRound size={20} aria-hidden="true" />}>
       <div className="discoverProviderStatus" role="status">
-        <span className={`discoverProviderDot ${source === "default" || source === "override" ? "ready" : ""}`} aria-hidden="true" />
+        <span className={`discoverProviderDot ${lastfmCheck === "ok" ? "ready" : ""}`} aria-hidden="true" />
         <span>{sourceLabel}</span>
-        <Button variant="secondary" size="icon" className="settingsTinyButton" type="button" onClick={() => void refreshProviderStatus()} aria-label="Refresh provider status"><RefreshCw size={14} /></Button>
+        {source === "error" ? <Button variant="secondary" size="sm" type="button" disabled={checking} onClick={() => void refreshProviderStatus()}>Retry status check</Button> : null}
+        {source === "default" || source === "override" ? <Button variant="secondary" size="sm" className="settingsActionButton discoverProviderTestButton" type="button" disabled={checking} onClick={() => void refreshProviderStatus()}><RefreshCw size={14} aria-hidden="true" /> {checking ? "Testing…" : "Test connection"}</Button> : null}
       </div>
+      {checking ? <p className="settingsHintText" role="status">Checking Last.fm…</p> : null}
+      {connectionLabel ? <p className="settingsHintText" role="status">{connectionLabel}</p> : null}
       {source === "missing" ? <p className="settingsHintText">The application has no configured default key. Your copy can still search public music, but personalized Last.fm recommendations need an application key.</p> : null}
       <details className="settingsDisclosure discoverProviderAdvanced" open={editingKey} onToggle={event => setEditingKey(event.currentTarget.open)}>
         <summary>Advanced · use a personal Last.fm key</summary>

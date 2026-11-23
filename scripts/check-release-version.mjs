@@ -34,7 +34,6 @@ function checkReleaseVersion() {
   for (const file of [
     "src/features/updates/WhatsNewModal.tsx",
     "src/features/updates/update.constants.ts",
-    "src/features/feedback/feedbackPrompt.ts",
     "src/app/platform.ts",
     "src/features/settings/settings.shared.tsx"
   ]) {

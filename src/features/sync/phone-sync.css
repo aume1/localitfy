@@ -21,7 +21,7 @@
 }
 
 .phoneSyncError {
-  color: #ff8f8f;
+  color: var(--lt-danger);
 }
 
 .phoneSyncPairForm {

@@ -16,7 +16,7 @@ test("Settings keeps the existing category rendering and reduced-motion support"
   assert.match(view, /key=\{settingsCategory\}/);
   assert.match(view, /import "\.\/settings\.css";/);
   assert.match(view, /import "\.\/settings-premium\.css";/);
-  for (const section of ["appearance", "playback", "discord", "library", "downloads", "updates", "about", "experimental", "advanced"]) {
+  for (const section of ["appearance", "playback", "lyrics", "discord", "library", "downloads", "updates", "about", "experimental", "advanced"]) {
     assert.ok(sections.includes('case "' + section + '":'), "Missing Settings category: " + section);
   }
 });
@@ -28,7 +28,8 @@ test("Compact navigation keeps search, category controls, and keyboard semantics
   assert.match(rail, /onSearchChange\(""\)/);
   assert.match(rail, /onCategoryChange\(tab\.id\)/);
   assert.match(rail, /aria-current=\{selected \? "page" : undefined\}/);
-  assert.match(rail, /No matching section/);
+  assert.match(rail, /No matching setting/);
+  assert.match(rail, /settingsControlResult/);
 });
 
 test("Compact styles cover inputs, focus indicators, and narrower viewports without hiding functionality", () => {
@@ -59,25 +60,33 @@ test("Home, Library/Liked and shell use active theme tokens", () => {
   const home = read("src/features/home/home.css");
   const library = read("src/features/library/library.css");
   const shell = read("src/styles/view-shell.css");
-  for (const source of [home, library, shell]) {
+  for (const source of [home, shell]) {
     assert.match(source, /var\(--lt-bg\)/);
     assert.match(source, /var\(--lt-accent\)/);
     assert.doesNotMatch(source, /#06131a|#79a7c4/);
   }
+  assert.match(library, /background: transparent/);
+  assert.match(library, /var\(--lt-text\)/);
+  assert.match(library, /var\(--lt-accent\)/);
+  assert.doesNotMatch(library, /#06131a|#79a7c4/);
 });
 
-test("User feedback remains available manually without automatic nag prompts", () => {
+test("Feedback transport and UI are absent; performance diagnostics remain", () => {
   const app = read("src/App.tsx");
-  const toast = read("src/features/shell/useAppToast.ts");
-  assert.doesNotMatch(app, /FEEDBACK_PROMPT_DELAY_MS|feedbackPromptBlockersRef/);
-  assert.match(app, /localtify:open-feedback/);
-  assert.match(toast, /kind !== "error"/);
+  const main = read("electron/main.cjs");
+  const preload = read("electron/preload.cjs");
+  const menu = read("electron/runtime/app-menu.cjs");
+  assert.doesNotMatch(app, /FeedbackPrompt|openFeedback|feedbackConfigStatus/);
+  assert.doesNotMatch(main, /feedback:send|feedback:status|sendLocaltifyFeedback/);
+  assert.doesNotMatch(preload, /feedback:send|feedback:status/);
+  assert.doesNotMatch(menu, /Report an Issue|sendLocaltifyFeedback|feedback:send/);
+  assert.match(app, /useDiagnosticsInfo/);
 });
 
 test("Settings use a readable width and grouped navigation", () => {
   const rail = read("src/features/settings/SettingsRail.tsx");
-  assert.match(skin, /width: min\(100%, 1120px\)/);
-  assert.match(skin, /grid-template-columns: 226px minmax\(0, 1fr\)/);
+  assert.match(skin, /width: min\(100%,\s*1180px\)/);
+  assert.match(skin, /grid-template-columns: 206px minmax\(0,\s*1fr\)/);
   for (const heading of ["Listening", "Your collection", "Application"]) {
     assert.ok(rail.includes(heading), "Missing settings navigation group: " + heading);
   }
@@ -165,15 +174,27 @@ test("Library and Liked use the shared content gutter and meaningful empty state
 });
 
 
-test("Advanced reset mascot and feedback card stay contained and theme-aware", () => {
+test("Advanced reset controls remain theme-aware without feedback cards", () => {
   const advanced = read("src/features/settings/categories/AdvancedSettings.tsx");
-  const app = read("src/App.tsx");
   assert.match(advanced, /settingsDangerMascotV501/);
-  assert.match(skin, /\.settingsPage\.settingsPageV027 \.settingsDangerMascotV501 \{/);
-  assert.match(skin, /max-height: 96px/);
-  assert.match(skin, /\.settingsPage\.settingsPageV027 \.settingsDangerPanelV491 \.settingsResetGrid/);
-  for (const selector of ["feedbackSettingsCardV331", "feedbackSettingsHeaderV331", "feedbackWebhookStatusV337", "feedbackSettingsButtonV331"]) {
-    assert.ok(app.includes(selector), "Feedback markup missing " + selector);
-    assert.ok(skin.includes("." + selector), "Feedback styles missing " + selector);
-  }
+  assert.match(skin, /settingsDangerMascotV501/);
+  assert.match(skin, /settingsDangerPanelV491/);
+  assert.doesNotMatch(skin, /feedbackSettingsCardV331|feedbackWebhookStatusV337/);
+});
+
+test("Settings search targets actual sections and never recreates the feedback feature", () => {
+  const search = read("src/features/settings/settings.search.ts");
+  const componentFiles = [
+    "AppearanceSettings", "PlaybackSettings", "LibrarySettings", "DownloadSettings",
+    "DiscordSettings", "DiscoverSettings", "LyricsSettings", "ExperimentalSettings",
+    "UpdateSettings", "AdvancedSettings"
+  ].map(name => read("src/features/settings/categories/" + name + ".tsx")).join("\n");
+  const targets = [...search.matchAll(/target: "(settings-[\w-]+)"/g)].map(item => item[1]);
+  assert.ok(targets.length >= 20, "Control search must cover each major Settings workflow");
+  assert.equal(new Set(targets).size, targets.length, "Each control result should have a stable target");
+  for (const id of targets) assert.ok(componentFiles.includes('id="' + id + '"'), "Missing Settings search target: " + id);
+  assert.doesNotMatch(search, /feedback|Feedback/i);
+  assert.match(read("src/features/settings/settings.shared.tsx"), /export function SettingsChoiceGroup/);
+  assert.match(read("src/features/settings/categories/DownloadSettings.tsx"), /SettingsChoiceGroup/);
+  assert.match(read("src/features/settings/categories/DiscordSettings.tsx"), /SettingsChoiceGroup/);
 });

@@ -159,7 +159,8 @@ server.listen(5173,async()=>{
         const inside=(el,box)=>!!el&&rect(el).top>=rect(box).top-1&&rect(el).bottom<=rect(box).bottom+1;
         return {
           theme:app.dataset.theme,
-          retired:!!sidebar.querySelector('[data-nav-id="liked"],[data-nav-id="albums"]'),
+          retired:!!sidebar.querySelector('[data-nav-id="liked"]'),
+          albumsVisible:!!sidebar.querySelector('[data-nav-id="albums"]'),
           pinned:inside(pinned,sidebar),
           importVisible:inside(sidebar.querySelector('.importMainAction'),sidebar),
           sidebarClearOfPlayer:rect(sidebar).bottom<=rect(app.querySelector('.playerBar')).top+1,
@@ -186,6 +187,7 @@ server.listen(5173,async()=>{
       })()`);
       assert.equal(chrome.mode,"slim");
       assert.equal(chrome.retired,false,"retired sidebar destinations");
+       assert.equal(chrome.albumsVisible,true,"Albums must be available by default");
       assert.ok(chrome.pinned&&chrome.homeVisible&&chrome.importVisible,"Settings, Home and Import must remain visible: "+JSON.stringify(chrome));
       assert.ok(chrome.sidebarClearOfPlayer,"sidebar must end above the full-width playback bar: "+JSON.stringify(chrome));
       if(chrome.theme==="light"){
@@ -217,6 +219,18 @@ server.listen(5173,async()=>{
     await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.sidebar [data-nav-id=library].active') && !!document.querySelector('.songButton')").catch(()=>false),"library tracks",35000,16);
     const libraryNavigationMs=performance.now()-libraryNavigationStart;
     await screenshot(win,"desktop-library");
+    // Albums is a first-class destination, not merely a sidebar link.
+    const albumNavigation=await win.webContents.executeJavaScript("(()=>{const button=document.querySelector('.sidebar [data-nav-id=albums]');if(!button)return false;button.click();return true})()");
+    assert.ok(albumNavigation,"Albums sidebar destination must be clickable");
+    await until(()=>win.webContents.executeJavaScript("document.querySelectorAll('.albumsPageV318 .albumCardV318').length>=3 && !document.querySelector('.appCrashBoundary')").catch(()=>false),"tagged album shelf",35000,16);
+    await screenshot(win,"desktop-albums");
+    const openAlbum=await win.webContents.executeJavaScript("(()=>{const button=document.querySelector('.albumCardV318 .mediaCardOpen');if(!button)return false;button.click();return true})()");
+    assert.ok(openAlbum,"Album artwork must open its detail page");
+    await until(()=>win.webContents.executeJavaScript("!!document.querySelector('section[data-page-section=album] .collectionHero') && !!document.querySelector('section[data-page-section=album] .trackList .trackRow') && !document.querySelector('.appCrashBoundary')").catch(()=>false),"album detail with tracks",35000,16);
+    assert.equal(await win.webContents.executeJavaScript("Boolean(document.querySelector('section[data-page-section=album]')?.textContent.match(/more by various artists/i))"),false,"compilation albums must not recommend unrelated records as the same artist");
+    await screenshot(win,"desktop-album-detail");
+    await win.webContents.executeJavaScript("document.querySelector('.sidebar [data-nav-id=library]').click()");
+    await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.songButton') && !document.querySelector('.appCrashBoundary')").catch(()=>false),"return from album to library",35000,16);
     const playbackStart=performance.now();
     await win.webContents.executeJavaScript("document.querySelector('.songButton').click()");
     await until(()=>win.webContents.executeJavaScript("[...document.querySelectorAll('audio')].some(a=>!a.paused&&a.currentTime>0)").catch(()=>false),"audio playing",35000,16);
@@ -381,6 +395,17 @@ server.listen(5173,async()=>{
       await win.webContents.executeJavaScript("document.querySelector('.librarySectionNav [data-library-section=liked]').click()");
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.libraryPageLiked')").catch(()=>false),"liked songs "+mode);
       await screenshot(win,"liked-"+mode);
+      const unlikeForEmpty = await win.webContents.executeJavaScript("(()=>{const button=document.querySelector('.libraryPageLiked .songRow .likeActionV443');if(!button)return false;button.click();return true})()");
+      assert.ok(unlikeForEmpty,"Liked must allow removing the last saved song");
+      await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.libraryPageLiked .libraryLikedEmpty')"),"Liked empty state "+mode,5000);
+      await screenshot(win,"liked-empty-"+mode);
+      const browseFromEmpty = await win.webContents.executeJavaScript("(()=>{const button=document.querySelector('.libraryLikedBrowse');if(!button)return false;button.click();return true})()");
+      assert.ok(browseFromEmpty,"Liked empty state must offer library navigation");
+      await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.libraryPage:not(.libraryPageLiked) .songRow[data-library-song-id=qa-0]')"),"back to songs from Liked "+mode,5000);
+      await win.webContents.executeJavaScript("document.querySelector('.libraryPage .songRow[data-library-song-id=qa-0] .likeActionV443').click()");
+      await until(()=>win.webContents.executeJavaScript("document.querySelector('.libraryPage .songRow[data-library-song-id=qa-0] .likeActionV443')?.getAttribute('aria-pressed')==='true'"),"restore liked song "+mode,5000);
+      await win.webContents.executeJavaScript("document.querySelector('.librarySectionNav [data-library-section=liked]').click()");
+      await until(()=>win.webContents.executeJavaScript("!!document.querySelector('.libraryPageLiked .songRow')"),"Liked restores track "+mode,5000);
       await win.webContents.executeJavaScript(`(()=>{const e=document.querySelector('.librarySearch');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,"no matching fixture");e.dispatchEvent(new Event("input",{bubbles:true}));})()`);
       await until(()=>win.webContents.executeJavaScript("document.querySelector('.libraryPageLiked')?.textContent.includes('No songs found')"),"liked search empty "+mode);
       await win.webContents.executeJavaScript("[...document.querySelectorAll('.libraryPageLiked button')].find(b=>b.textContent==='clear search').click()");
@@ -544,6 +569,20 @@ server.listen(5173,async()=>{
       const appearanceSelected=await win.webContents.executeJavaScript("(()=>{const button=[...document.querySelectorAll('.settingsCategoryButton')].find(button=>button.textContent.includes('Appearance'));if(!button)return false;button.click();return true;})()");
       assert.equal(appearanceSelected,true,"Appearance remains reachable from Settings");
       await until(()=>win.webContents.executeJavaScript("document.querySelectorAll('.settingsModeButton').length===2").catch(()=>false),"appearance navigation");
+      const searched = await win.webContents.executeJavaScript("(()=>{const e=document.querySelector('#settings-section-search');if(!e)return false;Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'crossfade');e.dispatchEvent(new Event('input',{bubbles:true}));return true})()");
+      assert.ok(searched,"Settings control search must be accessible");
+      await until(()=>win.webContents.executeJavaScript("Array.from(document.querySelectorAll('.settingsControlResult')).some(el=>el.textContent.includes('Crossfade'))").catch(()=>false),"crossfade control search");
+      const openedControl=await win.webContents.executeJavaScript("(()=>{const b=[...document.querySelectorAll('.settingsControlResult')].find(el=>el.textContent.includes('Crossfade'));if(!b)return false;b.click();return true})()");
+      assert.ok(openedControl,"Settings search result must be actionable");
+      await until(()=>win.webContents.executeJavaScript("document.querySelector('[data-settings-category=playback] #settings-playback-transitions')!==null").catch(()=>false),"direct crossfade settings");
+      await screenshot(win,"settings-search-crossfade");
+      await win.webContents.executeJavaScript("document.querySelector('.settingsCategoryButton[title*=\"Lyrics\"]')?.click()");
+      await until(()=>win.webContents.executeJavaScript("!!document.querySelector('[data-settings-category=lyrics] #settings-lyrics-display')").catch(()=>false),"independent lyrics settings");
+      await screenshot(win,"settings-lyrics");
+       const appearanceForNextTheme = await win.webContents.executeJavaScript("(()=>{const button=[...document.querySelectorAll('.settingsCategoryButton')].find(item=>item.textContent.includes('Appearance'));if(!button)return false;button.click();return true;})()");
+       assert.equal(appearanceForNextTheme,true,"Appearance must be accessible after Lyrics");
+       await until(()=>win.webContents.executeJavaScript("document.querySelectorAll('.settingsModeButton').length===2").catch(()=>false),"restore Appearance for next theme");
+
     }
     // Render the actual title-bar update banner and remote What's New flow without installing a fake package.
     win.webContents.send("localitfy:auto-update-event",{

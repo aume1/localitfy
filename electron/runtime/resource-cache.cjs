@@ -6,7 +6,7 @@ const { randomUUID } = require("node:crypto");
 // Only disposable lookup results belong here, never user artwork or library data.
 function createResourceCache({ maxEntries = 512, maxBytes = 2 * 1024 * 1024, file = "", now = Date.now, validate = () => true } = {}) {
   const entries = new Map();
-  let loaded = false, loading = null, bytes = 2, dirty = false, timer = null, writing = null, revision = 0, generation = 0;
+  let loaded = false, loading = null, bytes = 2, dirty = false, timer = null, writing = null, revision = 0, generation = 0, failedWrites = 0;
   function remove(key) {
     const entry = entries.get(key);
     if (entry) { bytes -= entry.bytes + 1; entries.delete(key); }
@@ -58,7 +58,7 @@ function createResourceCache({ maxEntries = 512, maxBytes = 2 * 1024 * 1024, fil
     trim();
     return JSON.stringify([...entries].map(([key, {value, expiresAt}]) => [key,{value,expiresAt}]));
   }
-  function schedule() {
+  function schedule(delayMs = 250) {
     if (!file || !dirty || timer !== null || writing) return;
     timer = setTimeout(() => {
       timer = null;
@@ -72,14 +72,17 @@ function createResourceCache({ maxEntries = 512, maxBytes = 2 * 1024 * 1024, fil
           if (generation !== currentGeneration) return;
           // Atomic publication; a synchronous shutdown flush cannot interleave this step.
           fs.renameSync(temporary, file);
+          failedWrites = 0;
           if (revision === currentRevision) dirty = false;
-        } catch {}
+        } catch { failedWrites++; }
         finally { await fs.promises.rm(temporary,{force:true}).catch(() => {}); }
       })().finally(() => {
         writing = null;
-        if (revision !== currentRevision) schedule();
+        if (dirty && generation === currentGeneration && (revision !== currentRevision || failedWrites < 4)) {
+          schedule(failedWrites ? Math.min(8_000, 500 * 2 ** (failedWrites - 1)) : 250);
+        }
       });
-    }, 250);
+    }, delayMs);
     timer.unref?.();
   }
   function flush() {
@@ -95,6 +98,7 @@ function createResourceCache({ maxEntries = 512, maxBytes = 2 * 1024 * 1024, fil
       fs.writeFileSync(temporary, data, { flag: "wx", mode: 0o600 });
       fs.renameSync(temporary, file);
       dirty = false;
+      failedWrites = 0;
     } catch { /* Cache persistence must never prevent normal use. */ }
     finally { if (temporary) { try { fs.rmSync(temporary, { force: true }); } catch {} } }
   }
@@ -102,7 +106,7 @@ function createResourceCache({ maxEntries = 512, maxBytes = 2 * 1024 * 1024, fil
     load();
     if (typeof key !== "string" || key.length > 1024 || !validate(value) || !(ttlMs > 0) || !Number.isFinite(ttlMs)) return;
     insert(key, { value, expiresAt: now() + ttlMs });
-    if (file) { dirty = true; revision++; schedule(); }
+    if (file) { dirty = true; revision++; failedWrites = 0; schedule(); }
   }
   function get(key) {
     load();

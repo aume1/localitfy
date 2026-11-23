@@ -6,7 +6,7 @@
   place-items: center !important;
   padding: 18px !important;
   overflow: auto !important;
-  background: rgba(0, 0, 0, 0.58) !important;
+  background: var(--lt-overlay-scrim) !important;
   backdrop-filter: blur(14px) saturate(118%) !important;
 }
 
@@ -85,7 +85,7 @@
   backdrop-filter: blur(14px) saturate(125%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(125%) !important;
   border: 1px solid rgba(var(--lt-accent-rgb), 0.28) !important;
-  background: rgba(6, 6, 8, 0.58) !important;
+  background: var(--lt-glass-background) !important;
   box-shadow: 0 18px 60px rgba(0,0,0,0.32) !important;
 }
 
@@ -130,10 +130,10 @@
   max-width: min(360px, calc(100vw - 48px));
   min-height: 42px;
   padding: 10px 14px;
-  border: 1px solid rgba(var(--lt-accent-rgb, 141, 255, 206), 0.24);
+  border: 1px solid rgba(var(--lt-accent-rgb), 0.24);
   border-radius: 16px;
 
-  color: var(--lt-text, #fff);
+  color: var(--lt-text);
 
   transform: translate3d(0, 0, 0);
   animation: localitfyToastIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -151,11 +151,11 @@
 }
 
 .appToast.success{
-  border-color: rgba(var(--lt-accent-rgb, 141, 255, 206), 0.34);
+  border-color: rgba(var(--lt-accent-rgb), 0.34);
 }
 
 .appToast.error{
-  border-color: rgba(255, 91, 119, 0.42);
+  border-color: color-mix(in srgb, var(--lt-danger) 42%, transparent);
 }
 
 .coverAura img{
@@ -210,7 +210,7 @@
   background:
     radial-gradient(circle at 50% 30%, rgba(var(--lt-accent-rgb), 0.13), transparent 34%),
     radial-gradient(circle at 18% 88%, rgba(var(--accent-2-rgb), 0.10), transparent 30%),
-    rgba(0, 0, 0, 0.50);
+    var(--lt-overlay-scrim-soft);
   backdrop-filter: blur(18px) saturate(1.08);
   animation: localitfyImportOverlayIn 260ms var(--cinematic-ease) both;
 }
@@ -305,7 +305,7 @@
   right: -20%;
   top: 34%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(var(--lt-accent-rgb), 0.72), rgba(255, 255, 255, 0.74), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--lt-accent-rgb), 0.72), color-mix(in srgb, var(--lt-accent) 74%, transparent), transparent);
   box-shadow: 0 0 34px rgba(var(--lt-accent-rgb), 0.42);
   transform: translateY(-80px);
   animation: localitfyScannerLine 1240ms var(--cinematic-ease) infinite;
@@ -330,7 +330,7 @@
   top: 34%;
   left: 12%;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--lt-accent);
   box-shadow:
     0 0 0 8px rgba(var(--lt-accent-rgb), 0.10),
     0 0 30px rgba(var(--lt-accent-rgb), 0.65);
@@ -508,8 +508,8 @@
   padding: 9px 11px;
   border: 1px solid rgba(var(--lt-accent-rgb), 0.38);
   border-radius: 18px;
-  color: #fff;
-  background: rgba(7, 7, 8, 0.94);
+  color: var(--lt-text);
+  background: var(--lt-glass-background);
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.46),
     0 0 0 1px rgba(255, 255, 255, 0.06) inset;
@@ -549,7 +549,7 @@
 }
 
 .localitfyDragPreviewText small{
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--lt-muted);
   font-size: 10px;
   font-weight: 850;
 }
@@ -709,7 +709,7 @@ body.isResizingSidebar{
 .whatsNewSubtext{
   max-width: 34rem;
   margin: 0 0 18px;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--lt-muted);
   font-size: 13px;
   line-height: 1.48;
 }
@@ -729,8 +729,8 @@ body.isResizingSidebar{
 .editorModalHead{
   flex: 0 0 auto !important;
   padding: 28px 32px 20px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
-  background: rgba(0, 0, 0, 0.22) !important;
+  border-bottom: 1px solid var(--lt-border) !important;
+  background: var(--lt-fill-subtle) !important;
 }
 
 .editorGridBetter{
@@ -751,9 +751,9 @@ body.isResizingSidebar{
 .editorMiniStats span{
   min-width: 0;
   padding: 10px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--lt-border);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--lt-fill-subtle);
 }
 
 .editorFieldsBetter{
@@ -772,24 +772,24 @@ body.isResizingSidebar{
   gap: 11px !important;
   margin: 0 !important;
   padding: 13px !important;
-  border: 1px solid rgba(255, 255, 255, 0.095) !important;
+  border: 1px solid var(--lt-border) !important;
   border-radius: 18px !important;
-  background: rgba(0, 0, 0, 0.72) !important;
+  background: var(--lt-glass-background) !important;
   backdrop-filter: blur(18px) saturate(140%) !important;
 }
 
 .app{
-  --shell-border: rgba(255, 255, 255, 0.095);
+  --shell-border: var(--lt-border);
   --shell-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .panel{
   border-color: var(--shell-border) !important;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
-    rgba(0, 0, 0, 0.32) !important;
+    linear-gradient(180deg, color-mix(in srgb, var(--lt-text) 5.2%, transparent), color-mix(in srgb, var(--lt-text) 2.2%, transparent)),
+    var(--lt-fill-subtle) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    inset 0 1px 0 color-mix(in srgb, var(--lt-text) 5.5%, transparent),
     0 18px 48px rgba(0, 0, 0, 0.18) !important;
   backdrop-filter: blur(18px) saturate(135%) !important;
   -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
@@ -821,7 +821,7 @@ body.isResizingSidebar{
   display: block !important;
   background:
     radial-gradient(circle at var(--glow-x, 78%) var(--glow-y, 44%), rgba(var(--lt-accent-rgb), 0.115), transparent 36%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.84), rgba(0, 0, 0, 0.58) 52%, rgba(0, 0, 0, 0.36)) !important;
+    linear-gradient(90deg, color-mix(in srgb, var(--lt-bg) 84%, transparent), color-mix(in srgb, var(--lt-bg) 58%, transparent) 52%, color-mix(in srgb, var(--lt-bg) 36%, transparent)) !important;
   transition:
     opacity 360ms ease,
     background 520ms ease !important;
@@ -890,15 +890,15 @@ body.isResizingSidebar{
 .circleButton:not(.playerBar *),
 .softButton,
 .heroGhost{
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--lt-border) !important;
+  background: var(--lt-fill) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
 }
 .circleButton.main:not(.playerBar *),
 .mainAction,
 .heroMain,
 .iconAction.liked{
-  color: #04100a !important;
+  color: var(--button-text-on-accent) !important;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 42%),
     var(--lt-accent) !important;
@@ -907,8 +907,8 @@ body.isResizingSidebar{
     inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
 }
 .editorFields input{
-  border-color: rgba(255, 255, 255, 0.09) !important;
-  background: rgba(255, 255, 255, 0.055) !important;
+  border-color: var(--lt-border) !important;
+  background: var(--lt-fill-subtle) !important;
   color: var(--lt-text) !important;
   transition:
     border-color 180ms ease,
@@ -927,7 +927,7 @@ body.isResizingSidebar{
   border-color: rgba(var(--lt-accent-rgb), 0.24) !important;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
-    rgba(5, 5, 6, 0.9) !important;
+    var(--lt-glass-background) !important;
   box-shadow:
     0 20px 54px rgba(0, 0, 0, 0.42),
     0 0 26px rgba(var(--lt-accent-rgb), 0.08) !important;
@@ -940,12 +940,12 @@ body.isResizingSidebar{
 }
 
 ::-webkit-scrollbar-track{
-  background: rgba(0, 0, 0, 0.48) !important;
+  background: var(--lt-fill-subtle) !important;
 }
 
 ::-webkit-scrollbar-thumb{
-  background: rgba(255, 255, 255, 0.14) !important;
-  border-color: rgba(0, 0, 0, 0.48) !important;
+  background: var(--lt-border-strong) !important;
+  border-color: var(--lt-bg) !important;
 }
 
 ::-webkit-scrollbar-thumb:hover{
@@ -1104,7 +1104,7 @@ body{
 
 .softButton{
   border-radius: 999px;
-  border: 1px solid color-mix(in oklab, var(--lt-accent) 22%, rgba(255,255,255,.08));
+  border: 1px solid color-mix(in oklab, var(--lt-accent) 22%, var(--lt-border));
   background: color-mix(in oklab, var(--surface) 70%, transparent);
   color: var(--lt-text);
 }
@@ -1124,7 +1124,7 @@ body{
   place-items: center !important;
   border-radius: 999px !important;
   background: color-mix(in oklab, var(--surface) 58%, transparent) !important;
-  border: 1px solid color-mix(in oklab, var(--lt-accent) 22%, rgba(255,255,255,.12)) !important;
+  border: 1px solid color-mix(in oklab, var(--lt-accent) 22%, var(--lt-border)) !important;
   color: color-mix(in oklab, var(--lt-text) 88%, var(--lt-accent) 12%) !important;
   box-shadow: none !important;
   transform: none;
@@ -1137,12 +1137,12 @@ body{
   min-height: var(--control-circle-main) !important;
   background: var(--lt-accent) !important;
   color: var(--button-text-on-accent) !important;
-  border-color: color-mix(in oklab, var(--lt-accent) 65%, white 10%) !important;
+  border-color: color-mix(in oklab, var(--lt-accent) 65%, var(--lt-border) 35%) !important;
 }
 
 .app{
-  --app-bg-solid: var(--lt-bg, #000);
-  --sidebar-line: color-mix(in oklab, var(--lt-accent, #64f0a4) 18%, var(--lt-border, rgba(255,255,255,.08)) 82%);
+  --app-bg-solid: var(--lt-bg);
+  --sidebar-line: color-mix(in oklab, var(--lt-accent) 18%, var(--lt-border) 82%);
 }
 
 [data-orb]{
@@ -1160,8 +1160,8 @@ body{
 .ambientSurface{
   isolation: auto !important;
   background:
-    color-mix(in oklab, var(--surface, rgba(255,255,255,.04)) 72%, var(--lt-bg, #000) 28%) !important;
-  border-color: color-mix(in oklab, var(--lt-accent, #64f0a4) 16%, var(--lt-border, rgba(255,255,255,.08)) 84%) !important;
+    color-mix(in oklab, var(--surface) 72%, var(--lt-bg) 28%) !important;
+  border-color: color-mix(in oklab, var(--lt-accent) 16%, var(--lt-border) 84%) !important;
   box-shadow: none !important;
 }
 
@@ -1177,8 +1177,8 @@ body{
 }
 
 .ambientSurface:hover{
-  background: color-mix(in oklab, var(--lt-accent, #64f0a4) 6%, var(--surface, rgba(255,255,255,.04)) 94%) !important;
-  border-color: color-mix(in oklab, var(--lt-accent, #64f0a4) 26%, var(--lt-border, rgba(255,255,255,.08)) 74%) !important;
+  background: color-mix(in oklab, var(--lt-accent) 6%, var(--surface) 94%) !important;
+  border-color: color-mix(in oklab, var(--lt-accent) 26%, var(--lt-border) 74%) !important;
   box-shadow: none !important;
 }
 
@@ -1192,11 +1192,11 @@ body{
 }
 
 :root{
-  --theme-accent: var(--lt-accent, #8dffce);
+  --theme-accent: var(--lt-accent);
   --theme-accent-2: var(--accent-2, var(--theme-accent));
   --theme-progress: var(--progress, var(--theme-accent));
   --theme-highlight: var(--highlight, var(--theme-accent-2));
-  --theme-bg: var(--lt-bg, #050506);
+  --theme-bg: var(--lt-bg);
 }
 
 .shell{
@@ -1209,20 +1209,20 @@ body{
 }
 
 :root{
-  --localtify-sidebar-bg: color-mix(in oklab, var(--lt-bg, #050505) 72%, var(--lt-accent, #ff65df) 17%);
-  --localtify-sidebar-bg-2: color-mix(in oklab, var(--bg-2, #080808) 70%, var(--accent-2, var(--lt-accent, #ff65df)) 16%);
-  --localtify-panel-bg: color-mix(in oklab, var(--surface, #101010) 76%, var(--lt-accent, #ff65df) 9%);
-  --localtify-panel-bg-2: color-mix(in oklab, var(--surface-2, #151515) 74%, var(--accent-2, var(--lt-accent, #ff65df)) 8%);
-  --localtify-line-soft: color-mix(in oklab, var(--lt-accent, #ff65df) 12%, rgba(255,255,255,.045));
+  --localtify-sidebar-bg: color-mix(in oklab, var(--lt-bg) 72%, var(--lt-accent) 17%);
+  --localtify-sidebar-bg-2: color-mix(in oklab, var(--bg-2) 70%, var(--accent-2, var(--lt-accent)) 16%);
+  --localtify-panel-bg: color-mix(in oklab, var(--surface) 76%, var(--lt-accent) 9%);
+  --localtify-panel-bg-2: color-mix(in oklab, var(--surface-2) 74%, var(--accent-2, var(--lt-accent)) 8%);
+  --localtify-line-soft: color-mix(in oklab, var(--lt-accent) 12%, var(--lt-border));
 }
 
 body{
-  color: var(--lt-text, #f7f7f7) !important;
+  color: var(--lt-text) !important;
 }
 
 .app{
 
-  color: var(--lt-text, #f7f7f7) !important;
+  color: var(--lt-text) !important;
 }
 
 .app::before{
@@ -1249,9 +1249,9 @@ body{
 .app[data-theme] .main{
   background:
     linear-gradient(180deg,
-      color-mix(in srgb, var(--lt-accent, #ff6edb) 8%, var(--lt-bg, #050505)) 0%,
-      color-mix(in srgb, var(--lt-accent, #ff6edb) 4%, var(--lt-bg, #050505)) 38%,
-      var(--lt-bg, #050505) 100%) !important;
+      color-mix(in srgb, var(--lt-accent) 8%, var(--lt-bg)) 0%,
+      color-mix(in srgb, var(--lt-accent) 4%, var(--lt-bg)) 38%,
+      var(--lt-bg) 100%) !important;
 }
 
 .app[data-theme] .navIcon{
@@ -1373,8 +1373,8 @@ body.localitfyThemePainting .app *{
 
 .mainAction.importMainAction{
   border: 0;
-  background: linear-gradient(135deg, var(--lt-accent), color-mix(in srgb, var(--lt-accent) 58%, #ffffff 42%));
-  color: #06080c;
+  background: linear-gradient(135deg, var(--lt-accent), color-mix(in srgb, var(--lt-accent) 85%, var(--lt-bg) 15%));
+  color: var(--button-text-on-accent);
   box-shadow: 0 14px 30px rgba(var(--lt-accent-rgb), 0.18);
 }
 
@@ -1395,7 +1395,7 @@ body.localitfyThemePainting .app *{
   fill: currentColor !important;
   fill-opacity: .22 !important;
   stroke-width: 2.85 !important;
-  filter: drop-shadow(0 0 12px color-mix(in oklab, var(--lt-accent, #a98cff) 20%, transparent)) !important;
+  filter: drop-shadow(0 0 12px color-mix(in oklab, var(--lt-accent) 20%, transparent)) !important;
 }
 
 .app .navDivider{
@@ -1403,14 +1403,14 @@ body.localitfyThemePainting .app *{
   height: 1px !important;
   margin-left: 14px !important;
   margin-right: 14px !important;
-  background: color-mix(in oklab, var(--lt-accent, #a98cff) 20%, rgba(255,255,255,.11)) !important;
+  background: color-mix(in oklab, var(--lt-accent) 20%, var(--lt-border)) !important;
   opacity: 1 !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
 }
 
 html{
-  background: var(--app-bg-solid, var(--lt-bg, #050505)) !important;
+  background: var(--app-bg-solid, var(--lt-bg)) !important;
 }
 
 .app{
@@ -1584,7 +1584,7 @@ html{
   padding: 9px 14px !important;
   border-radius: 999px !important;
   border: 1px solid color-mix(in srgb, var(--lt-accent) 42%, transparent) !important;
-  background: color-mix(in srgb, #050509 74%, var(--surface) 26%) !important;
+  background: color-mix(in srgb, var(--lt-bg-elevated) 74%, var(--lt-surface) 26%) !important;
   color: var(--lt-text) !important;
   box-shadow: 0 14px 44px rgba(0, 0, 0, .34), 0 0 26px rgba(var(--lt-accent-rgb), .15) !important;
   backdrop-filter: blur(12px) saturate(120%) !important;
@@ -1688,7 +1688,7 @@ html{
 .songCard.active,
 .songCard.playing,
 .songCard.isPlaying {
-  color: #ffffff !important;
+  color: var(--lt-text) !important;
   -webkit-text-fill-color: initial !important;
 }
 
@@ -1705,8 +1705,8 @@ html{
 .songCard.active h3,
 .songCard.playing h3,
 .songCard.isPlaying h3 {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: var(--lt-text) !important;
+  -webkit-text-fill-color: var(--lt-text) !important;
 }
 
 .songCard.active .songArtist,
@@ -1715,8 +1715,8 @@ html{
 .songCard.active p,
 .songCard.playing p,
 .songCard.isPlaying p {
-  color: rgba(255, 255, 255, 0.74) !important;
-  -webkit-text-fill-color: rgba(255, 255, 255, 0.74) !important;
+  color: color-mix(in srgb, var(--lt-text) 74%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--lt-text) 74%, transparent) !important;
 }
 
 button svg,
@@ -1894,7 +1894,7 @@ button {
   gap: 9px !important;
   border-radius: 14px !important;
   border: 1px solid rgba(var(--lt-accent-rgb), 0.22) !important;
-  background: rgba(7, 7, 8, 0.88) !important;
+  background: var(--lt-glass-background) !important;
   box-shadow:
     0 16px 42px rgba(0, 0, 0, 0.36),
     0 0 0 1px rgba(255, 255, 255, 0.035) inset !important;
@@ -1917,7 +1917,7 @@ button {
 }
 
 .app .appToast.error{
-  border-color: rgba(255, 91, 119, 0.42) !important;
+  border-color: color-mix(in srgb, var(--lt-danger) 42%, transparent) !important;
 }
 
 @keyframes localtifyCleanToastIn{
@@ -1996,10 +1996,10 @@ body.localtifyIdle .app:not(.songDragActive) .secretLayer{
 }
 
 .app{
-  background-color: var(--app-bg-solid, var(--lt-bg, #000)) !important;
+  background-color: var(--app-bg-solid, var(--lt-bg)) !important;
   background-image:
-    radial-gradient(circle at 12% -12%, color-mix(in oklab, var(--lt-accent, #e64be8) 10%, transparent), transparent 34%),
-    radial-gradient(circle at 88% 4%, color-mix(in oklab, var(--accent-2, #8b5cf6) 7%, transparent), transparent 36%) !important;
+    radial-gradient(circle at 12% -12%, color-mix(in oklab, var(--lt-accent) 10%, transparent), transparent 34%),
+    radial-gradient(circle at 88% 4%, color-mix(in oklab, var(--accent-2) 7%, transparent), transparent 36%) !important;
   background-size: auto !important;
   background-position: center !important;
 }
@@ -2138,8 +2138,8 @@ body::after,
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(circle at 50% 42%, rgba(var(--lt-accent-rgb, 227, 78, 232), 0.16), transparent 58%),
-    rgba(8, 5, 12, 0.92);
+    radial-gradient(circle at 50% 42%, rgba(var(--lt-accent-rgb), 0.16), transparent 58%),
+    var(--lt-surface-raised);
   contain: paint;
 }
 
@@ -2149,14 +2149,14 @@ body::after,
   z-index: 1;
   display: grid;
   place-items: center;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--lt-muted);
   font-size: clamp(1rem, 35%, 2.8rem);
   font-weight: 800;
   letter-spacing: -0.06em;
   text-transform: lowercase;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.055), transparent 42%),
-    radial-gradient(circle at 50% 45%, rgba(var(--lt-accent-rgb, 227, 78, 232), 0.18), transparent 62%);
+    radial-gradient(circle at 50% 45%, rgba(var(--lt-accent-rgb), 0.18), transparent 62%);
   opacity: 1;
   transform: scale(1.01);
   transition: opacity 220ms ease, transform 280ms ease;
@@ -2241,7 +2241,6 @@ body.localtifyBackgroundMode .ambientSurface,
 }
 
 .settingsSection,
-.settingsCard,
 .songListPanel {
   content-visibility: auto;
   contain-intrinsic-size: 320px;
@@ -2283,21 +2282,6 @@ body.localtifyBackgroundMode .ambientSurface,
   margin: 0 !important;
 }
 
-.virtualHomeGridCanvas{
-  min-height: 100%;
-}
-
-.virtualHomeGridRow{
-  position: absolute;
-  inset: 0 0 auto 0;
-  display: grid;
-  gap: 14px;
-  width: 100%;
-  align-items: start;
-  padding-bottom: 14px;
-  box-sizing: border-box;
-  contain: layout paint style;
-}
 
 .virtualSongViewport::-webkit-scrollbar{
   width: 8px;
@@ -2477,7 +2461,7 @@ body.localitfyThemePainting .app{
   place-items: center !important;
   padding: 18px !important;
   overflow: auto !important;
-  background: rgba(0,0,0,.68) !important;
+  background: var(--lt-overlay-scrim) !important;
   backdrop-filter: blur(22px) saturate(120%) !important;
   -webkit-backdrop-filter: blur(22px) saturate(120%) !important;
 }
@@ -2510,7 +2494,7 @@ body,
   width: 100%;
   height: 100%;
   margin: 0;
-  background: var(--lt-bg, #000);
+  background: var(--lt-bg);
 }
 
 .app{
@@ -2521,7 +2505,7 @@ body,
   height: 100vh;
   overflow: hidden;
 
-  background: var(--lt-bg, #000);
+  background: var(--lt-bg);
 }
 
 .titleBar{
@@ -2562,7 +2546,7 @@ body,
   color: var(--lt-text);
   background: var(--workspace-sidebar);
   border-right: 1px solid rgba(var(--lt-accent-rgb), .25);
-  box-shadow: inset -1px 0 0 rgba(255,255,255,.025);
+  box-shadow: inset -1px 0 0 var(--lt-border);
   opacity: 1;
   transform: none;
   transition: none;
@@ -2573,7 +2557,7 @@ body,
 .sidebar:hover,
 .app .sidebar:hover{
   background: var(--workspace-sidebar);
-  box-shadow: inset -1px 0 0 rgba(255,255,255,.025);
+  box-shadow: inset -1px 0 0 var(--lt-border);
   transform: none;
 }
 
@@ -2598,7 +2582,7 @@ body,
   overflow-x: hidden;
   overflow-y: auto;
   color: var(--lt-text);
-  background: var(--lt-bg, #000);
+  background: var(--lt-bg);
   transform: none;
   transition: none;
   overscroll-behavior: contain;
@@ -3069,7 +3053,7 @@ body.isResizingPlayer .app *{
 }
 
 .app{
-  color: var(--lt-text, rgba(255,255,255,.92));
+  color: var(--lt-text);
   text-rendering: geometricPrecision;
 }
 
@@ -3121,15 +3105,15 @@ body.isResizingPlayer .app *{
   border-color: rgba(var(--lt-accent-rgb), .22) !important;
   background:
     linear-gradient(180deg, rgba(var(--lt-accent-rgb), .070), rgba(255,255,255,.014)),
-    rgba(6, 6, 11, .76) !important;
+    color-mix(in srgb, var(--lt-surface) 76%, transparent) !important;
 }
 
 .app :is(.warning, .warn, .notImported, .failed, .bad):not(.playerBar){
-  border-color: rgba(255, 190, 94, .24) !important;
+  border-color: color-mix(in srgb, var(--lt-warning) 24%, transparent) !important;
 }
 
 .app :is(.error, .danger, .failed, .bad):not(.playerBar){
-  border-color: rgba(255, 90, 126, .25) !important;
+  border-color: color-mix(in srgb, var(--lt-danger) 25%, transparent) !important;
 }
 
 .app :is(.content, .pageTransition, .songList){
@@ -3138,9 +3122,9 @@ body.isResizingPlayer .app *{
 }
 
 .app{
-  --outline-calm-v487: color-mix(in oklab, rgba(255,255,255,.05) 84%, var(--lt-accent) 16%) !important;
-  --outline-hover-v487: color-mix(in oklab, rgba(255,255,255,.065) 68%, var(--lt-accent) 32%) !important;
-  --outline-active-v487: color-mix(in oklab, rgba(255,255,255,.06) 30%, var(--lt-accent) 70%) !important;
+  --outline-calm-v487: color-mix(in oklab, var(--lt-border) 84%, var(--lt-accent) 16%) !important;
+  --outline-hover-v487: color-mix(in oklab, var(--lt-border) 68%, var(--lt-accent) 32%) !important;
+  --outline-active-v487: color-mix(in oklab, var(--lt-border) 30%, var(--lt-accent) 70%) !important;
 }
 
 

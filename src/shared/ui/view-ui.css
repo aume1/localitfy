@@ -32,18 +32,18 @@
 }
 
 .localtifyStateCardV373.warning {
-  --state-rgb: 255, 198, 91;
-  --state-icon-color: #ffd477;
+  --state-rgb: var(--lt-warning-rgb);
+  --state-icon-color: var(--lt-warning);
 }
 
 .localtifyStateCardV373.error {
-  --state-rgb: 255, 88, 116;
-  --state-icon-color: #ff8aa0;
+  --state-rgb: var(--lt-danger-rgb);
+  --state-icon-color: var(--lt-danger);
 }
 
 .localtifyStateCardV373.success {
-  --state-rgb: 67, 234, 139;
-  --state-icon-color: #7af2ad;
+  --state-rgb: var(--lt-success-rgb);
+  --state-icon-color: var(--lt-success);
 }
 
 .localtifyStateIconV373 {

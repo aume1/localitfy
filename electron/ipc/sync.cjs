@@ -32,10 +32,10 @@ function registerSyncIpc(router, { app, repositories, coverPath, listSongsShaped
     onPlayEvent: (event) => { try { observePlay(event); } catch (error) { console.log("[localtify sync scrobble]", error?.message || error); } },
     onChanged: (change) => {
       if (change.devices) return notify("sync:status", status());
-      // The open window keeps its own copy of songs and playlists; refresh it so it never saves over the phone's edits.
-      notify("library:watched-change", { importedCount: 0, libraryChanged: true, songs: listSongsShaped() });
+      // A playlist-only or listening-history sync does not mutate the song library.
+      if (change.songs) notify("library:watched-change", { importedCount: 0, libraryChanged: true, songs: listSongsShaped() });
       if (change.playlists) notify("sync:playlists-changed", repositories.playlists.get());
-      notify("sync:status", status());
+      if (change.songs || change.playlists) notify("sync:status", status());
     }
   });
 

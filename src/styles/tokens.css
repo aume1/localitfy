@@ -1,5 +1,6 @@
 :root{
   --lt-bg: #000000;
+  --lt-bg-rgb: 0, 0, 0;
   --lt-bg-elevated: #111214;
 
   --lt-surface: #151518;
@@ -23,6 +24,38 @@
   --lt-accent-rgb: 255, 255, 255;
   --lt-accent-soft: rgba(var(--lt-accent-rgb), 0.14);
   --lt-danger: #ff6b8a;
+  --lt-danger-rgb: 255, 107, 138;
+  --lt-on-danger: #ffffff;
+  --lt-warning: #e8b258;
+  --lt-warning-rgb: 232, 178, 88;
+  --lt-success: #7af2ad;
+  --lt-success-rgb: 122, 242, 173;
+  --button-text-on-accent: #000000;
+  --lt-overlay-scrim: rgba(0, 0, 0, .60);
+  --lt-overlay-scrim-soft: rgba(0, 0, 0, .50);
+  --lt-on-image: #ffffff;
+  --lt-like-heart: #fe587a;
+  --lt-like-heart-rgb: 254, 88, 122;
+  --lt-image-scrim: rgba(0, 0, 0, .35);
+  --lt-update-from: #1351a8;
+  --lt-update-to: #176cce;
+  --lt-update-border: rgba(99, 170, 255, .45);
+  --lt-update-text: #ffffff;
+  --lt-update-text-muted: rgba(255, 255, 255, .82);
+  --lt-update-button: rgba(255, 255, 255, .16);
+  --lt-update-button-hover: rgba(255, 255, 255, .28);
+  --lt-update-progress: #a6d5ff;
+  --lt-update-error-from: #6e2936;
+  --lt-update-error-to: #833f49;
+  --lt-update-error-border: #a55465;
+  --lt-update-ready-from: #16658a;
+  --lt-update-ready-to: #1786a3;
+  --lt-oled-bg: #000000;
+  --lt-oled-rgb: 255, 255, 255;
+  --lt-oled-text: #ffffff;
+  --lt-oled-muted: #b9b9b9;
+  --lt-oled-surface: #111111;
+  --lt-oled-border: #292929;
 
   --lt-radius-sm: 12px;
   --lt-radius-md: 18px;

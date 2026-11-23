@@ -65,10 +65,10 @@
   bottom: 104px;
   max-width: 142px;
   padding: 5px 8px;
-  border: 1px solid rgba(var(--accent-rgb), .18);
+  border: 1px solid var(--lt-border);
   border-radius: 999px;
-  color: rgba(255,255,255,.82);
-  background: rgba(6,6,10,.62);
+  color: var(--lt-text);
+  background: var(--lt-glass-background);
   backdrop-filter: blur(10px) saturate(116%);
   -webkit-backdrop-filter: blur(10px) saturate(116%);
   font-size: 10px;

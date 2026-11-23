@@ -22,10 +22,10 @@ import { useAppToast } from "./features/shell/useAppToast";
 import { useShellResize } from "./features/shell/useShellResize";
 import { useScreensaverController } from "./features/shell/useScreensaverController";
 import { useDiagnosticsInfo } from "./features/shell/useDiagnosticsInfo";
-import { useFeedbackController } from "./features/feedback";
 import { usePlaylistsController } from "./features/playlists";
+import { useAlbumsController } from "./features/albums/useAlbumsController";
 import { useAppMenuCommands } from "./features/shell/useAppMenuCommands";
-import { updateStatusLabel, useUpdatesController } from "./features/updates";
+import { useUpdatesController } from "./features/updates";
 import { useSettingsController } from "./features/settings";
 import { useCoversController } from "./features/covers";
 import type { VirtualSongRowsProps } from "./features/library/components/SongRows";
@@ -49,11 +49,6 @@ import { useBodyRuntimeClasses } from "./app/runtime/useBodyRuntimeClasses";
 import { useAppLifecycleRuntime } from "./app/runtime/useAppLifecycleRuntime";
 import { applyVisualCustomizationDefaults, migrateVisualSettings } from "./features/settings/visualCustomization";
 import { getLocaltifyPlatformInfo } from "./app/platform";
-import {
-  FEEDBACK_MESSAGE_MAX_LENGTH,
-  shouldOpenFeedbackPromptFromGlobalSearch,
-  shouldOpenFeedbackPromptFromSettingsSearch
-} from "./features/feedback/feedbackPrompt";
 import {
   markOnboardingSeenForThisRelease,
   shouldOpenOnboardingForThisRelease
@@ -107,8 +102,8 @@ import {
   sanitizeSongList
 } from "./features/search";
 import {
+  matchSettingsControls,
   normalizeSettingsSearch,
-  resolveSettingsCategoryFromSearch,
   settingsTabMatchesSearch
 } from "./features/settings/settings.search";
 import {
@@ -142,7 +137,6 @@ import { usePlaybackConnect } from "./features/connect/usePlaybackConnect";
 import { useDevToolsShortcut } from "./features/shell/useDevToolsShortcut";
 
 const Onboarding = lazy(() => import("./Onboarding"));
-const FeedbackPrompt = lazy(() => import("./features/feedback/FeedbackPromptModal"));
 const SettingsCategoryContent = lazy(() => import("./features/settings/SettingsCategoryContent"));
 
 
@@ -227,17 +221,8 @@ function MainModeApp() {
   const [view, setView] = useState<View>("home");
   const [isAppBackgrounded, setIsAppBackgrounded] = useState(() => (typeof document === "undefined" ? false : document.hidden));
   const isAppBackgroundedRef = useRef(isAppBackgrounded);
-  const {
-    diagnosticsCopied, setDiagnosticsCopied,
-    performanceStatus, setPerformanceStatus,
-    feedbackPromptOpen, setFeedbackPromptOpen,
-    feedbackCategory, setFeedbackCategory,
-    feedbackMessage, setFeedbackMessage,
-    feedbackSendBusy, setFeedbackSendBusy,
-    feedbackStatus, setFeedbackStatus,
-    feedbackConfigStatus, setFeedbackConfigStatus,
-    feedbackLastSentAtRef
-  } = useFeedbackController();
+  const [diagnosticsCopied, setDiagnosticsCopied] = useState(false);
+  const [performanceStatus, setPerformanceStatus] = useState<{ok?:boolean;electronVersion?:string;chromeVersion?:string}|null>(null);
   const [isViewSwitching, setIsViewSwitching] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(() => shouldOpenOnboardingForThisRelease());
   const {
@@ -270,6 +255,17 @@ function MainModeApp() {
   const { libraryIndex, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
     songs, deferredQuery, view, libraryFilterMode, librarySortMode, libraryRenderLimit, libraryListLengthRef, libraryRenderLimitRef
   });
+
+  const albumsController = useAlbumsController({
+    view, songs, songsById, setSongs, setLibraryScanBusy, setLibraryScanMessage,
+    setStatusText, patchSongLocal, reducedMotion: settings.reducedMotion
+  });
+
+  const albumIdBySong = useMemo(() => {
+    const ids = new Map<string, string>();
+    for (const album of albumsController.localAlbums) for (const song of album.songs) ids.set(song.id, album.id);
+    return ids;
+  }, [albumsController.localAlbums]);
 
   const {
     updatePrompt,
@@ -368,33 +364,23 @@ function MainModeApp() {
 
   const visibleSettingsTabs = useMemo(() => {
     if (!settingsSearchQuery) return settingsCategoryTabs;
-    return settingsCategoryTabs.filter((tab) => settingsTabMatchesSearch(tab, settingsSearchQuery));
+    const controlCategories = new Set(
+      matchSettingsControls(settingsSearchQuery, settingsCategoryTabs.map(tab => tab.id))
+        .map(result => result.category)
+    );
+    return settingsCategoryTabs.filter(tab =>
+      settingsTabMatchesSearch(tab, settingsSearchQuery) || controlCategories.has(tab.id)
+    );
   }, [settingsSearchQuery]);
 
   const settingsSearchResultLabel = settingsSearchQuery
     ? visibleSettingsTabs.length
       ? `showing ${visibleSettingsTabs.length} matching section${visibleSettingsTabs.length === 1 ? "" : "s"}`
-      : "no exact section found — Search for settings such as Discord, theme, cover, update, volume, or type /feedback."
-    : "Search for settings such as Discord, theme, cover, update, volume, or type /feedback.";
+       : "No matching setting. Try theme, lyrics, crossfade, or downloads."
+    : "Search theme, lyrics, crossfade, or downloads.";
 
   function handleSettingsSearchInput(value: string) {
     setSettingsSearch(value);
-
-    if (shouldOpenFeedbackPromptFromSettingsSearch(value)) {
-      setSettingsSearch("");
-      setQuery("");
-      setSettingsCategory("advanced");
-      setFeedbackCategory("bug");
-      openFeedbackPrompt();
-      setStatusText("feedback box opened");
-      showAppToast("feedback box opened", "success");
-      return;
-    }
-
-    const nextCategory = resolveSettingsCategoryFromSearch(value);
-    if (nextCategory && nextCategory !== settingsCategory) {
-      setSettingsCategory(nextCategory);
-    }
   }
 
   function openSettingsPanel(category: SettingsCategory = "appearance") {
@@ -411,8 +397,7 @@ function MainModeApp() {
 
   function changeView(nextView: View, _source: "nav" | "onboarding" | "settings" | "unknown" = "nav") {
     setLyricsOpen(false);
-    // Old runtime callers may still provide the retired album destination.
-    if (["albums", "covers"].includes(String(nextView))) nextView = "library";
+    if (nextView === "covers") nextView = "library";
     if (view === nextView) return;
 
     if (viewSwitchTimerRef.current !== null) {
@@ -612,6 +597,10 @@ function MainModeApp() {
     setSpotifyUrl,
     spotifyTracks,
     setSpotifyTracks,
+    spotifySourceName,
+    setSpotifySourceName,
+    spotifySourceType,
+    setSpotifySourceType,
     spotifyFetchBusy,
     spotifyFetchError,
     setSpotifyFetchError,
@@ -828,42 +817,10 @@ function MainModeApp() {
     };
   }, [ready]);
 
-  useEffect(() => {
-    if (!ready || !window.localitfy?.getFeedbackStatus) return;
-
-    let cancelled = false;
-
-    const cancelIdle = runLocaltifyIdleTask(() => {
-      window.localitfy
-        .getFeedbackStatus?.()
-        .then((status: any) => {
-          if (!cancelled) setFeedbackConfigStatus(status || null);
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setFeedbackConfigStatus({
-              ok: false,
-              configured: false,
-              valid: false,
-              status: "unknown",
-              label: "Feedback status unavailable",
-              message: "The feedback status bridge did not respond."
-            });
-          }
-        });
-    }, 1200);
-
-    return () => {
-      cancelled = true;
-      cancelIdle();
-    };
-  }, [ready]);
-
   const { diagnosticsInfo, copyDiagnosticsInfo } = useDiagnosticsInfo({
     currentThemeName: currentTheme.name,
     downloadFolderLabel,
     performanceStatus,
-    feedbackConfigStatus,
     platformInfo,
     playlistCount: playlists.length,
     settings,
@@ -1599,16 +1556,6 @@ function MainModeApp() {
 
   const handleSearchInput = (value: string) => {
     const command = value.trim().toLowerCase();
-
-    if (shouldOpenFeedbackPromptFromGlobalSearch(value)) {
-      setQuery("");
-      setSettingsSearch("");
-      setFeedbackCategory("bug");
-      openFeedbackPrompt();
-      setStatusText("feedback box opened");
-      showAppToast("feedback box opened", "success");
-      return;
-    }
 
     if (command === "screensaver" || command === "/screensaver") {
       setQuery("");
@@ -4825,6 +4772,7 @@ function MainModeApp() {
     setPlayQueue((queue) => remapSongIds(queue, keptFor));
     setQueueHistory((history) => history.map((item) => keptFor.has(item.songId) ? { ...item, songId: keptFor.get(item.songId)! } : item));
     setPlaylists((items) => items.map((item) => ({ ...item, songIds: remapSongIds(item.songIds, keptFor) })));
+    albumsController.remapAlbumSongs(keptFor);
     setSongs(applyLibraryOrder(sanitizeSongList(nextSongs)));
   }
 
@@ -5144,186 +5092,6 @@ function MainModeApp() {
     }
   };
 
-  const openFeedbackPrompt = useCallback(() => {
-    setFeedbackStatus({ kind: "idle", message: "" });
-    setFeedbackPromptOpen(true);
-  }, []);
-
-  const closeFeedbackPrompt = useCallback(() => {
-    setFeedbackPromptOpen(false);
-    setFeedbackSendBusy(false);
-    setFeedbackStatus({ kind: "idle", message: "" });
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-
-    const openFeedbackNow = () => {
-      setQuery("");
-      setSettingsSearch("");
-      setFeedbackCategory("bug");
-      openFeedbackPrompt();
-      setStatusText("feedback box opened");
-      showAppToast("feedback box opened", "success");
-    };
-
-    const isFeedbackCommand = (value: unknown) => {
-      const query = String(value || "").trim().toLowerCase();
-      return query === "/feedback" || query === "feedback";
-    };
-
-    const looksLikeSearchInput = (target: EventTarget | null) => {
-      if (!(target instanceof HTMLInputElement)) return false;
-      const haystack = [
-        target.className,
-        target.placeholder,
-        target.getAttribute("aria-label"),
-        target.getAttribute("name"),
-        target.getAttribute("type")
-      ].map((item) => String(item || "").toLowerCase()).join(" ");
-
-      return haystack.includes("search") || haystack.includes("query");
-    };
-
-    const handleExternalFeedback = (event: Event) => {
-      event.preventDefault?.();
-      openFeedbackNow();
-    };
-
-    const handleSearchInputCommand = (event: Event) => {
-      const target = event.target;
-
-      if (!looksLikeSearchInput(target)) return;
-      if (!isFeedbackCommand((target as HTMLInputElement).value)) return;
-
-      (target as HTMLInputElement).value = "";
-      event.preventDefault?.();
-      event.stopPropagation?.();
-      openFeedbackNow();
-    };
-
-    const handleFeedbackButtonClick = (event: MouseEvent) => {
-      const target = event.target;
-      const element = target instanceof Element
-        ? target.closest("[data-localtify-feedback-open], .feedbackSettingsButtonV331")
-        : null;
-
-      if (!element) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      openFeedbackNow();
-    };
-
-    window.addEventListener("localtify:open-feedback", handleExternalFeedback as EventListener);
-    document.addEventListener("input", handleSearchInputCommand, true);
-    document.addEventListener("click", handleFeedbackButtonClick, true);
-
-    return () => {
-      window.removeEventListener("localtify:open-feedback", handleExternalFeedback as EventListener);
-      document.removeEventListener("input", handleSearchInputCommand, true);
-      document.removeEventListener("click", handleFeedbackButtonClick, true);
-    };
-  }, [openFeedbackPrompt, ready]);
-
-  const submitFeedbackPrompt = useCallback(async () => {
-    const message = feedbackMessage.trim();
-
-    if (message.length < 4) {
-      setFeedbackStatus({ kind: "error", message: "Write a little more so the feedback is useful." });
-      return;
-    }
-
-    if (message.length > FEEDBACK_MESSAGE_MAX_LENGTH) {
-      setFeedbackStatus({ kind: "error", message: "That feedback is too long. Keep it under 1500 characters." });
-      return;
-    }
-
-    const now = Date.now();
-    if (now - feedbackLastSentAtRef.current < 10_000) {
-      setFeedbackStatus({ kind: "error", message: "Hold on a few seconds before sending another report." });
-      return;
-    }
-
-    if (!window.localitfy?.sendFeedback) {
-      setFeedbackStatus({ kind: "error", message: "Feedback bridge is not ready in this build." });
-      return;
-    }
-
-    setFeedbackSendBusy(true);
-    setFeedbackStatus({ kind: "idle", message: "" });
-
-    try {
-      const result = await window.localitfy.sendFeedback({
-        category: feedbackCategory,
-        message,
-        appVersion: APP_VERSION,
-        platform: platformInfo.label,
-        diagnostics: {
-          appVersion: APP_VERSION,
-          platform: platformInfo.label,
-          electronVersion: performanceStatus?.electronVersion || "",
-          chromeVersion: performanceStatus?.chromeVersion || "",
-          songCount: songs.length,
-          playlistCount: playlists.length,
-          downloadsFolder: downloadFolderLabel || settings.downloadFolder || "default downloads folder",
-          discordRpc: settings.discordEnabled ? "enabled" : "disabled",
-          updateStatus: updatePrompt.visible ? updateStatusLabel(updatePrompt.status) : "not visible",
-          feedbackWebhook: feedbackConfigStatus?.configured
-            ? feedbackConfigStatus.valid
-              ? "enabled"
-              : "configured but invalid"
-            : "not configured"
-        }
-      });
-
-      if (!result?.ok) {
-        const code = String((result as any)?.code || "");
-        const message =
-          code === "webhook_missing"
-            ? "Discord feedback is not configured. Add LOCALTIFY_FEEDBACK_WEBHOOK_URL in your env."
-            : code === "webhook_invalid"
-              ? "Discord webhook URL is invalid. Use a real discord.com/api/webhooks URL."
-              : code === "webhook_failed"
-                ? result?.error || "Discord did not accept the feedback. Check the webhook."
-                : result?.error || "Could not send feedback right now.";
-
-        setFeedbackStatus({ kind: "error", message });
-        return;
-      }
-
-      feedbackLastSentAtRef.current = Date.now();
-      setFeedbackStatus({ kind: "success", message: "Sent successfully. Thanks, I will review this." });
-      setFeedbackMessage("");
-
-      window.setTimeout(() => {
-        setFeedbackPromptOpen(false);
-        setFeedbackStatus({ kind: "idle", message: "" });
-      }, 1500);
-    } catch (error) {
-      setFeedbackStatus({
-        kind: "error",
-        message: error instanceof Error ? error.message : "Could not send feedback right now."
-      });
-    } finally {
-      setFeedbackSendBusy(false);
-    }
-  }, [
-    downloadFolderLabel,
-    feedbackCategory,
-    feedbackConfigStatus?.configured,
-    feedbackConfigStatus?.valid,
-    feedbackMessage,
-    performanceStatus?.chromeVersion,
-    performanceStatus?.electronVersion,
-    platformInfo.label,
-    playlists.length,
-    settings.discordEnabled,
-    settings.downloadFolder,
-    songs.length,
-    updatePrompt
-  ]);
-
   const repeatButtonStateText = repeatMode === "one" ? "1" : "";
   const repeatButtonTitle = repeatButtonTitleFor(repeatMode, Boolean(activePlaylist), playbackSource);
   const repeatButtonAriaLabel = repeatButtonTitle;
@@ -5335,50 +5103,6 @@ function MainModeApp() {
       : nowPlayingMotionNonce % 2 === 0
         ? "nowPlayingSongEven"
         : "nowPlayingSongOdd";
-
-
-  function renderFeedbackSettingsCard() {
-    if (settingsCategory !== "advanced") return null;
-
-    const feedbackReady = Boolean(feedbackConfigStatus?.configured && feedbackConfigStatus?.valid);
-    const feedbackStatusLabel = feedbackConfigStatus
-      ? feedbackConfigStatus.label || (feedbackReady ? "Discord feedback enabled" : "Discord feedback not configured")
-      : "Checking feedback status...";
-    const feedbackStatusMessage = feedbackConfigStatus?.message ||
-      (feedbackReady ? "Feedback will be delivered to your Discord channel." : "Add LOCALTIFY_FEEDBACK_WEBHOOK_URL to your .env or packaged resources to enable Discord delivery.");
-
-    return (
-      <section className={`settingsPageCard feedbackSettingsCardV331 ${feedbackReady ? "feedbackReady" : "feedbackNotReady"}`} aria-label="Send feedback">
-        <div className="feedbackSettingsHeaderV331">
-          <span className="feedbackSettingsIconV331" aria-hidden="true">✦</span>
-          <div className="settingsSectionTitle">
-            <span>feedback</span>
-            <strong>Send feedback</strong>
-            <small>Report bugs, UI issues, or feature ideas directly from localtify. Type feedback or /feedback in search, or press this button.</small>
-          </div>
-        </div>
-
-        <div className={`feedbackWebhookStatusV337 ${feedbackReady ? "ready" : "notReady"}`}>
-          <strong>{feedbackStatusLabel}</strong>
-          <small>{feedbackStatusMessage}</small>
-          {feedbackConfigStatus?.envName ? <em>{feedbackConfigStatus.envName}</em> : null}
-        </div>
-
-        <button
-          type="button"
-          className="feedbackSettingsButtonV331 localtifyProximityTarget"
-          data-localtify-feedback-open="true"
-          onClick={() => openFeedbackPrompt()}
-        >
-          <span>
-            <strong>Open feedback box</strong>
-            <small>{feedbackReady ? "Send a short report straight to the feedback channel." : "You can test the popup UI, but delivery needs the webhook env."}</small>
-          </span>
-          <em>open</em>
-        </button>
-      </section>
-    );
-  }
 
 
   function renderSettingsCategoryContent() {
@@ -5419,8 +5143,6 @@ function MainModeApp() {
         metadataUndoCount={metadataUndoItems.length}
         rebuildSearchIndexAction={rebuildSearchIndexAction}
         libraryScanMessage={libraryScanMessage}
-        changeView={changeView}
-        pixelArtAssets={pixelArtAssets}
         pixelArtBusy={pixelArtBusy}
         randomizeAllCovers={randomizeAllCovers}
         downloadFolderLabel={downloadFolderLabel}
@@ -5446,7 +5168,6 @@ function MainModeApp() {
         resetAllSettingsSafely={resetAllSettingsSafely}
         />
         </Suspense>
-        {renderFeedbackSettingsCard()}
       </>
     );
   }
@@ -5464,7 +5185,7 @@ function MainModeApp() {
     changeView, nav,
     openSettings: () => openSettingsPanel(),
     importSongs,
-    openFeedback: openFeedbackPrompt,
+    importAlbumFolder: () => albumsController.scanAlbumFolderImport("library"),
     checkForUpdates: () => { openSettingsPanel("updates"); return manualUpdateCheck(); }
   });
 
@@ -5554,12 +5275,11 @@ function MainModeApp() {
   const playerUpdateVolume = useStableCallback((key: "volume", value: number, persist?: boolean) => updateSetting(key, value, persist));
   const playerQueueItem = useStableCallback(playQueueItem);
   const playerLyricsSeek = useStableCallback((seconds: number) => handleSeek((seconds / (durationRef.current || currentDuration || currentSong?.duration || 1)) * 100));
-  const playerLyricsSettings = useStableCallback(() => { setLyricsOpen(false); setSettingsSearch(""); setSettingsCategory("experimental"); changeView("settings"); });
+  const playerLyricsSettings = useStableCallback(() => { setLyricsOpen(false); setSettingsSearch(""); setSettingsCategory("lyrics"); changeView("settings"); });
 
   const libraryAreaDragOver = useStableCallback(handleLibraryAreaDragOver);
   const libraryAreaDragLeave = useStableCallback(handleLibraryAreaDragLeave);
   const libraryAreaDrop = useStableCallback(handleLibraryAreaDrop);
-  const libraryRowSettings = useMemo(() => ({libraryRowStyle: settings.libraryRowStyle}), [settings.libraryRowStyle]);
   const libraryRows = useMemo<Omit<VirtualSongRowsProps, "list" | "className">>(() => ({
     currentId, isPlaying, draggedSongId, libraryDragOverSongId, libraryDropSide, draggedSongTitle,
     onAreaDragOver: libraryAreaDragOver, onAreaDragLeave: libraryAreaDragLeave, onAreaDrop: libraryAreaDrop,
@@ -5672,8 +5392,6 @@ function MainModeApp() {
       rows: libraryRows,
       setLibraryFilterMode,
       setLibrarySortMode,
-      setLibraryRowStyle: (style) => void updateSetting("libraryRowStyle", style),
-      settings: libraryRowSettings,
       showingMissingFiles: view === "library" && libraryFilterMode === "missing",
       shuffleLibrarySongsAction,
       openSimilarSongs: setSimilarRequest,
@@ -5682,6 +5400,7 @@ function MainModeApp() {
       view,
       visibleSongs
     },
+    albums: { ...albumsController, songs, currentSong },
     artists: {
       songs
     },
@@ -5790,7 +5509,11 @@ function MainModeApp() {
       setSpotifyFetchError,
       setSpotifySelectedIds,
       setSpotifyTracks,
+      setSpotifySourceName,
+      setSpotifySourceType,
       setSpotifyUrl,
+      spotifySourceName,
+      spotifySourceType,
       settings,
       spotifyDownloadBusy,
       spotifyFetchBusy,
@@ -5874,6 +5597,8 @@ function MainModeApp() {
         toggleLike,
         askRemoveSong,
         goToArtist: nav.openArtistPage,
+        goToAlbum: nav.openAlbumPage,
+        getAlbumId: (songId: string) => albumIdBySong.get(songId) ?? null,
         openSimilarSongs: (song: Song) => setSimilarRequest({ kind: "song", songId: song.id }),
         notForMe: settings.experimentalMusicAnalysis ? notForMe : undefined
       },
@@ -5951,7 +5676,18 @@ function MainModeApp() {
         removeSong
       }
     },
-    collections: { playSongs: playCollectionSongs, queueSongs: queueCollectionSongs, playPlaylist, openSimilar: setSimilarRequest },
+    collections: {
+      playSongs: playCollectionSongs, queueSongs: queueCollectionSongs, playPlaylist, openSimilar: setSimilarRequest,
+      playlists,
+      addAlbumToPlaylist: (playlistId, songIds) => {
+        const valid = songIds.filter(id => songsById.has(id));
+        if (!valid.length) return;
+        setPlaylists(items => items.map(item => item.id === playlistId
+          ? { ...item, songIds: [...new Set([...item.songIds, ...valid])] } : item));
+        showAppToast("Album tracks added to playlist", "success");
+      },
+      createPlaylistFromAlbum: (name, songIds) => createPlaylistFromSongs(name, songIds)
+    },
     playbackAudio: {
       audioRef,
       currentSong: visualCurrentSong,
@@ -6025,14 +5761,6 @@ function MainModeApp() {
     <>
       <AppShell {...localtifyAppViewProps} />
       <CatBuddy enabled={settings.catBuddyEnabled === true} reducedMotion={settings.reducedMotion === true} />
-      {feedbackPromptOpen ? <Suspense fallback={null}><FeedbackPrompt
-        reducedMotion={settings.reducedMotion}
-        feedbackCategory={feedbackCategory} setFeedbackCategory={setFeedbackCategory}
-        feedbackMessage={feedbackMessage} setFeedbackMessage={setFeedbackMessage}
-        feedbackStatus={feedbackStatus} setFeedbackStatus={setFeedbackStatus}
-        feedbackSendBusy={feedbackSendBusy}
-        closeFeedbackPrompt={closeFeedbackPrompt} submitFeedbackPrompt={submitFeedbackPrompt}
-      /></Suspense> : null}
     </>
   );
 }

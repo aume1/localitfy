@@ -41,3 +41,23 @@ test("Spotify selection and retry preserve focus, narrow layout and disabled act
   assert.match(css, /@media \(max-width: 460px\)/);
   assert.match(view, /disabled=\{spotifyDownloadBusy\}/);
 });
+
+test("MusicBrainz album previews keep Spotify authentication and link inputs out of the active panel", () => {
+  assert.match(view, /catalogSelection\s*\?\s*<button[^>]*onClick=\{clearSpotify\}>Back to Spotify import<\/button>/);
+  assert.match(view, /\{!catalogSelection \? <>\s*<label className="downloadsInputLabel" htmlFor="downloads-spotify-link">Spotify link<\/label>/);
+  assert.match(view, /\{catalogSelection \? <p className="downloadsCatalogHint"/);
+  assert.match(view, /disabled=\{working \|\| spotifyFetchBusy\} onClick=\{clearSpotify\}/);
+  assert.match(view, /\.\.\.\(!catalogSelection \? \[\{ label: "Fetch Spotify link"/);
+  assert.match(view, /\.\.\.\(!catalogSelection \? \[\{ label: spotifyLoggedIn \? "Disconnect Spotify"/);
+});
+
+test("Download activity keeps visible retry/open actions without duplicating them in the menu", () => {
+  const start = view.indexOf("const actions = [", view.indexOf("visible.map(item"));
+  const end = view.indexOf("];", start);
+  assert.ok(start > 0 && end > start);
+  const menu = view.slice(start, end);
+  assert.doesNotMatch(menu, /label: "Resume download"|label: "Retry download"|label: "Open in library"/);
+  assert.match(menu, /label: "Open downloads folder"/);
+  assert.match(menu, /attention && item.error/);
+  assert.match(view, /className="downloadsRowAction" disabled=\{working\} onClick=\{retry\}/);
+});

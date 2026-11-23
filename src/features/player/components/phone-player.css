@@ -34,7 +34,7 @@
   border-radius: 16px;
   background:
     linear-gradient(90deg, rgba(var(--cover-rgb, var(--lt-accent-rgb)), 0.32), rgba(var(--cover-rgb, var(--lt-accent-rgb)), 0.14)),
-    var(--lt-surface-raised, #1b1b24);
+    var(--lt-surface-raised);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;

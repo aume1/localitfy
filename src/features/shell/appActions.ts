@@ -1,5 +1,6 @@
 import { createContext, useContext, type MouseEvent as ReactMouseEvent } from "react";
 import type { Song } from "../library/song.types";
+import type { LocalAlbumEntry } from "../albums/album.types";
 import type { Playlist } from "../playlists/playlist.types";
 import type { PageDetail, NavigationHistory } from "./useNavigationHistory";
 import { artistDetailId } from "./useNavigationHistory";
@@ -13,6 +14,7 @@ export type CollectionTarget = {
   songs: readonly Song[];
   coverSong: Song | null;
   playlist?: Playlist;
+  album?: LocalAlbumEntry;
 };
 
 export type PlayCollectionOptions = { shuffle?: boolean; startId?: string };
@@ -48,6 +50,10 @@ export function firstCover(songs: readonly Song[]): Song | null {
   return best ?? songs[0] ?? null;
 }
 const trackCount = (count: number) => `${count} track${count === 1 ? "" : "s"}`;
+
+export function albumTarget(album: LocalAlbumEntry): CollectionTarget {
+  return { kind: "album", id: album.id, title: album.title, subtitle: album.albumArtist || album.artist, songs: album.songs, coverSong: album.coverSong ?? firstCover(album.songs), album };
+}
 
 export function artistTarget(name: string, songs: readonly Song[]): CollectionTarget {
   return { kind: "artist", id: artistDetailId(name), title: name, subtitle: `artist · ${trackCount(songs.length)}`, songs, coverSong: firstCover(songs) };

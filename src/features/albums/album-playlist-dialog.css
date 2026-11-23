@@ -1,0 +1,37 @@
+.albumPlaylistDialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(660px, calc(100dvh - 40px));
+  overflow: hidden auto;
+  padding: 20px;
+  color: var(--lt-text);
+  background: var(--lt-surface);
+  border: 1px solid var(--lt-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 72px rgba(0,0,0,.32);
+}
+.albumPlaylistDialog::backdrop { background: rgba(0,0,0,.64); backdrop-filter: blur(6px); }
+.albumPlaylistDialogHead { display: grid; grid-template-columns: 64px minmax(0,1fr) 32px; gap: 13px; align-items: start; }
+.albumPlaylistDialogCover,.albumPlaylistDialogCover img { width:64px; height:64px; object-fit:cover; border-radius:9px; }
+.albumPlaylistDialogHead h2 { margin:3px 0 2px; font-size:18px; line-height:1.25; overflow-wrap:anywhere; }
+.albumPlaylistDialogHead p { margin:0; color:var(--lt-muted); font-size:12px; }
+.albumPlaylistDialogHead small { color:var(--lt-muted); font-size:11px; }
+.albumPlaylistDialogClose,.albumPlaylistDialogNew,.albumPlaylistDialogList button { border:1px solid transparent; background:transparent; color:inherit; cursor:pointer; }
+.albumPlaylistDialogClose { display:grid; place-items:center; width:32px; height:32px; border-radius:8px; }
+.albumPlaylistDialogSearch { display:flex; gap:8px; align-items:center; margin:22px 0 10px; padding:0 12px; border:1px solid var(--lt-border); border-radius:10px; background:var(--lt-surface-soft); }
+.albumPlaylistDialogSearch input { min-width:0; flex:1; border:0; outline:0; padding:12px 0; background:transparent; color:inherit; }
+.albumPlaylistDialogList { display:grid; gap:3px; max-height:290px; overflow:auto; }
+.albumPlaylistDialogList button { width:100%; display:flex; align-items:center; gap:12px; padding:11px; border-radius:10px; text-align:left; }
+.albumPlaylistDialogList button:hover:not(:disabled),.albumPlaylistDialogClose:hover,.albumPlaylistDialogNew:hover { background:var(--lt-surface-raised); }
+.albumPlaylistDialogList button:disabled { opacity:.55; cursor:default; }
+.albumPlaylistDialogList button > span:last-child { display:grid; min-width:0; gap:3px; }
+.albumPlaylistDialogList strong { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:13px; }
+.albumPlaylistDialogList small { color:var(--lt-muted); font-size:11px; }
+.albumPlaylistDialogListIcon { flex:none; display:grid; place-items:center; width:34px; height:34px; border-radius:9px; background:var(--lt-surface-raised); }
+.albumPlaylistDialogEmpty { padding:20px 10px; color:var(--lt-muted); text-align:center; font-size:13px; }
+.albumPlaylistDialogNew { display:flex; align-items:center; gap:9px; width:100%; padding:12px; margin-top:13px; border-top-color:var(--lt-border); border-radius:8px; font-weight:600; text-align:left; }
+.albumPlaylistDialogCreate { display:flex; gap:8px; margin-top:14px; }
+.albumPlaylistDialogCreate input { min-width:0; flex:1; padding:10px 12px; color:inherit; background:var(--lt-surface-soft); border:1px solid var(--lt-border); border-radius:8px; }
+.albumPlaylistDialogCreate button { border:0; border-radius:8px; padding:0 16px; font:inherit; font-weight:650; background:var(--lt-accent); color:var(--lt-text); cursor:pointer; }
+.albumPlaylistDialog :is(button,input):focus-visible { outline:2px solid var(--lt-accent); outline-offset:2px; }
+@media (max-width:480px) { .albumPlaylistDialog { padding:15px; } }
+@media (prefers-reduced-motion:reduce) { .albumPlaylistDialog::backdrop { backdrop-filter:none; } }

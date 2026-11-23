@@ -71,3 +71,27 @@ test("oversized replacements invalidate older cached metadata in memory and afte
     assert.equal(createResourceCache(opts).get("track"), undefined);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test("failed background persistence retries after the cache directory is repaired", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "localtify-cache-retry-"));
+  const blocked = path.join(dir, "blocked");
+  const file = path.join(blocked, "cache.json");
+  fs.writeFileSync(blocked, "not a directory");
+  const cache = createResourceCache({ file });
+  try {
+    cache.set("retry", "persisted", 10000);
+    await new Promise(resolve => setTimeout(resolve, 430));
+    assert.equal(fs.existsSync(file), false);
+    fs.unlinkSync(blocked);
+    fs.mkdirSync(blocked);
+    const deadline = Date.now() + 2500;
+    while (!fs.existsSync(file) && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    assert.equal(fs.existsSync(file), true, "cache retries after the original filesystem error");
+    assert.equal(createResourceCache({ file }).get("retry"), "persisted");
+  } finally {
+    cache.flush();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -1,0 +1,44 @@
+name: provider-health
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/provider-health.yml'
+      - 'electron/discover/**'
+      - 'electron/musicbrainz/**'
+      - 'electron/lyrics/**'
+      - 'electron/ipc/discover.cjs'
+      - 'scripts/live-artwork-check.cjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: provider-health-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-providers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Probe public providers (advisory)
+        shell: bash
+        run: |
+          mkdir -p qa-providers
+          node scripts/live-artwork-check.cjs > qa-providers/live-provider-report.json
+          node -e 'const fs=require("node:fs");const r=JSON.parse(fs.readFileSync("qa-providers/live-provider-report.json","utf8"));if(!Array.isArray(r.checks)||r.checks.length<8)throw Error("Incomplete provider report");for(const c of r.checks)console.log([c.provider,c.status,c.detail||""].join(" | "))'
+      - name: Preserve provider results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-provider-health
+          path: qa-providers/
+          if-no-files-found: warn

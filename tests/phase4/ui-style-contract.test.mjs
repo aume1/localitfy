@@ -104,7 +104,7 @@ test("Card mode owner respects theme surfaces without stripping effects", () => 
   }
   assert.match(css, /:is\(\.app\[data-card-background="solid"\], \.app\[data-card-background="glassy"\], \.app\[data-card-background="oledFlat"\]\) :where\(\.songRow\)/);
   assert.match(css, /box-shadow: var\(--v321-list-card-shadow\) !important/);
-  assert.match(css, /--v321-list-card-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.045\)/);
+  assert.match(css, /--v321-list-card-shadow: inset 0 1px 0 color-mix\(in srgb, var\(--lt-text\) 4\.5%, transparent\)/);
   assert.match(css, /backdrop-filter: blur\(16px\)/);
 });
 
@@ -138,13 +138,13 @@ test("Discover, similar tracks and tagging respect the active accent and UI bord
   const context = read("src/features/library/components/song-context-menu.css");
   const queue = read("src/features/player/components/queue-panel.css");
 
-  assert.match(discover, /\.discoverPick\.active\s*\{[^}]*color: var\(--accent-contrast, #06100b\)/);
+  assert.match(discover, /\.discoverPick\.active\s*\{[^}]*color: var\(--button-text-on-accent\)/);
   assert.match(discover, /\.app \.discoverPage :is\(\.discoverName, \.discoverPick\):focus-visible\s*\{\s*outline: 2px solid var\(--lt-accent\) !important/);
   assert.doesNotMatch(discover, /\.discoverKey\s+input|\.discoverLink\b/);
   assert.match(similar, /\.similarSongsRow\[data-current="true"\]\s*\{\s*background: rgba\(var\(--lt-accent-rgb\), \.08\)/);
   assert.match(similar, /\.similarSongsHeader h2\s*\{[^}]*overflow-wrap: anywhere/);
-  assert.match(similar, /\.similarSongsPrimary\s*\{[^}]*color: var\(--accent-contrast, #06100b\)/);
-  assert.match(tagging, /\.tagSearchButton\.primary\s*\{[^}]*color: var\(--accent-contrast, #06100b\)/);
+  assert.match(similar, /\.similarSongsPrimary\s*\{[^}]*color: var\(--button-text-on-accent\)/);
+  assert.match(tagging, /\.tagSearchButton\.primary\s*\{[^}]*color: var\(--button-text-on-accent\)/);
   assert.match(tagging, /\.tagSearchForm input\s*\{[^}]*border: 1px solid var\(--lt-border\)/);
   assert.doesNotMatch(similar, /rgba\(141, 255, 206|rgba\(163, 193, 198/);
   assert.doesNotMatch(tagging, /rgba\(163, 193, 198/);
@@ -239,8 +239,8 @@ test("shared shell no longer owns feature page designs", () => {
 test("shared empty/error cards use theme surfaces rather than hard-coded dark paint", () => {
   const css = read("src/shared/ui/view-ui.css");
   assert.match(css, /background:\s*linear-gradient\([\s\S]*?\),\s*var\(--lt-surface\)/);
-  assert.match(css, /--state-rgb: 255, 88, 116/);
-  assert.match(css, /--state-rgb: 67, 234, 139/);
+  assert.match(css, /--state-rgb: var\(--lt-danger-rgb\)/);
+  assert.match(css, /--state-rgb: var\(--lt-success-rgb\)/);
   assert.doesNotMatch(css, /rgba\(8,\s*8,\s*13/);
   assert.doesNotMatch(css, /backdrop-filter/);
 });
@@ -249,7 +249,7 @@ test("media play overlay remains visible on touch and focusable on keyboard", ()
   const css = read("src/shared/ui/media-card.css");
   assert.match(css, /@media \(hover: none\), \(pointer: coarse\)/);
   assert.match(css, /\.mediaCardPlay:focus-visible/);
-  assert.match(css, /color: var\(--accent-contrast, var\(--lt-bg\)\)/);
+  assert.match(css, /color: var\(--button-text-on-accent\)/);
 });
 
 test("page search, settings controls and sidebar use the shared token and icon system", () => {
@@ -294,11 +294,15 @@ test("lyrics and portal menus use theme-aware foreground and surfaces", () => {
 });
 
 
-test("retired local album feature is absent; album metadata and liked songs stay accessible", () => {
-  assert.equal(fs.existsSync(path.join(root, "src/features/albums/AlbumsView.tsx")), false);
-  assert.equal(fs.existsSync(path.join(root, "src/features/albums/useAlbumsController.ts")), false);
+test("albums have a default navigation destination and a working detail view", () => {
+  assert.ok(fs.existsSync(path.join(root, "src/features/albums/AlbumsView.tsx")));
+  assert.ok(fs.existsSync(path.join(root, "src/features/albums/useAlbumsController.ts")));
   const nav = read("src/features/shell/navigation.constants.ts");
-  assert.doesNotMatch(nav, /id:"(?:albums|liked)"/);
-  assert.match(read("src/features/shell/AppShell.tsx"), /\["liked", "Liked"\]/);
-  assert.doesNotMatch(read("src/features/home/homeLayout.ts"), /newAlbums/);
+  assert.match(nav, /id:"albums"/);
+  assert.doesNotMatch(nav, /id:"liked"/);
+  const shell = read("src/features/shell/AppShell.tsx");
+  assert.match(shell, /\["albums", "Albums"\]/);
+  assert.match(shell, /<AlbumPage/);
+  assert.match(read("src/features/shell/appActions.ts"), /function albumTarget/);
+  assert.match(shell, /\["liked", "Liked"\]/);
 });

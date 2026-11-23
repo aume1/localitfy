@@ -49,7 +49,7 @@ test("hidden tabs leave the visible list but keep their slot; settings cannot be
 
 test("moving swaps with the next visible neighbour and stops at the edges", () => {
   const order = layout.moveSidebarItem(undefined, [], "home", 1);
-  assert.deepEqual(plain(order.library), ["library", "home", "discover"]);
+  assert.deepEqual(plain(order.library), ["library", "home", "albums", "discover"]);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "home", -1), false);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "analytics", 1), false);
   assert.equal(layout.canMoveSidebarItem(undefined, [], "settings", 1), false);
@@ -110,7 +110,8 @@ test("repeat-all loops the artist/genre a queue was started from", () => {
   assert.match(app, /target\.kind === "source-loop"\) \{\s*setPlayQueue\(target\.rest\);/);
   const shell = read("src/features/shell/useCollectionActions.ts");
   assert.match(shell, /target\.kind === "artist" \|\| target\.kind === "genre" \? playbackSourceRef\(target\.kind, target\.title\)/);
-  assert.match(app, /collections: \{ playSongs: playCollectionSongs,/);
+  assert.match(app, /collections:\s*\{\s*playSongs:\s*playCollectionSongs,/);
+  assert.match(shell, /target\.kind === "album" \? playbackSourceRef\("album", target\.title, target\.id\)/);
   // Leaving the context through a normal song pick stops the loop.
   assert.match(app, /else if \(!playbackContext\?\.keepSource && !playbackContext\?\.keepPlaylistContext\) \{\s*setPlaybackSource\(null\);/);
 });

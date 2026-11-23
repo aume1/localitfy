@@ -63,20 +63,15 @@
 .settingsPage .settingsNoSearchResultsV027 { padding: 10px; color: var(--settings-muted); font-size: 12px; }
 .settingsPage .settingsCategoryContent,
 .settingsPage .settingsCategoryMotion,
-.settingsPage .settingsCategoryPage,
-.settingsPage .settingsContentBlock { min-width: 0; }
-.settingsPage .settingsCategoryPage,
-.settingsPage .settingsContentBlock { display: grid; align-content: start; gap: 18px; }
+.settingsPage .settingsCategoryPage { min-width: 0; }
+.settingsPage .settingsCategoryPage { display: grid; align-content: start; gap: 18px; }
 .settingsPage .settingsCategoryHeader {
   min-width: 0; display: flex; align-items: flex-end; justify-content: space-between;
   gap: 12px; flex-wrap: wrap; padding: 4px 0 12px; border-bottom: 1px solid var(--settings-edge);
 }
-.settingsPage .settingsCategoryHeader h4,
-.settingsPage .settingsContentBlock h2 { margin: 5px 0 0; color: var(--settings-text); font-size: clamp(20px, 2vw, 27px); font-weight: 700; letter-spacing: -.035em; }
+.settingsPage .settingsCategoryHeader h4 { margin: 5px 0 0; color: var(--settings-text); font-size: clamp(20px, 2vw, 27px); font-weight: 700; letter-spacing: -.035em; }
 .settingsPage .settingsCategoryHeader > span { color: var(--settings-muted); font-size: 12px; }
-.settingsPage .settingsPanelCard,
-.settingsPage .settingGroup,
-.settingsPage .settingsCardStack {
+.settingsPage .settingsPanelCard {
   min-width: 0; display: grid; align-content: start; gap: 16px;
   padding: clamp(17px, 2vw, 24px);
   border: 1px solid var(--settings-edge); border-radius: var(--lt-radius-panel);
@@ -111,8 +106,7 @@
   display: flex; align-items: center; flex-wrap: wrap; gap: 9px;
 }
 .settingsPage :is(input[type="checkbox"], input[type="radio"]) { accent-color: var(--settings-accent); width: 16px; height: 16px; }
-.settingsPage .settingsChoiceRowV491,
-.settingsPage .optionGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr)); gap: 9px; }
+.settingsPage .settingsChoiceRowV491 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr)); gap: 9px; }
 .settingsPage .settingsChoicePillV491,
 .settingsPage .settingsChoice, .settingsPage .cleanerOptionV440 {
   min-width: 0; min-height: 62px; display: grid; align-content: center; justify-items: start; gap: 6px;

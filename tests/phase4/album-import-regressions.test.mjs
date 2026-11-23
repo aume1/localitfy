@@ -54,3 +54,16 @@ test("album filename parsing is pure and keeps original song and folder identity
   assert.equal(albumTrackNumberFromFileName("/music/09 - Song.mp3"), 9);
   assert.equal(albumTrackNumberFromFileName("/music/Untitled.mp3", 2), 3);
 });
+
+test("MusicBrainz album downloads keep canonical recording identities", () => {
+  const require = createRequire(import.meta.url);
+  const { musicBrainzRecordingUrl } = require("../../electron/discover/track-identity.cjs");
+  const { normalizeRequest } = require("../../electron/download-jobs.cjs");
+  const id = "mb0123456789abcdef0123456789abcdef";
+  const url = "https://musicbrainz.org/recording/01234567-89ab-cdef-0123-456789abcdef";
+  assert.equal(musicBrainzRecordingUrl(id), url);
+  assert.equal(normalizeRequest({ source:"spotify", url, folder:root, track:{ id } }).url, url);
+  assert.throws(() => normalizeRequest({
+    source:"spotify", url:"https://open.spotify.com/track/" + id, folder:root, track:{ id }
+  }), /identity/);
+});

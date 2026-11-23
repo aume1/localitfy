@@ -47,7 +47,7 @@
   left: 50%;
   width: 350%;
   height: 350%;
-  border: 1px solid #fe587a;
+  border: 1px solid var(--lt-like-heart);
   border-radius: 999px;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0);
@@ -72,7 +72,7 @@
   width: 100%;
   height: 100%;
   border-radius: inherit;
-  background: var(--particle-color, #fe5064);
+  background: var(--particle-color, var(--lt-like-heart));
   transform: scale(0);
 }
 
@@ -106,7 +106,7 @@
 
 .iconAction.likeActionV443.liked .likeHeartShellV443,
 .iconAction.likeActionV443.likeActionActiveV443 .likeHeartShellV443{
-  filter: drop-shadow(0 0 10px rgba(254, 88, 122, .30));
+  filter: drop-shadow(0 0 10px rgba(var(--lt-like-heart-rgb), .30));
 }
 
 @keyframes localtifyLikeRingV443{

@@ -264,7 +264,6 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
         </form>
       </div>
 
-      <DailyMixesShelf {...props.dailyMixes} />
       <div className="playlistContentGrid isEmpty">
         <section className="playlistShelfPanel">
           <div className="panelHead">
@@ -273,9 +272,8 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
             </div>
           </div>
 
-          {playlistSummaries.length > 0 && visiblePlaylists.length === 0 ? <p role="status">No matching playlists.</p> : null}
           <div className="collectionBrowseGrid">
-            {playlistSummaries.length ? visiblePlaylists.map(({ playlist, previewSongs, songCount, duration }, index) => (
+            {visiblePlaylists.length ? visiblePlaylists.map(({ playlist, previewSongs, songCount, duration }, index) => (
               <MediaCard
                 key={playlist.id}
                 className={`collectionBrowseCard playlistShelfCard ${activePlaylistId === playlist.id ? "playing" : ""} ${playlistDragOverPlaylistId === playlist.id ? "dropTarget" : ""}`}
@@ -303,13 +301,11 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
                 cute
                 tone={songs.length ? "info" : "warning"}
                 eyebrow="playlists"
-                title="No playlists yet"
-                message={songs.length ? "Create a playlist." : "Import music to get started."}
+                title={playlistQuery ? "No matching playlists" : "No playlists yet"}
+                message={playlistQuery ? "Try another playlist name." : songs.length ? "Name a playlist above to get started." : "Import songs to start your collection."}
                 actions={songs.length ? (
-                  <button className="mainAction" type="button" onClick={() => {
-                    createPlaylist(newPlaylistName.trim() || "my mix");
-                  }}>
-                    create playlist
+                  <button className="mainAction" type="button" onClick={() => { if (playlistQuery) setPlaylistQuery(""); else document.querySelector<HTMLInputElement>(".playlistNameInput")?.focus(); }}>
+                    {playlistQuery ? "Clear search" : "Name a playlist"}
                   </button>
                 ) : isAndroidApp() ? null : (
                   <button className="mainAction" type="button" onClick={importSongs}>import songs</button>
@@ -320,6 +316,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
         </section>
 
       </div>
+      <DailyMixesShelf {...props.dailyMixes} />
     </section>
   );
 }

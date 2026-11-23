@@ -68,7 +68,7 @@
   padding: 0 var(--lt-space-4);
   border: 0;
   border-radius: var(--lt-radius-item);
-  color: var(--accent-contrast, var(--lt-bg));
+  color: var(--button-text-on-accent);
   background: var(--lt-accent);
   box-shadow: none;
   cursor: pointer;
@@ -108,7 +108,7 @@
   cursor: pointer;
 }
 .collectionTextButton:hover { color: var(--lt-text); border-color: var(--lt-border-strong); }
-.collectionTextButton.danger:hover { color: var(--lt-danger); border-color: rgba(255, 107, 138, .45); }
+.collectionTextButton.danger:hover { color: var(--lt-danger); border-color: color-mix(in srgb, var(--lt-danger) 45%, transparent); }
 .collectionShowAll { justify-self: start; margin-top: 4px; }
 
 :is(.collectionPlayButton, .collectionIconButton, .collectionTextButton):disabled { cursor: not-allowed; opacity: .42; }

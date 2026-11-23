@@ -43,14 +43,13 @@ export function useNavigationHistory(view: View, changeView: (view: View, source
   }, [contentRef]);
 
   const go = useCallback((nextView: View, source: "nav" | "unknown" = "nav") => {
-    const destination = ["albums", "covers"].includes(String(nextView)) ? "library" : nextView;
+    const destination = nextView === "covers" ? "library" : nextView;
     push(destination, null);
     changeViewStable(destination, source);
   }, [push, changeViewStable]);
 
   const open = useCallback((detail: PageDetail) => {
     if (!detail.id) return;
-    if (String(detail.kind) === "album") { go("library", "unknown"); return; }
     push(DETAIL_VIEWS[detail.kind], detail);
     changeViewStable(DETAIL_VIEWS[detail.kind], "unknown");
   }, [push, changeViewStable, go]);
@@ -142,6 +141,7 @@ export function useNavigationHistory(view: View, changeView: (view: View, source
     back,
     forward,
     gesture,
+    openAlbumPage: (albumId: string) => open({ kind: "album", id: albumId }),
     openArtistPage: (artistName: string) => open({ kind: "artist", id: artistDetailId(artistName) }),
     revealNowPlaying(context: NowPlayingContext) {
       if (context.kind === "library") go("library", "unknown");

@@ -591,9 +591,9 @@ test("downloads offer tagging once per finished batch, only for the songs that b
   assert.deepEqual(render(false, false, [...after, { librarySongId: "new-3", downloadStatus: "done" }], []).songIds, [], "never asks while tagging is off");
 });
 
-test("main registers tagging IPC and Experimental settings shows the panel", () => {
+test("main registers tagging IPC and Lyrics settings exposes the panel", () => {
   assert.match(fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8"), /registerTaggingIpc\(ipcRouter/);
-  assert.match(fs.readFileSync(path.join(root, "src", "features", "settings", "categories", "ExperimentalSettings.tsx"), "utf8"), /<TaggingSettings /);
+  assert.match(fs.readFileSync(path.join(root, "src", "features", "settings", "categories", "LyricsSettings.tsx"), "utf8"), /<TaggingSettings /);
 });
 
 test("public catalog searches use escaped MusicBrainz queries and the shared cache", async () => {

@@ -38,7 +38,7 @@ test("history pushes pages, drops forward entries and remembers where each page 
 
 test("detail pages live inside their section and artist ids ignore case", () => {
   const { DETAIL_VIEWS, artistDetailId } = loadHistory();
-  assert.deepEqual(plain(DETAIL_VIEWS), { artist: "artists", genre: "genres", playlist: "playlists", mix: "playlists" });
+  assert.deepEqual(plain(DETAIL_VIEWS), { album: "albums", artist: "artists", genre: "genres", playlist: "playlists", mix: "playlists" });
   assert.equal(artistDetailId("  Brakence "), "brakence");
 });
 
@@ -56,6 +56,7 @@ test("back and forward work from the title bar, mouse buttons, keyboard and the 
 
 test("collections open as pages in their section instead of drawers", () => {
   const shell = read("src/features/shell/AppShell.tsx");
+  assert.match(shell, /detail\?\.kind === "album"\s*\? <AlbumPage/);
   assert.match(shell, /detail\?\.kind === "artist"\s*\? <ArtistPage/);
   assert.match(shell, /detail\?\.kind === "genre"\s*\? <GenrePage/);
   assert.match(shell, /detail\?\.kind === "mix"\s*\? <MixPage/);

@@ -27,7 +27,7 @@
   flex: 1 1 220px;
   min-height: 38px;
   padding: 0 12px;
-  border: 1px solid var(--lt-border, rgba(255, 255, 255, .14));
+  border: 1px solid var(--lt-border);
   border-radius: 10px;
   background: var(--lt-surface);
   color: var(--lt-text);

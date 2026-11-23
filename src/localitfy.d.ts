@@ -9,16 +9,6 @@ import type { ScrobbleAnswer, ScrobbleService, ScrobbleStatus } from "./features
 
 export {};
 
-type LocalitfyFeedbackStatus = {
-  ok: boolean;
-  configured: boolean;
-  valid: boolean;
-  envName?: string;
-  status?: "ready" | "invalid" | "not_configured" | string;
-  label?: string;
-  message?: string;
-};
-
 type LocalitfyPhoneSyncStatus = {
   enabled: boolean;
   running: boolean;
@@ -272,7 +262,7 @@ declare global {
   };
 
   type LocalitfyAppMenuCommand = {
-    type: "navigate" | "back" | "forward" | "settings" | "import-music" | "import-album-folder" | "new-playlist" | "select-all" | "find" | "feedback" | "check-updates";
+    type: "navigate" | "back" | "forward" | "settings" | "import-music" | "import-album-folder" | "new-playlist" | "select-all" | "find" | "check-updates";
     view?: string;
   };
 
@@ -311,22 +301,6 @@ declare global {
     backupPath?: string;
     libraryBackedUp?: boolean;
     releaseNotes?: string;
-  };
-
-  type LocalitfyFeedbackPayload = {
-    category: "bug" | "ui" | "feature" | "other";
-    message: string;
-    appVersion?: string;
-    platform?: string;
-    diagnostics?: Record<string, unknown>;
-  };
-
-  type LocalitfyFeedbackResult = {
-    ok: boolean;
-    code?: string;
-    statusCode?: number;
-    envName?: string;
-    error?: string;
   };
 
   type LocalitfyVolumeAnalysisResult = {
@@ -484,7 +458,7 @@ declare global {
       /** New files in watched folders were imported, or a library file went missing or came back. */
       onWatchedFoldersChange: (callback: (payload: { importedCount: number; libraryChanged: boolean; songs: Song[] }) => void) => () => void;
       /** Public catalog and optional personalized suggestions. Off until turned on in Discover. */
-      getDiscoveries: (payload?: { configuration?: boolean; refresh?: boolean; catalog?: { kind: CatalogKind; term: string; radioSeed?: string }; artwork?: { title: string; artist: string; kind?: CatalogKind; fallback?: boolean; providerId?: string; album?: string; durationMs?: number } }) => Promise<DiscoverResult>;
+      getDiscoveries: (payload?: { configuration?: boolean; verify?: boolean; refresh?: boolean; catalog?: { kind: CatalogKind; term: string; radioSeed?: string }; artwork?: { title: string; artist: string; kind?: CatalogKind; fallback?: boolean; providerId?: string; album?: string; durationMs?: number } }) => Promise<DiscoverResult>;
       /** The artist page biography, under the same opt-in as Discover. Saved on this device. */
       getArtistBio?: (artist: string) => Promise<ArtistBio>;
       /** Scrobbling credentials never leave Electron’s main process. */
@@ -647,8 +621,7 @@ declare global {
         window?: Record<string, unknown>;
       }>;
       getGpuStatus?: () => Promise<unknown>;
-      sendFeedback?: (payload: LocalitfyFeedbackPayload) => Promise<LocalitfyFeedbackResult>;
-      getFeedbackStatus?: () => Promise<LocalitfyFeedbackStatus>;
+
       openExternal?: (url: string) => Promise<{ ok: boolean; reason?: string }>;
 
       spotifyCheck?: () => Promise<LocalitfySpotifyStatus>;

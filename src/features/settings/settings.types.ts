@@ -1,7 +1,7 @@
 import type { DiscordActivityStyle, DiscordArtMode, DiscordSecondLine, DiscordTitleCleanup } from "../discord/discord.types";
 import type { CoverColorSyncMode, ThemeId } from "./theme.types";
 
-export type SettingsCategory = "appearance" | "playback" | "discord" | "discover" | "library" | "downloads" | "covers" | "updates" | "about" | "advanced" | "metadata" | "experimental";
+export type SettingsCategory = "appearance" | "playback" | "lyrics" | "discord" | "discover" | "library" | "downloads" | "covers" | "updates" | "about" | "advanced" | "metadata" | "experimental";
 export type AudioEffectMode = "normal" | "nightcore" | "daycore";
 
 /** Old settings are readable at the migration boundary, not part of the active renderer API. */

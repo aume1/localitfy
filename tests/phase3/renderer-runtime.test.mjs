@@ -11,7 +11,6 @@ test("App is fully typechecked and delegates feature runtime ownership", () => {
     "useCoversController",
     "useLibraryController",
     "useSettingsController",
-    "useFeedbackController",
     "useScreensaverController",
     "usePlayerRuntime"
   ]) assert.match(app, new RegExp(`\\b${controller}\\b`));
@@ -22,7 +21,6 @@ test("feature controllers do not depend on the renderer monolith", () => {
     "src/features/covers/useCoversController.ts",
     "src/features/library/useLibraryController.ts",
     "src/features/settings/useSettingsController.ts",
-    "src/features/feedback/useFeedbackController.ts",
     "src/features/shell/useScreensaverController.ts",
     "src/features/player/usePlayerRuntime.ts"
   ];

@@ -25,19 +25,25 @@
   z-index: 7000;
   isolation: isolate;
   display: grid;
-  grid-template-rows: auto minmax(96px, 1fr) auto;
-  gap: var(--lt-space-4);
-  padding: max(var(--lt-space-4), env(safe-area-inset-top)) max(16px, env(safe-area-inset-right), 5vw) max(var(--lt-space-4), env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left), 5vw);
-  overflow: auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: max(18px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right), 4vw) max(18px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left), 4vw);
+  overflow: hidden;
   color: var(--lt-text);
   background: var(--lt-bg);
 }
 .immersivePlayer[data-background="oledBlack"]{
-  --lt-bg: #000;
-  --lt-text: #f7f7f7;
-  --lt-muted: #b9b9b9;
-  --lt-surface: #111;
-  --lt-border: #292929;
+  --lt-bg: var(--lt-oled-bg);
+  --lt-text: var(--lt-oled-text);
+  --lt-muted: var(--lt-oled-muted);
+  --lt-surface: var(--lt-oled-surface);
+  --lt-border: var(--lt-oled-border);
+  --lt-border-strong: var(--lt-oled-border);
+  --lt-accent: var(--lt-oled-text);
+  --lt-accent-rgb: var(--lt-oled-rgb);
+  --accent: var(--lt-oled-text);
+  --accent-rgb: var(--lt-oled-rgb);
+  --button-text-on-accent: var(--lt-oled-bg);
   --muted: var(--lt-muted);
 }
 .immersiveTop{
@@ -72,7 +78,7 @@
   container-type: size;
 }
 .immersiveArtwork{
-  width: min(100%, 100cqh, 520px);
+  width: min(100%, 100cqh, 410px);
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: var(--lt-radius-sm);
@@ -112,7 +118,7 @@
   .immersiveLyrics .lyricsView { background: transparent; border: 0; }
 }
 .immersiveBottom{
-  width: min(100%, 520px);
+  width: min(100%, 440px);
   margin-inline: auto;
   display: grid;
   gap: var(--lt-space-3);
@@ -133,7 +139,7 @@
   white-space: nowrap;
 }
 .immersiveTitles h2{
-  font-size: clamp(20px, 2.5vw, 30px);
+  font-size: clamp(19px, 2.3vw, 27px);
   font-weight: 650;
 }
 .immersiveTitles p{
@@ -167,11 +173,11 @@
 }
 .immersiveIcon[aria-pressed="true"]{ color: var(--lt-accent); }
 .immersivePlay{
-  width: 60px;
-  height: 60px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   background: var(--lt-accent);
-  color: var(--accent-contrast, #07110b);
+  color: var(--button-text-on-accent);
 }
 .immersivePlay svg{ width: 28px; height: 28px; }
 .immersivePlayer :is(button,input):focus-visible{
@@ -235,12 +241,7 @@
 .immersiveStage[data-lyrics-only="true"] { grid-template-columns: minmax(0,1fr); }
 .immersiveStage[data-lyrics-only="true"] > .immersiveArtwork { display: none; }
 .immersiveLyrics .lyricsView { background: transparent; border: 0; }
-.immersiveIntensity { min-width: 0; max-width: 90px; color: var(--lt-text); background: var(--lt-surface-soft); border: 0; border-radius: var(--lt-radius-item); font: inherit; padding: var(--lt-space-1) var(--lt-space-2); }
-.app .immersivePlayer[data-intensity="subtle"] .artworkBackdrop { opacity: .45; }
-.app .immersivePlayer[data-intensity="strong"] .artworkBackdrop { opacity: 1; }
-.immersivePlayer .artworkBackdropCover { inset: -48px; width: calc(100% + 96px); height: calc(100% + 96px); filter: blur(48px) saturate(.85); opacity: .32; }
-.immersivePlayer .artworkBackdropLayer[data-visible="true"] .artworkBackdropCover { animation: immersiveDrift 36s ease-in-out infinite alternate; }
-@keyframes immersiveDrift { from { transform: scale(1.02) translate3d(-1%, 0, 0); } to { transform: scale(1.11) translate3d(2%, -2%, 0); } }
+.immersivePlayer .artworkBackdropCover { inset: -48px; width: calc(100% + 96px); height: calc(100% + 96px); filter: blur(36px) saturate(.75); opacity: .2; }
 .app[data-theme="light"] .immersivePlayer .artworkBackdropCover { opacity: .22; }
 .app.reducedMotion .immersivePlayer .artworkBackdropCover { animation: none; }
 @media (prefers-reduced-motion: reduce) { .immersivePlayer .artworkBackdropCover { animation: none; } }
@@ -248,4 +249,67 @@
   .immersiveVolume { width: min(32%, 120px); }
   .immersiveTools { flex-wrap: wrap; }
   .immersiveActions { flex-wrap: wrap; justify-content: end; }
+}
+
+.immersivePlayer .immersiveTop { width: min(100%,1160px); margin-inline: auto; }
+.immersivePlayer .immersiveStage { width: min(100%,1160px); margin: 0 auto; }
+.immersivePlayer .immersiveArtwork { border-radius: 12px; box-shadow: 0 18px 65px rgba(0,0,0,.13); }
+.immersivePlayer .immersiveBottom { gap: 10px; }
+.immersivePlayer .immersiveTitles { flex: 1 1 auto; min-width: 0; }
+.immersivePlayer .immersiveTitles h2 { line-height: 1.24; }
+.immersivePlayer .immersiveTitles p { margin-top: 4px; font-size: 12px; }
+.immersivePlayer .immersiveSeek { gap: 0; }
+.immersivePlayer .immersiveTimes { font-size: 11px; }
+.immersivePlayer .immersiveTransport { justify-content: center; gap: clamp(8px,1.8vw,22px); }
+.immersivePlayer .immersiveIcon { width: 38px; height: 38px; }
+.immersivePlayer .immersiveTools { justify-content: space-between; gap: 12px; }
+.immersivePlayer .immersiveVolume { width: min(40%,160px); }
+.immersivePlayer .immersiveActions { gap: 2px; }
+.immersivePlayer[data-lyrics-open="true"] .immersiveStage[data-lyrics="true"] {
+  width: min(100%,1160px);
+  display: grid; grid-template-columns: minmax(0, min(32vw,370px)) minmax(0,1fr);
+  gap: clamp(24px,4vw,58px); place-items: center stretch;
+}
+.immersivePlayer[data-lyrics-open="true"] .immersiveStage[data-lyrics="true"] > .immersiveArtwork {
+  display: block; width: min(100%,100cqh,370px); justify-self: center;
+}
+.immersivePlayer[data-lyrics-open="true"] .immersiveLyrics { width: 100%; min-width: 0; max-height: 100%; }
+.immersivePlayer[data-lyrics-open="true"] .immersiveLyrics .lyricsView { max-width: none; width: 100%; }
+.immersivePlayer[data-lyrics-open="true"] .immersiveLyrics .lyricsLines { padding: 9vh 20px 26vh; gap: 13px; }
+.immersivePlayer[data-lyrics-open="true"] .immersiveLyrics .lyricsLine {
+  font-size: clamp(19px,2vw,27px); font-weight: 610;
+  line-height: 1.42; overflow-wrap: anywhere;
+}
+.immersivePlayer[data-lyrics-open="true"] .immersiveLyrics .lyricsLine.isBreak { font-size: 18px; }
+.immersivePlayer[data-lyrics-open="true"] .immersiveLyrics .lyricsHead { padding: 10px 12px; gap: 10px; }
+.immersivePlayer[data-lyrics-open="true"] .immersiveLyrics .lyricsHeadActions { gap: 5px; }
+.immersivePlayer[data-lyrics-open="true"] .immersiveLyrics .lyricsHeadActions :is(button,select) { font-size: 11px; }
+.immersivePlayer[data-lyrics-open="true"] .immersiveBottom {
+  width: min(100%,1160px); display: grid;
+  grid-template-columns: minmax(0, min(32vw,370px)) minmax(0,1fr);
+  gap: 9px clamp(24px,4vw,58px);
+}
+.immersivePlayer[data-lyrics-open="true"] .immersiveBottom > * { grid-column: 1; min-width: 0; }
+.immersivePlayer:has(.immersiveStage[data-lyrics-only="true"]) .immersiveBottom { width: min(100%,440px); display: grid; grid-template-columns: 1fr; }
+@media (max-width: 900px), (max-height: 580px) {
+  .immersivePlayer { overflow-y: auto; grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr) auto; }
+  .immersivePlayer[data-lyrics-open="true"] .immersiveStage[data-lyrics="true"] {
+    grid-template-columns: minmax(0,1fr); width: min(100%,720px);
+  }
+  .immersivePlayer[data-lyrics-open="true"] .immersiveStage[data-lyrics="true"] > .immersiveArtwork { display: none; }
+  .immersivePlayer[data-lyrics-open="true"] .immersiveBottom { width: min(100%,440px); grid-template-columns: 1fr; }
+  .immersivePlayer[data-lyrics-open="true"] .immersiveBottom > * { grid-column: 1; }
+}
+@media (max-width: 560px) {
+  .immersivePlayer { padding: 12px 18px max(18px,env(safe-area-inset-bottom)); }
+  .immersivePlayer .immersiveArtwork { width: min(100%,100cqh,330px); }
+  .immersivePlayer .immersiveTools { flex-wrap: wrap; }
+  .immersivePlayer .immersiveActions { justify-content: end; }
+}
+
+.immersivePlayer[data-lyrics-open="true"] .immersiveStage[data-lyrics-only="true"] {
+  grid-template-columns: minmax(0,1fr);
+}
+.immersivePlayer[data-lyrics-open="true"] .immersiveStage[data-lyrics-only="true"] > .immersiveArtwork {
+  display: none;
 }

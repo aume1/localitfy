@@ -82,9 +82,10 @@ function cleanPartialPublication(job) {
   let stat;
   try { stat = fs.statSync(filename); } catch (error) { if (error.code === "ENOENT") return false; throw error; }
   if (!stat.isFile() || stat.ino !== pending.ino || stat.dev !== pending.dev || stat.birthtimeMs !== pending.birthtimeMs || stat.size >= job.sizeBytes) return false;
-  pendingPublications.add(filePathKey(filename));
+  const key = filePathKey(filename);
+  pendingPublications.add(key);
   fs.unlinkSync(filename);
-  pendingPublications.delete(filePathKey(filename));
+  pendingPublications.delete(key);
   return true;
 }
 

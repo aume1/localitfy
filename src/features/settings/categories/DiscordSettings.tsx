@@ -1,6 +1,6 @@
 import type { Settings } from "../settings.types";
 import type { ChoiceOption, UpdateSetting } from "../settings.shared";
-import { ToggleRow } from "../settings.shared";
+import { SettingsChoiceGroup, SettingSection, ToggleRow } from "../settings.shared";
 
 export type DiscordSettingsProps = {
   settings: Settings;
@@ -10,12 +10,65 @@ export type DiscordSettingsProps = {
   discordSecondLineOptions: ReadonlyArray<ChoiceOption>;
   discordArtModeOptions: ReadonlyArray<ChoiceOption>;
 };
-export default function DiscordSettings({ settings, updateSetting, discordPreview, discordStyleOptions, discordSecondLineOptions, discordArtModeOptions }: DiscordSettingsProps) {
+
+export default function DiscordSettings({
+  settings, updateSetting, discordPreview, discordStyleOptions,
+  discordSecondLineOptions, discordArtModeOptions
+}: DiscordSettingsProps) {
   return <section className="settingsCategoryPage discordSettingsPage" aria-label="Discord settings">
-    <div className="settingsCategoryHeader discordCategoryHeader"><div><p className="eyebrow">discord rich presence</p><h4>privacy, text, buttons, and artwork</h4></div><span>{settings.discordEnabled ? "showing activity" : "activity hidden"}</span></div>
-    <div className="settingsPanelCard discordHeroCard"><div className="discordPreviewMock" aria-label="Discord activity preview"><span>{discordPreview.badge}</span><strong>{discordPreview.details}</strong><small>{discordPreview.state}</small></div><div className="discordHeroCopy"><strong>Discord preview</strong><span>These controls match rpc.cjs: privacy hides the exact song, style changes the text, artwork changes the large image, and buttons can be disabled.</span></div></div>
-    <div className="settingsPanelCard discordMainControls"><div className="settingsPanelHeader"><div><strong>Privacy and visibility</strong><span>The most important Discord settings are here first so nobody gets stuck in privacy mode.</span></div></div><div className="settingsMiniGrid four discordToggleGrid"><ToggleRow label="Enable Discord activity" help="Shows localtify as your Discord status." checked={settings.discordEnabled} onChange={(value) => void updateSetting("discordEnabled", value)} /><ToggleRow label="Privacy mode" help="Hides the exact song name and shows a generic local music status." checked={settings.discordPrivacyMode} onChange={(value) => void updateSetting("discordPrivacyMode", value)} /><ToggleRow label="Paused status" help="Shows paused/idle when playback is not active." checked={settings.discordShowPausedIdle} onChange={(value) => void updateSetting("discordShowPausedIdle", value)} /><ToggleRow label="RPC buttons" help="Shows safe buttons like search song or get localtify." checked={settings.discordButtons} onChange={(value) => void updateSetting("discordButtons", value)} /></div></div>
-    <div className="settingsTwoColumn discordSettingsGrid"><div className="settingsPanelCard"><div className="settingsPanelHeader"><div><strong>Status style</strong><span>Changes the main Discord text style.</span></div></div><div className="optionGrid five discordOptionGrid">{discordStyleOptions.map((option) => <button key={option.id} className={`settingsChoice ${settings.discordActivityStyle === option.id ? "active" : ""}`} type="button" onClick={() => void updateSetting("discordActivityStyle", option.id)}><strong>{option.name}</strong><small>{option.note}</small></button>)}</div></div><div className="settingsPanelCard"><div className="settingsPanelHeader"><div><strong>Second line</strong><span>Choose the smaller line under the song.</span></div></div><div className="optionGrid five discordOptionGrid">{discordSecondLineOptions.map((option) => <button key={option.id} className={`settingsChoice ${settings.discordSecondLine === option.id ? "active" : ""}`} type="button" onClick={() => void updateSetting("discordSecondLine", option.id)}><strong>{option.name}</strong><small>{option.note}</small></button>)}</div></div></div>
-    <div className="settingsPanelCard discordArtworkCard"><div className="settingsPanelHeader"><div><strong>Artwork mode</strong><span>Choose the image used in Discord Rich Presence.</span></div></div><div className="optionGrid four discordOptionGrid">{discordArtModeOptions.map((option) => <button key={option.id} className={`settingsChoice ${settings.discordArtMode === option.id ? "active" : ""}`} type="button" onClick={() => void updateSetting("discordArtMode", option.id)}><strong>{option.name}</strong><small>{option.note}</small></button>)}</div><p className="settingsHintText">Pixel shuffle rotates through available Discord image assets before repeating them.</p></div>
+    <div className="settingsCategoryHeader discordCategoryHeader">
+      <div><h4>Discord</h4><p className="settingsHintText">Choose exactly what your friends can see while you listen.</p></div>
+      <span>{settings.discordEnabled ? "Activity enabled" : "Activity hidden"}</span>
+    </div>
+    <div className="settingsPanelCard discordHeroCard">
+      <div className="discordPreviewMock" aria-label="Discord activity preview">
+        <span>{discordPreview.badge}</span>
+        <strong>{discordPreview.details}</strong>
+        <small>{discordPreview.state}</small>
+      </div>
+      <div className="discordHeroCopy">
+        <strong>Live preview</strong>
+        <span>{settings.discordEnabled ? "Preview of your current presence." : "Configure your presence now; nothing is shared until Discord activity is enabled."}</span>
+      </div>
+    </div>
+    <SettingSection title="Privacy & visibility" id="settings-discord-privacy"
+      description="Discord receives your listening status only while this feature is enabled."
+      className="discordMainControls">
+      <div className="settingsMiniGrid discordToggleGrid">
+        <ToggleRow label="Enable Discord activity" help="Show Localtify in your Discord status."
+          checked={settings.discordEnabled} onChange={value => void updateSetting("discordEnabled", value)} />
+        <ToggleRow label="Privacy mode" help="Hide the exact song and show a generic listening status."
+          checked={settings.discordPrivacyMode}
+          onChange={value => void updateSetting("discordPrivacyMode", value)} />
+        <ToggleRow label="Paused and idle status" help="Keep an idle status when playback pauses."
+          checked={settings.discordShowPausedIdle}
+          onChange={value => void updateSetting("discordShowPausedIdle", value)} />
+        <ToggleRow label="Activity buttons" help="Show optional public music links in your status."
+          checked={settings.discordButtons}
+          onChange={value => void updateSetting("discordButtons", value)} />
+      </div>
+    </SettingSection>
+    <div className="settingsTwoColumn discordSettingsGrid">
+      <SettingSection id="settings-discord-status" title="Status style" description="How your listening activity is described.">
+        <SettingsChoiceGroup label="Discord status style" value={settings.discordActivityStyle}
+          options={discordStyleOptions.map(option => ({
+            value: option.id as Settings["discordActivityStyle"], label: option.name || option.label || option.id, description: option.note
+          }))} onChange={value => void updateSetting("discordActivityStyle", value)} />
+      </SettingSection>
+      <SettingSection title="Second line" description="The smaller line below the song title.">
+        <SettingsChoiceGroup label="Discord secondary text" value={settings.discordSecondLine}
+          options={discordSecondLineOptions.map(option => ({
+            value: option.id as Settings["discordSecondLine"], label: option.name || option.label || option.id, description: option.note
+          }))} onChange={value => void updateSetting("discordSecondLine", value)} />
+      </SettingSection>
+    </div>
+    <SettingSection id="settings-discord-artwork" title="Artwork" description="The cover displayed with your Discord presence."
+      className="discordArtworkCard">
+      <SettingsChoiceGroup label="Discord artwork mode" value={settings.discordArtMode}
+        options={discordArtModeOptions.map(option => ({
+          value: option.id as Settings["discordArtMode"], label: option.name || option.label || option.id, description: option.note
+        }))} onChange={value => void updateSetting("discordArtMode", value)} />
+      <p className="settingsHintText">Pixel shuffle rotates through available artwork before repeating.</p>
+    </SettingSection>
   </section>;
 }

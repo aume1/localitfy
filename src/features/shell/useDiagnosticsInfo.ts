@@ -14,7 +14,6 @@ type DiagnosticsInfoOptions = {
   currentThemeName: string;
   downloadFolderLabel: string;
   performanceStatus: any;
-  feedbackConfigStatus: any;
   platformInfo: PlatformInfo;
   playlistCount: number;
   settings: Settings;
@@ -29,7 +28,6 @@ export function useDiagnosticsInfo({
   currentThemeName,
   downloadFolderLabel,
   performanceStatus,
-  feedbackConfigStatus,
   platformInfo,
   playlistCount,
   settings,
@@ -49,11 +47,6 @@ export function useDiagnosticsInfo({
     const updateStatus = updatePrompt.visible
       ? updateStatusLabel(updatePrompt.status)
       : lastUpdateCheckedLabel;
-    const feedbackWebhookStatus = feedbackConfigStatus?.configured
-      ? feedbackConfigStatus.valid
-        ? "enabled"
-        : "configured but invalid"
-      : "not configured";
     const electronVersion = String(performanceStatus?.electronVersion || "not reported yet");
     const chromeVersion = String(performanceStatus?.chromeVersion || "not reported yet");
     const packageSupport = platformInfo.id === "windows"
@@ -75,7 +68,6 @@ export function useDiagnosticsInfo({
       { label: "downloads folder", value: downloadFolderStatus },
       { label: "Discord RPC", value: discordStatus },
       { label: "update status", value: updateStatus },
-      { label: "feedback webhook", value: feedbackWebhookStatus },
       { label: "startup status", value: startupStatus },
       { label: "platform support", value: packageSupport }
     ];
@@ -95,7 +87,6 @@ export function useDiagnosticsInfo({
         `theme: ${themeLabel}`,
         `Discord RPC: ${discordStatus}`,
         `update status: ${updateStatus}`,
-        `feedback webhook: ${feedbackWebhookStatus}`,
         `startup status: ${startupStatus}`,
         `platform support: ${packageSupport}`
       ].join("\n")
@@ -105,8 +96,6 @@ export function useDiagnosticsInfo({
     downloadFolderLabel,
     performanceStatus?.chromeVersion,
     performanceStatus?.electronVersion,
-    feedbackConfigStatus?.configured,
-    feedbackConfigStatus?.valid,
     platformInfo.id,
     platformInfo.label,
     platformInfo.releaseLabel,

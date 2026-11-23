@@ -1,9 +1,10 @@
-import { memo, useLayoutEffect, useRef, useState } from "react";
+import { memo } from "react";
 import { LikeHeartAnimationV443 } from "../../../shared/ui/LikeHeartAnimation";
+import { GripVertical } from "lucide-react";
 import type { CSSProperties, DragEvent, MouseEvent as ReactMouseEvent, PointerEvent } from "react";
 import { usePageVirtualizer } from "../../../shared/hooks/usePageVirtualizer";
 import type { Song, LibraryDropSide } from "../song.types";
-import { Cover, getCardCoverCssUrl } from "../../covers/Cover";
+import { Cover } from "../../covers/Cover";
 import { MascotStateArt, PlayingBarsIcon } from "../../../shared/ui/LocaltifyViewUi";
 import { formatTime } from "../../../shared/utils/format";
 import { TrackMetadata } from "../TrackMetadata";
@@ -54,6 +55,8 @@ export const SongRowItem = memo(function SongRowItem({
   onOpenPlaylistPicker,
   onOpenSongContextMenu,
   onStartSongDrag,
+  onPointerStartSongDrag,
+  registerLibrarySongElement,
   onDragOverSong,
   onDragLeaveSong,
   onDropSong,
@@ -63,11 +66,17 @@ export const SongRowItem = memo(function SongRowItem({
 
   return (
     <article
+      ref={(element) => registerLibrarySongElement?.(song.id, element)}
       className={`songRow ${selected ? "selected" : ""} ${active ? "active" : ""} ${active && isPlaying ? "playing" : ""} ${isDragging ? "songDragging" : ""} ${isDropTarget ? "songDropTarget" : ""} ${isMissingFile ? "songMissingFileV039" : ""}`}
       data-library-song-id={song.id}
       data-file-exists={isMissingFile ? "false" : "true"}
       data-drop-side={isDropTarget ? libraryDropSide : undefined}
       draggable={!onToggleSelection}
+      onPointerDown={(event) => {
+        if (onToggleSelection || (event.pointerType !== "touch" && event.pointerType !== "pen")) return;
+        if (!(event.target instanceof Element) || !event.target.closest(".songRowDragHandle")) return;
+        onPointerStartSongDrag?.(event, song.id);
+      }}
       onDragStart={(event) => onStartSongDrag(event, song.id)}
       onDragOver={(event) => onDragOverSong(event, song.id)}
       onDragLeave={(event) => onDragLeaveSong(event, song.id)}
@@ -78,6 +87,7 @@ export const SongRowItem = memo(function SongRowItem({
       title={isMissingFile ? "Local audio file missing" : draggedSongTitle ? `dragging ${draggedSongTitle}` : undefined}
       style={{ "--stagger": `${Math.min(index, 20) * 18}ms` } as CSSProperties}
     >
+      {!onToggleSelection && onPointerStartSongDrag ? <span className="songRowDragHandle" aria-hidden="true"><GripVertical size={14} strokeWidth={2} /></span> : null}
       <button className="songButton" type="button" disabled={isMissingFile && !onToggleSelection} aria-pressed={onToggleSelection ? Boolean(selected) : undefined} aria-current={!onToggleSelection && active ? "true" : undefined} aria-label={`${onToggleSelection ? (selected ? "Deselect" : "Select") : "Play"} ${song.title}`} onClick={() => onToggleSelection ? onToggleSelection(song.id) : onSelectSong(song.id, true)}>
         <span className="songIndex">{onToggleSelection ? (selected ? "✓" : "○") : active && isPlaying ? <PlayingBarsIcon /> : index + 1}</span>
 
@@ -115,133 +125,6 @@ export const SongRowItem = memo(function SongRowItem({
   );
 });
 
-export type LibrarySongCardItemProps = SongInteractionHandlers & {
-  song: Song;
-  index: number;
-  active: boolean;
-  isPlaying: boolean;
-  isDragging: boolean;
-  isDropTarget: boolean;
-  libraryDropSide: LibraryDropSide;
-  draggedSongTitle: string;
-};
-
-export const LibrarySongCardItem = memo(function LibrarySongCardItem({
-  song,
-  index,
-  active,
-  isPlaying,
-  isDragging,
-  isDropTarget,
-  libraryDropSide,
-  draggedSongTitle,
-  onSelectSong,
-  onTogglePlay,
-  onToggleLike,
-  onOpenPlaylistPicker,
-  onOpenSongContextMenu,
-  onStartSongDrag,
-  onPointerStartSongDrag,
-  registerLibrarySongElement,
-  onDragOverSong,
-  onDragLeaveSong,
-  onDropSong,
-  onDragEnd
-}: LibrarySongCardItemProps) {
-  const rankLabel = index < 9 ? `0${index + 1}` : String(index + 1);
-  const cardCoverCssUrl = getCardCoverCssUrl(song);
-
-  function clickedInteractiveElement(target: EventTarget | null) {
-    return target instanceof HTMLElement
-      ? Boolean(target.closest("button, input, textarea, select, a, [role='button'], .homeAlbumActions"))
-      : false;
-  }
-
-  return (
-    <article
-      ref={(element) => registerLibrarySongElement?.(song.id, element)}
-      className={`homeAlbumCard ${active ? "active" : ""} ${active && isPlaying ? "playing" : ""} ${isDragging ? "songDragging" : ""} ${isDropTarget ? "songDropTarget" : ""}`}
-      data-library-song-id={song.id}
-      data-drop-side={isDropTarget ? libraryDropSide : undefined}
-      draggable={false}
-      onClick={(event) => {
-        if (clickedInteractiveElement(event.target)) return;
-        onSelectSong(song.id, true);
-      }}
-      onPointerDown={(event) => {
-        if (clickedInteractiveElement(event.target)) return;
-        onPointerStartSongDrag?.(event, song.id);
-      }}
-      onContextMenu={(event) => onOpenSongContextMenu?.(event, song)}
-      onDragStart={(event) => {
-        event.preventDefault();
-        onStartSongDrag(event, song.id);
-      }}
-      onDragOver={(event) => onDragOverSong(event, song.id)}
-      onDragLeave={(event) => onDragLeaveSong(event, song.id)}
-      onDrop={(event) => onDropSong(event, song.id)}
-      onDragEnd={onDragEnd}
-      aria-grabbed={isDragging}
-      title={draggedSongTitle ? `dragging ${draggedSongTitle}` : "click to play, drag the card body to reorder"}
-      style={{
-        "--stagger": `${Math.min(index, 28) * 16}ms`,
-        "--library-card-cover": cardCoverCssUrl
-      } as CSSProperties}
-    >
-      <button
-        className="homeAlbumPlayZone homeAlbumCoverButton"
-        type="button"
-        onPointerDown={(event) => event.stopPropagation()}
-        onClick={(event) => {
-          event.stopPropagation();
-          active ? onTogglePlay() : onSelectSong(song.id, true);
-        }}
-        title={`${active && isPlaying ? "pause" : "play"} ${song.title}`}
-        aria-label={`${active && isPlaying ? "pause" : "play"} ${song.title}`}
-      >
-        <Cover song={song} className="homeAlbumArt" />
-        <span className="homeAlbumRank">{rankLabel}</span>
-      </button>
-
-      <TrackMetadata song={song} className="homeAlbumMeta" />
-
-      <div className="homeAlbumStats">
-        <span>{formatTime(song.duration)}</span>
-      </div>
-
-      <div className="homeAlbumActions">
-        <button
-          className={`iconAction likeActionV443 noActionHoverV444 ${song.liked ? "liked likeActionActiveV443" : ""}`}
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleLike(song.id);
-          }}
-          aria-label={song.liked ? "unlike song" : "like song"}
-          aria-pressed={song.liked}
-          title={song.liked ? "unlike" : "like"}
-        >
-          <LikeHeartAnimationV443 liked={song.liked} />
-        </button>
-
-        <button
-          className="iconAction playlistAddAction noActionHoverV444"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpenPlaylistPicker(song);
-          }}
-          aria-label="add to playlist"
-          title="add to playlist"
-        >
-          +
-        </button>
-      </div>
-    </article>
-  );
-});
-
-
 export type VirtualSongRowsProps = SongInteractionHandlers & {
   list: Song[];
   className: string;
@@ -278,6 +161,8 @@ export const VirtualSongRows = memo(function VirtualSongRows({
   onOpenPlaylistPicker,
   onOpenSongContextMenu,
   onStartSongDrag,
+  onPointerStartSongDrag,
+  registerLibrarySongElement,
   onDragOverSong,
   onDragLeaveSong,
   onDropSong,
@@ -355,6 +240,8 @@ export const VirtualSongRows = memo(function VirtualSongRows({
                 onOpenPlaylistPicker={onOpenPlaylistPicker}
                 onOpenSongContextMenu={onOpenSongContextMenu}
                 onStartSongDrag={onStartSongDrag}
+                onPointerStartSongDrag={onPointerStartSongDrag}
+                registerLibrarySongElement={registerLibrarySongElement}
                 onDragOverSong={onDragOverSong}
                 onDragLeaveSong={onDragLeaveSong}
                 onDropSong={onDropSong}
@@ -368,165 +255,3 @@ export const VirtualSongRows = memo(function VirtualSongRows({
   );
 });
 
-export type VirtualLibrarySongCardsProps = SongInteractionHandlers & {
-  list: Song[];
-  className: string;
-  currentId: string;
-  isPlaying: boolean;
-  draggedSongId: string;
-  libraryDragOverSongId: string;
-  libraryDropSide: LibraryDropSide;
-  draggedSongTitle: string;
-  onAreaDragOver: (event: DragEvent<HTMLDivElement>) => void;
-  onAreaDragLeave: (event: DragEvent<HTMLDivElement>) => void;
-  onAreaDrop: (event: DragEvent<HTMLDivElement>) => void;
-};
-
-export const VirtualLibrarySongCards = memo(function VirtualLibrarySongCards({
-  list,
-  className,
-  currentId,
-  isPlaying,
-  draggedSongId,
-  libraryDragOverSongId,
-  libraryDropSide,
-  draggedSongTitle,
-  onAreaDragOver,
-  onAreaDragLeave,
-  onAreaDrop,
-  onSelectSong,
-  onTogglePlay,
-  onToggleLike,
-  onOpenPlaylistPicker,
-  onOpenSongContextMenu,
-  onStartSongDrag,
-  onPointerStartSongDrag,
-  registerLibrarySongElement,
-  onDragOverSong,
-  onDragLeaveSong,
-  onDropSong,
-  onDragEnd
-}: VirtualLibrarySongCardsProps) {
-  const [viewportWidth, setViewportWidth] = useState(0);
-  const minColumnWidth = 168;
-  const gridGap = 14;
-  const columns = Math.max(1, Math.floor(((viewportWidth || minColumnWidth) + gridGap) / (minColumnWidth + gridGap)));
-  const rowCount = Math.max(1, Math.ceil(list.length / columns));
-
-  const { listRef, virtualizer: rowVirtualizer, scrollMargin } = usePageVirtualizer<HTMLDivElement>({
-    count: list.length ? rowCount : 0,
-    estimateSize: () => 256,
-    overscan: 2,
-    getItemKey: (rowIndex) => {
-      const firstSong = list[rowIndex * columns];
-      return firstSong?.id ? `${firstSong.id}-${columns}` : `${rowIndex}-${columns}`;
-    }
-  });
-  const gridRef = useRef<HTMLDivElement | null>(null);
-  const hasSongs = list.length > 0;
-  const setGridRef = (element: HTMLDivElement | null) => {
-    gridRef.current = element;
-    listRef(element);
-  };
-
-  useLayoutEffect(() => {
-    const element = gridRef.current;
-    if (!element) return;
-
-    const updateWidth = () => setViewportWidth(element.clientWidth || 0);
-    updateWidth();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateWidth);
-      return () => window.removeEventListener("resize", updateWidth);
-    }
-
-    const observer = new ResizeObserver(updateWidth);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [hasSongs]);
-
-  if (!list.length) {
-    return (
-      <div
-        className={className}
-        onDragOver={onAreaDragOver}
-        onDragLeave={onAreaDragLeave}
-        onDrop={onAreaDrop}
-      >
-        <div className="emptyState homeAlbumEmpty">
-          <strong>import songs to fill this area</strong>
-          <p>import some music to start your library.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      ref={setGridRef}
-      className={`${className} virtualSongViewport virtualHomeGridViewport`}
-      onDragOver={onAreaDragOver}
-      onDragLeave={onAreaDragLeave}
-      onDrop={onAreaDrop}
-      data-virtual-count={list.length}
-      data-virtual-columns={columns}
-    >
-      <div
-        className="virtualSongCanvas virtualHomeGridCanvas"
-        style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
-      >
-        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-          const rowStartIndex = virtualRow.index * columns;
-          const rowSongs = list.slice(rowStartIndex, rowStartIndex + columns);
-
-          return (
-            <div
-              key={virtualRow.key}
-              ref={rowVirtualizer.measureElement}
-              data-index={virtualRow.index}
-              className="virtualHomeGridRow"
-              style={{
-                transform: `translateY(${virtualRow.start - scrollMargin}px)`,
-                gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
-              }}
-            >
-              {rowSongs.map((song, offset) => {
-                const index = rowStartIndex + offset;
-                const active = song.id === currentId;
-                const isDragging = draggedSongId === song.id;
-                const isDropTarget = Boolean(draggedSongId && draggedSongId !== song.id && libraryDragOverSongId === song.id);
-
-                return (
-                  <LibrarySongCardItem
-                    key={song.id}
-                    song={song}
-                    index={index}
-                    active={active}
-                    isPlaying={isPlaying}
-                    isDragging={isDragging}
-                    isDropTarget={isDropTarget}
-                    libraryDropSide={libraryDropSide}
-                    draggedSongTitle={draggedSongTitle}
-                    onSelectSong={onSelectSong}
-                    onTogglePlay={onTogglePlay}
-                    onToggleLike={onToggleLike}
-                    onOpenPlaylistPicker={onOpenPlaylistPicker}
-                    onOpenSongContextMenu={onOpenSongContextMenu}
-                    onStartSongDrag={onStartSongDrag}
-                    onPointerStartSongDrag={onPointerStartSongDrag}
-                    registerLibrarySongElement={registerLibrarySongElement}
-                    onDragOverSong={onDragOverSong}
-                    onDragLeaveSong={onDragLeaveSong}
-                    onDropSong={onDropSong}
-                    onDragEnd={onDragEnd}
-                  />
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-});

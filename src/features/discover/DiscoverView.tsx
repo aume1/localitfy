@@ -192,7 +192,7 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
     </PageHeader>
     {needsSetup ? setup : null}
     {settings.discoverEnabled && result?.status === "needs-key" ? <div className="discoverKeyNotice" role="status">
-      <span>Add a Last.fm key for personalized recommendations.</span>
+      <span>Public catalog search works without a key. Last.fm recommendations require an API key.</span>
     </div> : null}
 
     {settings.discoverEnabled ? <section className="discoverCatalog" aria-labelledby="discover-catalog-title">
@@ -203,6 +203,9 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
         <button className="discoverPrimaryAction" type="submit" disabled={catalogLoading || catalogTerm.trim().length < 2}><Search size={15} /><span>{catalogLoading ? "Searching…" : "Search"}</span></button>
       </form>
       {catalogLoading ? <p className="discoverBecause" role="status">Searching…</p> : null}
+      {result?.status === "needs-key" && !catalog && !catalogLoading && !catalogTerm.trim()
+        ? <p className="discoverCatalogHint"><Search size={16} aria-hidden="true" /> Search above for a song or artist to explore public music.</p>
+        : null}
       {!relatedTitle && localMatches.length && deferredTerm === catalogTerm ? <>
         <h3 className="discoverHeading">In your library</h3>
         <ul className="discoverSongList" aria-label="Local search results">
@@ -213,7 +216,7 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
           </li>)}
         </ul>
       </> : null}
-      {catalog?.status === "error" ? <p role="alert">{catalog.error}</p> : null}
+      {catalog?.status === "error" ? <p className="discoverCatalogMessage" role="alert">{catalog.error}</p> : null}
       {catalog?.status === "catalog" ? catalog.items.length ? <>
         <div className="discoverSectionHead"><h3 className="discoverHeading">{relatedTitle ? `Related to ${relatedTitle}` : "Top result"}</h3>{catalog.kind === "recording" && /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}$/.test(catalog.items[0].url) ? <button type="button" className="softButton" disabled={catalogLoading} onClick={() => void searchRelated(catalog.items[0])}>Similar songs</button> : null}</div>
         {catalog.items.slice(0,1).map(item => <div key={item.id} className="discoverTopResult">
@@ -228,7 +231,7 @@ export default function DiscoverView({ settings, updateSetting, sendToDownloads,
           <span className="discoverSongText"><button type="button" className="discoverName" onClick={() => openLink(item.url)} title={item.title}>{item.title}</button><small title={item.subtitle}>{item.subtitle}</small></span>
           {catalog.kind === "recording" ? <><span className="discoverDuration">{duration(item.durationMs)}</span>{pickButton(item)}</> : null}
         </li>)}
-      </ul></> : <p role="status">No matching catalog results.</p> : null}
+      </ul></> : <p className="discoverCatalogMessage" role="status">No matching catalog results. Try another song title or artist.</p> : null}
     </section> : null}
 
     {settings.discoverEnabled && loading && !ready ? <p className="discoverNotice" role="status">Finding music…</p> : null}

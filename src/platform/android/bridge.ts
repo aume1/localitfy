@@ -148,7 +148,7 @@ export function createAndroidBridge(): Bridge {
       const current=phoneLibrary.files[id];
       return result?.url&&current?.cover===record.cover&&current?.coverExt===record.coverExt?{source,url:result.url,size}:null;
     },
-    getDiscoveries: (payload) => payload?.artwork ? cachedArtworkFromMac(payload.artwork) : payload?.catalog ? fromMac<DiscoverResult>("discover:get", payload, 60000) : fromMacOrKept<DiscoverResult>("discover:get", payload ?? {}, "mac:discover", { status: "off" }),
+    getDiscoveries: (payload) => payload?.artwork ? cachedArtworkFromMac(payload.artwork) : payload?.verify ? fromMac<DiscoverResult>("discover:get", payload, 15000) : payload?.catalog ? fromMac<DiscoverResult>("discover:get", payload, 60000) : fromMacOrKept<DiscoverResult>("discover:get", payload ?? {}, "mac:discover", { status: "off" }),
     getArtistBio: async (artist: string) => {
       if (phoneLibrary.effectiveSettings().discoverEnabled !== true) return { status: "off" };
       return fromMacOrKept<ArtistBio>("discover:artist-bio", { artist }, `mac:bio:${artist.trim().toLocaleLowerCase()}`, { status: "none" },

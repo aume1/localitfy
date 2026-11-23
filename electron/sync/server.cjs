@@ -2,6 +2,8 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
+const { Readable } = require("node:stream");
+const { pipeline } = require("node:stream/promises");
 const { createLiveHub, LIVE_VERSION } = require("./live.cjs");
 
 const PROTOCOL = 2;
@@ -145,6 +147,58 @@ function createSyncServer({ repositories, coverPath, statePath, serverName = "co
     };
   }
 
+  // Filesystem metadata is queried outside the Electron main-process synchronous path.
+  // A bounded batch avoids tens of thousands of simultaneous stat operations.
+  async function snapshotAsync() {
+    const source = repositories.songs.list();
+    const playlists = repositories.playlists.get();
+    const songs = [];
+    for (let offset = 0; offset < source.length; offset += 32) {
+      const chunk = await Promise.all(source.slice(offset, offset + 32).map(async (song) => {
+        const file = await fileInfoAsync(song.filePath);
+        if (!file) throw new Error("Desktop audio files are unavailable. Reconnect the drive or relink missing songs before syncing. Cached phone files are unchanged.");
+        const shaped = {};
+        for (const field of SONG_FIELDS) if (song[field] !== undefined) shaped[field] = song[field];
+        return { ...shaped, file, cover: await fileInfoAsync(coverPath(song)) };
+      }));
+      songs.push(...chunk);
+    }
+    const settings = repositories.settings?.get?.() || {};
+    return {
+      protocol: PROTOCOL, live: LIVE_VERSION, platform, serverTime: now(),
+      features: Object.fromEntries(FEATURE_SETTINGS.filter(key => settings[key] !== undefined).map(key => [key, settings[key]])),
+      songs, playlists
+    };
+  }
+
+  async function fileInfoAsync(filePath) {
+    try {
+      if (!filePath || !path.isAbsolute(filePath)) return null;
+      const stat = await fs.promises.stat(filePath);
+      if (!stat.isFile()) return null;
+      return { size: stat.size, mtimeMs: Math.round(stat.mtimeMs), ext: path.extname(filePath).slice(1).toLowerCase() };
+    } catch {
+      return null;
+    }
+  }
+
+  // Emit bounded JSON chunks and honor stream backpressure instead of blocking
+  // the main thread with one large JSON.stringify for a complete library.
+  async function sendSnapshot(response, snapshotData) {
+    const { songs, ...metadata } = snapshotData;
+    response.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    async function* chunks() {
+      yield JSON.stringify(metadata).slice(0, -1) + ',"songs":[';
+      for (let offset = 0; offset < songs.length; offset += 128) {
+        if (offset) yield ",";
+        yield JSON.stringify(songs.slice(offset, offset + 128)).slice(1, -1);
+        await new Promise(resolve => setImmediate(resolve));
+      }
+      yield "]}";
+    }
+    await pipeline(Readable.from(chunks()), response);
+  }
+
   function applyChanges(body) {
     const result = { songs: 0, playlists: 0, playEvents: 0 };
     const finishedEvents = [];
@@ -261,10 +315,11 @@ function createSyncServer({ repositories, coverPath, statePath, serverName = "co
     if (!device) return send(response, 401, { error: "This phone is not paired with this Mac" });
 
     if (request.method === "GET" && route === "/v1/snapshot") {
+      const data = await snapshotAsync();
       device.lastSyncAt = now();
       writeState();
       onChanged({ devices: true });
-      return send(response, 200, snapshot());
+      return sendSnapshot(response, data);
     }
     if (request.method === "POST" && route === "/v1/changes") {
       const body = await readJson(request);
@@ -327,6 +382,7 @@ function createSyncServer({ repositories, coverPath, statePath, serverName = "co
     start,
     stop,
     snapshot,
+    snapshotAsync,
     applyChanges,
     newPairingCode,
     get pairing() { return pairing && pairing.expiresAt > now() ? { code: pairing.code, expiresAt: pairing.expiresAt } : null; },

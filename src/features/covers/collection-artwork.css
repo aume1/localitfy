@@ -9,7 +9,7 @@ span.generatedCollectionArtwork {
   container-type: inline-size;
   background: radial-gradient(ellipse at 87% 16%, var(--mix-c), transparent 70%),
     radial-gradient(ellipse at 20% 80%, var(--mix-b), transparent 65%), var(--mix-a);
-  color: #fff;
+  color: var(--lt-on-image);
 }
 .generatedArtworkNumber {
   position: absolute;

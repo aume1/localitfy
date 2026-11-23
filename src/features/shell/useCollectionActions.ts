@@ -20,7 +20,8 @@ export function useCollectionActions(nav: NavigationHistory, collections: ShellC
     openCollection: (target) => nav.open({ kind: target.kind, id: target.id }),
     playCollection(target, options = {}) {
       if (target.playlist && !options.startId) return void playPlaylist(target.playlist, Boolean(options.shuffle));
-      const source = target.kind === "artist" || target.kind === "genre" ? playbackSourceRef(target.kind, target.title) : null;
+      const source = target.kind === "album" ? playbackSourceRef("album", target.title, target.id)
+        : target.kind === "artist" || target.kind === "genre" ? playbackSourceRef(target.kind, target.title) : null;
       playSongs(playableIds(target.songs), target.title, source, Boolean(options.shuffle), options.startId);
     },
     queueCollection: (target) => void queueSongs(playableIds(target.songs), target.title),

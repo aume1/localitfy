@@ -79,7 +79,7 @@
   background: var(--lt-fill-selected) !important;
 }
 .app :is(input, textarea) { caret-color: var(--lt-accent); }
-.app ::selection { background: var(--lt-accent); color: var(--accent-contrast, #06100b); }
+.app ::selection { background: var(--lt-accent); color: var(--button-text-on-accent); }
 
 .app :is(input:not(:where([type="checkbox"], [type="radio"], [type="range"])), textarea):not([data-embedded-field]){
   color: var(--lt-text) !important;

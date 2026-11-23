@@ -2,7 +2,7 @@ const REPOSITORY_URL = "https://github.com/meshahid973/localtify";
 
 // View shortcuts follow the sidebar order; ⌘, already opens Settings.
 const MENU_VIEWS = [
-  ["home", "Home"], ["library", "Library"], ["liked", "Liked Songs"], ["artists", "Artists"], ["genres", "Genres"],
+  ["home", "Home"], ["library", "Library"], ["albums", "Albums"], ["liked", "Liked Songs"], ["artists", "Artists"], ["genres", "Genres"],
   ["playlists", "Playlists"], ["downloads", "Downloads"], ["analytics", "Analytics"]
 ];
 
@@ -43,6 +43,7 @@ function createAppMenuRuntime({ Menu, shell, appName = "localtify", isDev = fals
         label: "File",
         submenu: [
           { label: "Import Music…", accelerator: "Command+O", click: command("import-music") },
+          { label: "Import Album Folder…", click: command("import-album-folder") },
           { label: "New Playlist", accelerator: "Command+N", click: command("new-playlist") },
           { type: "separator" },
           { role: "close" }
@@ -100,10 +101,7 @@ function createAppMenuRuntime({ Menu, shell, appName = "localtify", isDev = fals
       {
         role: "help",
         submenu: [
-          { label: "Send Feedback…", click: command("feedback") },
-          { type: "separator" },
-          { label: `${appName} on GitHub`, click: () => void shell.openExternal(REPOSITORY_URL) },
-          { label: "Report an Issue", click: () => void shell.openExternal(`${REPOSITORY_URL}/issues`) }
+          { label: `${appName} on GitHub`, click: () => void shell.openExternal(REPOSITORY_URL) }
         ]
       }
     ];

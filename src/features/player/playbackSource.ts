@@ -4,7 +4,7 @@ import type { Playlist } from "../playlists/playlist.types";
 import type { RepeatMode } from "./player.types";
 
 /** An artist or genre started as a queue. songIds keeps the play order so repeat-all can loop it. */
-export type PlaybackSourceRef = { kind: "artist" | "genre"; id: string; label: string };
+export type PlaybackSourceRef = { kind: "album" | "artist" | "genre"; id: string; label: string };
 export type PlaybackSource = PlaybackSourceRef & { songIds: string[] };
 export type NowPlayingContext = { kind: PlaybackSourceRef["kind"] | "playlist" | "library"; id: string; label: string };
 export type RepeatPreview = { label: string; songs: Song[]; hint: string };

@@ -38,7 +38,6 @@ export default function ImmersivePlayer({ player, song, queue, lyrics, backgroun
   const lyricsTrigger = useRef<HTMLButtonElement>(null);
   const [minimal, setMinimal] = useState(false);
   const [lyricsOnly, setLyricsOnly] = useState(false);
-  const [intensity, setIntensity] = useState<"inherit" | "subtle" | "strong" | "off">("inherit");
   const [fullscreen, setFullscreen] = useState(false);
   const [fullscreenError, setFullscreenError] = useState(false);
   const ownedFullscreen = useRef<HTMLElement | null>(null);
@@ -66,7 +65,7 @@ export default function ImmersivePlayer({ player, song, queue, lyrics, backgroun
     lyricsOpen, toggleLyrics
   } = player;
   const duration = currentDuration || song.duration || 0;
-  const showBackdrop = effectiveAmbient && backgroundStyle === "coverBlur" && !backgrounded && intensity !== "off";
+  const showBackdrop = effectiveAmbient && backgroundStyle === "coverBlur" && !backgrounded;
   function closeLyrics() { lyrics.onClose(); lyricsTrigger.current?.focus({ preventScroll: true }); }
   function closeQueue() { queue.onClose(); queueTrigger.current?.focus({ preventScroll: true }); }
   function toggleMinimal() {
@@ -78,7 +77,8 @@ export default function ImmersivePlayer({ player, song, queue, lyrics, backgroun
   }
 
   return <section ref={dialog} className="immersivePlayer" role="dialog" aria-modal="true" aria-label="Immersive player"
-    tabIndex={-1} data-background={backgroundStyle} data-intensity={intensity} style={ambientStyle}
+    tabIndex={-1} data-background={backgroundStyle} data-lyrics-open={lyrics.open ? "true" : "false"}
+    data-minimal={minimal ? "true" : "false"} style={ambientStyle}
     onKeyDown={(event) => {
       if (event.key !== "Escape" || event.defaultPrevented || document.querySelector(".songContextMenuLayer")) return;
       event.preventDefault();
@@ -162,7 +162,6 @@ export default function ImmersivePlayer({ player, song, queue, lyrics, backgroun
         <div className="immersiveActions">
           {connect && !minimal ? <DevicePicker controls={connect} variant="bar" /> : null}
           {lyrics.open ? <IconButton type="button" className="immersiveIcon" aria-label={lyricsOnly ? "Show artwork beside lyrics" : "Focus on lyrics"} aria-pressed={lyricsOnly} onClick={() => setLyricsOnly(value => !value)}>{lyricsOnly ? <Image size={20} /> : <Columns2 size={20} />}</IconButton> : null}
-          {showBackdrop || intensity === "off" ? <select className="immersiveIntensity" aria-label="Immersive background intensity" value={intensity} onChange={event => setIntensity(event.currentTarget.value as typeof intensity)}><option value="inherit">Default</option><option value="subtle">Subtle</option><option value="strong">Strong</option><option value="off">Off</option></select> : null}
           {lyricsOpen !== undefined ? <IconButton ref={lyricsTrigger} type="button" className="immersiveIcon" aria-label="Lyrics" aria-pressed={lyricsOpen} onClick={toggleLyrics}><MicVocal size={20} aria-hidden="true" /></IconButton> : null}
           <IconButton ref={queueTrigger} type="button" className="immersiveIcon" data-queue-trigger aria-label="Play queue"
             aria-expanded={queuePanelOpen} aria-controls={queuePanelOpen ? "localtify-play-queue" : undefined} aria-haspopup="dialog" onClick={toggleQueuePanel}><ListMusic size={20} aria-hidden="true" /></IconButton>

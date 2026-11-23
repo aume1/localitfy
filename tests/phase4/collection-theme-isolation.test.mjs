@@ -26,7 +26,7 @@ test("detail collection surfaces adapt to light themes and touch devices", () =>
   for (const file of ["src/features/pages/SongGroupPage.tsx", "src/features/pages/MixPage.tsx", "src/features/playlists/PlaylistsView.tsx"]) assert.match(read(file), /<PageAtmosphere\b/);
   assert.match(css, /\.trackList \{[^}]*background: transparent/);
   assert.match(read("src/features/covers/artwork-backdrop.css"), /color-mix\(in srgb, var\(--lt-surface\)/);
-  assert.match(css, /color: var\(--accent-contrast, var\(--lt-bg\)\)/);
+  assert.match(css, /color: var\(--button-text-on-accent\)/);
   assert.match(css, /\.collectionIconButton:hover:not\(:disabled\)[^{}]*\{[^}]*var\(--lt-border-strong\)/);
   assert.match(css, /@media \(hover: none\), \(pointer: coarse\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);

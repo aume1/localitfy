@@ -6,7 +6,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
-const { publishDownloadedFile, isPendingPublication } = require("../../electron/download-publication.cjs");
+const { publishDownloadedFile, cleanPartialPublication, isPendingPublication } = require("../../electron/download-publication.cjs");
 const { createDownloadJobStore } = require("../../electron/download-jobs.cjs");
 const { filePathKey } = require("../../electron/runtime/path-identity.cjs");
 
@@ -132,4 +132,32 @@ test("recovery removes only its verified incomplete portable output, preserving 
     assert.equal(fs.existsSync(filePath), false);
     assert.equal(fs.readFileSync(userFile, "utf8"), "keep");
   } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+});
+
+test("failed partial-output removal keeps the file excluded until cleanup succeeds", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "localtify-partial-"));
+  const filePath = path.join(directory, "incomplete.mp3");
+  const originalUnlink = fs.unlinkSync;
+  try {
+    fs.writeFileSync(filePath, "truncated audio");
+    const stat = fs.statSync(filePath);
+    const job = {
+      request: { folder: directory },
+      sizeBytes: stat.size + 100,
+      pendingOutput: { filePath, ino: stat.ino, dev: stat.dev, birthtimeMs: stat.birthtimeMs }
+    };
+    fs.unlinkSync = (candidate) => {
+      if (candidate === filePath) throw Object.assign(new Error("locked output"), { code: "EACCES" });
+      return originalUnlink(candidate);
+    };
+    assert.throws(() => cleanPartialPublication(job), /locked output/);
+    assert.equal(isPendingPublication(filePath), true, "a remaining partial must not appear importable");
+    fs.unlinkSync = originalUnlink;
+    assert.equal(cleanPartialPublication(job), true);
+    assert.equal(isPendingPublication(filePath), false);
+    assert.equal(fs.existsSync(filePath), false);
+  } finally {
+    fs.unlinkSync = originalUnlink;
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });

@@ -1,8 +1,8 @@
 import { isAndroidApp, computerName } from "../../app/platform";
 import "./library.css";
 import { lazy, Suspense, useCallback, useMemo, useState, type DragEventHandler } from "react";
-import { VirtualLibrarySongCards, VirtualSongRows, type VirtualSongRowsProps } from "./components/SongRows";
-import { Copy, FileWarning, FolderInput, ListMusic, Radio, Shuffle, Trash2, Grid2X2, List } from "lucide-react";
+import { VirtualSongRows, type VirtualSongRowsProps } from "./components/SongRows";
+import { Copy, FileWarning, FolderInput, ListMusic, Radio, Shuffle, Trash2, Heart } from "lucide-react";
 import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import type { DuplicatesMergeResult } from "./duplicates/DuplicatesDialog";
 import { ActionLabel } from "../../shared/ui/ActionLabel";
@@ -12,7 +12,6 @@ import { ArcDropdownMenu } from "../../shared/ui/ArcDropdownMenu";
 import { LocaltifyStateCard, MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
 import type { LibrarySortMode } from "./librarySort";
 import type { Song } from "./song.types";
-import type { Settings } from "../settings/settings.types";
 import type { View } from "../shell/view.types";
 
 const DuplicatesDialog = lazy(() => import("./duplicates/DuplicatesDialog"));
@@ -35,8 +34,6 @@ export type LibraryViewProps = {
   rows: Omit<VirtualSongRowsProps, "list" | "className">;
   setLibraryFilterMode?: (mode: "all" | "missing") => unknown;
   setLibrarySortMode: (mode: LibrarySortMode) => unknown;
-  setLibraryRowStyle: (style: Settings["libraryRowStyle"]) => unknown;
-  settings: Pick<Settings, "libraryRowStyle">;
   showingMissingFiles: boolean;
   shuffleLibrarySongsAction: () => unknown;
   songs: Song[];
@@ -61,7 +58,6 @@ export default function LibraryView(props: LibraryViewProps) {
     rows,
     setLibraryFilterMode,
     setLibrarySortMode,
-    settings,
     showingMissingFiles,
     shuffleLibrarySongsAction,
     songs,
@@ -79,7 +75,6 @@ export default function LibraryView(props: LibraryViewProps) {
   const playableVisibleCount = useMemo(() => visibleSongs.reduce((count, song) => count + Number(song.fileExists !== false), 0), [visibleSongs]);
   const likedCount = useMemo(() => songs.reduce((count, song) => count + Number(Boolean(song.liked)), 0), [songs]);
   const isLiked = view === "liked";
-  const grid = !selectionMode && settings.libraryRowStyle === "coverCards";
   const shownLabel = showingMissingFiles ? "missing files" : isLiked ? "tracks" : "all tracks";
 
   return (
@@ -99,10 +94,6 @@ export default function LibraryView(props: LibraryViewProps) {
           items={[{ value: "library", label: "library order" }, { value: "artist", label: "artist A–Z" }, { value: "title", label: "title A–Z" }, { value: "recent", label: "recently added" }, { value: "plays", label: "most played" }]}
           onValueChange={setLibrarySortMode}
         />
-        <div className="libraryViewMode" role="group" aria-label="Library layout">
-          <button type="button" aria-pressed={grid} title="Grid view" aria-label="Grid view" onClick={() => { exitSelection(); props.setLibraryRowStyle("coverCards"); }}><Grid2X2 size={16}/></button>
-          <button type="button" aria-pressed={!grid} title="List view" aria-label="List view" onClick={() => props.setLibraryRowStyle("comfyRows")}><List size={18}/></button>
-        </div>
         <button className="libraryAction" type="button" aria-pressed={selectionMode} onClick={() => selectionMode ? exitSelection() : setSelectionMode(true)} disabled={!visibleSongs.length && !selectionMode}>{selectionMode ? "Done" : "Select tracks"}</button>
         {!isLiked ? (
           <>
@@ -155,38 +146,40 @@ export default function LibraryView(props: LibraryViewProps) {
         </div>
 
         {visibleSongs.length ? (
-          grid ? (
-            <div className="libraryTrackSurface libraryCoverCards">
-              <VirtualLibrarySongCards {...rows} list={visibleSongs} className="libraryCoverCardsGridV321" />
-            </div>
-          ) : (
-            <div
-              className="libraryTrackSurface libraryFullListV025"
-              onDragOver={handleLibraryAreaDragOver}
-              onDragLeave={handleLibraryAreaDragLeave}
-              onDrop={handleLibraryAreaDrop}
-            >
-              <VirtualSongRows {...rows} selectedIds={selectionMode ? selection : undefined} onToggleSelection={selectionMode ? toggleSelection : undefined} list={visibleSongs} className="libraryFullListV025" />
-            </div>
-          )
-        ) : (
+          <div className="libraryTrackSurface libraryFullListV025"
+            onDragOver={handleLibraryAreaDragOver}
+            onDragLeave={handleLibraryAreaDragLeave}
+            onDrop={handleLibraryAreaDrop}>
+            <VirtualSongRows {...rows} selectedIds={selectionMode ? selection : undefined}
+              onToggleSelection={selectionMode ? toggleSelection : undefined}
+              list={visibleSongs} className="libraryFullListV025" />
+          </div>        ) : (
           <div className="libraryEmpty">
-            <LocaltifyStateCard
-              centered={!isLiked}
-              cute={!isLiked}
-              tone={query.trim() || isLiked ? "info" : showingMissingFiles ? "success" : "warning"}
-              eyebrow={showingMissingFiles ? "file check" : isLiked ? "liked songs" : query.trim() ? "search" : "library"}
-              title={query.trim() ? "No songs found" : showingMissingFiles ? "No missing files" : isLiked ? "No liked songs yet" : "No songs yet"}
-               message={query.trim() ? "Try a different title or artist." : showingMissingFiles ? "All your files are available." : isLiked ? "Like a song to save it here." : isAndroidApp() ? `Sync with your ${computerName()} in Settings → Library to get started.` : "Import music to get started."}
-              mascotState={query.trim() ? "question" : showingMissingFiles ? "happy" : "empty"}
-              actions={query.trim() ? (<button className="softButton" type="button" onClick={() => handleSearchInput("")}>clear search</button>) : showingMissingFiles ? (
-                <button className="softButton" type="button" onClick={() => setLibraryFilterMode?.("all")}>show all tracks</button>
-              ) : isLiked ? (
-                <button className="softButton" type="button" onClick={() => changeView("library", "empty-liked")}>browse library</button>
-              ) : isAndroidApp() ? null : (
-                <button className="mainAction" type="button" onClick={importSongs}>import songs</button>
-              )}
-            />
+            {isLiked && !query.trim() ? (
+              <div className="libraryLikedEmpty">
+                <span className="libraryLikedEmptyIcon" aria-hidden="true"><Heart size={26} strokeWidth={1.7}/></span>
+                <h3>No liked songs yet</h3>
+                <p>Tap the heart on any song to keep it here.</p>
+                <button className="libraryAction libraryLikedBrowse" type="button" onClick={() => changeView("library", "empty-liked")}>Browse songs</button>
+              </div>
+            ) : (
+              <LocaltifyStateCard
+                centered={!isLiked}
+                cute={!isLiked}
+                tone={query.trim() || isLiked ? "info" : showingMissingFiles ? "success" : "warning"}
+                eyebrow={showingMissingFiles ? "file check" : isLiked ? "liked songs" : query.trim() ? "search" : "library"}
+                title={query.trim() ? "No songs found" : showingMissingFiles ? "No missing files" : isLiked ? "No liked songs yet" : "No songs yet"}
+                 message={query.trim() ? "Try a different title or artist." : showingMissingFiles ? "All your files are available." : isLiked ? "Like a song to save it here." : isAndroidApp() ? `Sync with your ${computerName()} in Settings → Library to get started.` : "Import music to get started."}
+                mascotState={query.trim() ? "question" : showingMissingFiles ? "happy" : "empty"}
+                actions={query.trim() ? (<button className="softButton" type="button" onClick={() => handleSearchInput("")}>clear search</button>) : showingMissingFiles ? (
+                  <button className="softButton" type="button" onClick={() => setLibraryFilterMode?.("all")}>show all tracks</button>
+                ) : isLiked ? (
+                  <button className="softButton" type="button" onClick={() => changeView("library", "empty-liked")}>browse library</button>
+                ) : isAndroidApp() ? null : (
+                  <button className="mainAction" type="button" onClick={importSongs}>import songs</button>
+                )}
+              />
+            )}
           </div>
         )}
       </section>

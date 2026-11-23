@@ -4,7 +4,6 @@ import type { AnalysisStatus } from "../../analysis/analysis.types";
 import type { Settings } from "../settings.types";
 import type { Song } from "../../library/song.types";
 import NotForMeSettings from "../../analysis/NotForMeSettings";
-import TaggingSettings from "../../tagging/TaggingSettings";
 
 const megabytes = (bytes: number) => `${(bytes / 1_000_000).toFixed(1)} MB`;
 
@@ -16,7 +15,6 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [clearTarget, setClearTarget] = useState<"history" | "analysis" | null>(null);
-  const [lyricsCacheCleared, setLyricsCacheCleared] = useState(false);
   const mounted = useRef(true);
   const requestVersion = useRef(0);
 
@@ -29,7 +27,7 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
       try {
         const next = await window.localitfy.getAnalysisStatus();
         if (!stopped && version === requestVersion.current) { setStatus(next); setError(""); }
-      } catch { if (!stopped) setError("Could not load experimental feature status. Please reopen this section."); }
+      } catch { if (!stopped) setError("Could not load audio analysis status. Please reopen this section."); }
       if (!stopped) timer = window.setTimeout(poll, 1500);
     };
     void poll();
@@ -49,7 +47,7 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
     } finally { requestVersion.current += 1; if (mounted.current) setBusy(false); }
   }
 
-  if (!status) return <section className="settingsCategoryPage" aria-label="Experimental features"><h4>Experimental features</h4><p role="status">{error || "Loading experimental features…"}</p></section>;
+  if (!status) return <section className="settingsCategoryPage" aria-label="Experimental features"><h4>Audio analysis</h4><p role="status">{error || "Loading experimental features…"}</p></section>;
   const downloading = status.download.state === "downloading";
   const ready = status.download.state === "ready";
 
@@ -57,8 +55,8 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
   const batteryBlocked = status.onBattery && !status.allowOnBattery;
 
   return <section className="settingsCategoryPage settingsDeclutterPageV491" aria-label="Experimental features">
-    <div className="settingsCategoryHeader settingsCategoryHeaderCleanV491"><div><h4>Music analysis</h4></div></div>
-    <div className="settingsPanelCard settingsFocusPanelV491">
+    <div className="settingsCategoryHeader settingsCategoryHeaderCleanV491"><div><h4>Audio analysis</h4></div></div>
+    <div id="settings-analysis-model" className="settingsPanelCard settingsFocusPanelV491">
       <div className="settingsPanelHeader"><div><strong>Audio similarity analysis</strong><span>Find similar songs using on-device analysis.</span></div></div>
       <fieldset disabled={busy || !status.supported} className="experimentalControls">
         <ToggleRow label="Enable music analysis" help="Off by default. Enabling does not download a model or start scanning your library." checked={status.enabled} onChange={(value) => void run(async () => {
@@ -94,24 +92,12 @@ export default function ExperimentalSettings({ settings, songs, updateSetting }:
       </div>
       {status.error ? <p role="alert">{status.error}</p> : null}
     </div>
-    <div className="settingsPanelCard settingsFocusPanelV491">
+    <div id="settings-analysis-history" className="settingsPanelCard settingsFocusPanelV491">
       <div className="settingsPanelHeader"><div><strong>Local listening history</strong><span>Listening time and playback outcomes can help future recommendations. Stored only in your local library database.</span></div></div>
       <fieldset disabled={busy} className="experimentalControls"><ToggleRow label="Save listening history" help="Turning this off stops new history writes. Existing history stays until cleared." checked={status.historyEnabled} onChange={(value) => void run(() => window.localitfy.setListeningHistoryEnabled(value))} /></fieldset>
       <div className="settingsActionRow settingsActionRowCleanV491"><button type="button" className="settingsActionButton" disabled={busy} onClick={() => setClearTarget("history")}>Clear listening history</button></div>
     </div>
     {status.enabled || settings.discoverEnabled ? <NotForMeSettings settings={settings} songs={songs} updateSetting={updateSetting} /> : null}
-    <div className="settingsPanelCard settingsFocusPanelV491">
-      <div className="settingsPanelHeader"><div><strong>Lyrics</strong><span>Synced lyrics from local .lrc files or online lookup.</span></div></div>
-      <fieldset className="experimentalControls">
-        <ToggleRow label="Show lyrics" help="Off by default. Adds the lyrics button to the player." checked={settings.lyricsEnabled === true} onChange={(value) => void updateSetting("lyricsEnabled", value)} />
-        <ToggleRow label="Look up lyrics online" help="Sends the song title, artist, album and length to LRCLIB (lrclib.net), a free community lyrics database. Results are cached on this device." checked={settings.lyricsOnlineLookup !== false} onChange={(value) => void updateSetting("lyricsOnlineLookup", value)} />
-      </fieldset>
-      <div className="settingsActionRow settingsActionRowCleanV491">
-        <button type="button" className="settingsActionButton" onClick={() => void window.localitfy.openExternal("https://lrclib.net")}>About LRCLIB</button>
-        <button type="button" className="settingsActionButton" disabled={lyricsCacheCleared} onClick={() => void window.localitfy.clearLyricsCache().then(() => { if (mounted.current) setLyricsCacheCleared(true); })}>{lyricsCacheCleared ? "Lyrics cache cleared" : "Clear lyrics cache"}</button>
-      </div>
-    </div>
-    <TaggingSettings settings={settings} songs={songs} updateSetting={updateSetting} />
     {clearTarget ? <div className="settingsPanelCard" role="group" aria-label="Confirm clearing data"><p>Clear {clearTarget === "history" ? "listening history" : "saved analysis"}? Your music, playlists and existing play counts are kept. Database backups may retain earlier data.</p><div className="settingsActionRow"><button type="button" className="settingsActionButton" disabled={busy} onClick={() => { const target = clearTarget; setClearTarget(null); void run(() => target === "history" ? window.localitfy.clearListeningHistory() : window.localitfy.clearAnalysis(), target === "history" ? "History cleared. Recording resumes with the next playback session." : "Saved analysis cleared."); }}>Clear data</button><button type="button" className="settingsActionButton" onClick={() => setClearTarget(null)}>Keep data</button></div></div> : null}
     {message ? <p role="status">{message}</p> : null}
     {error ? <p role="alert">{error}</p> : null}

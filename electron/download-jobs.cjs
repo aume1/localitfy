@@ -14,10 +14,11 @@ const clone = value => structuredClone(value);
 function normalizeRequest(request) {
   if (!["youtube", "spotify"].includes(request?.source)) throw new Error("Unknown download source");
   const url = new URL(String(request.url || ""));
-  const { selectedYouTubeUrl, validTrackIdentity } = require("./discover/track-identity.cjs");
+  const { selectedYouTubeUrl, musicBrainzRecordingUrl, validTrackIdentity } = require("./discover/track-identity.cjs");
   const selected = request.source === "spotify" ? selectedYouTubeUrl(request.track?.id) : "";
-  const hosts = request.source === "youtube" || selected ? ["www.youtube.com"] : ["open.spotify.com"];
-  if (selected && url.href !== selected) throw new Error("Selected recording identity does not match its URL");
+  const catalog = request.source === "spotify" ? musicBrainzRecordingUrl(request.track?.id) : "";
+  const hosts = request.source === "youtube" || selected ? ["www.youtube.com"] : catalog ? ["musicbrainz.org"] : ["open.spotify.com"];
+  if ((selected && url.href !== selected) || (catalog && url.href !== catalog)) throw new Error("Selected recording identity does not match its URL");
   if (url.protocol !== "https:" || !hosts.includes(url.hostname) || url.username || url.password || url.port) throw new Error("Invalid download URL");
   if (!path.isAbsolute(request.folder || "")) throw new Error("Download folder must be absolute");
   const options = request.options || {};

@@ -1,11 +1,11 @@
 :root{
-  --panel: rgba(255, 255, 255, 0.035);
+  --panel: var(--lt-fill-subtle);
   --accent-2: var(--accent);
   --accent-2-rgb: var(--accent-rgb);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  color: #f5f5f0;
-  background: #000;
+  color: var(--lt-text);
+  background: var(--lt-bg);
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -16,7 +16,7 @@ html{
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: #000;
+  background: var(--lt-bg);
 }
 
 *{
@@ -35,7 +35,7 @@ button:disabled{
 }
 
 .app{
-  --danger: #ff4f73;
+  --danger: var(--lt-danger);
   --pill: 999px;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
   color: var(--text);
@@ -102,8 +102,8 @@ button:disabled{
 }
 
 .windowButtons .closeWin:hover{
-  color: #fff;
-  background: #e54868;
+  color: var(--lt-on-danger);
+  background: var(--lt-danger);
 }
 
 /* macOS keeps its native traffic lights. Leave room for them instead of
@@ -291,7 +291,7 @@ button:disabled{
   overflow: hidden;
   display: grid;
   place-items: center;
-  color: #06100b;
+  color: var(--button-text-on-accent);
   background: var(--accent);
   transition: transform 120ms ease,
     filter 120ms ease;
@@ -333,7 +333,7 @@ button:disabled{
 }
 
 .iconAction.liked{
-  color: #06100b;
+  color: var(--button-text-on-accent);
   background: var(--accent);
 }
 
@@ -343,8 +343,8 @@ button:disabled{
 
 .deleteAction:hover{
   opacity: 1;
-  color: #fff;
-  background: var(--danger);
+  color: var(--lt-on-danger);
+  background: var(--lt-danger);
 }
 
 .stack{
@@ -440,10 +440,10 @@ button:disabled{
 .dangerButton{
   min-height: 38px;
   padding: 0 15px;
-  border: 1px solid rgba(255, 79, 115, 0.28);
+  border: 1px solid color-mix(in srgb, var(--lt-danger) 28%, transparent);
   border-radius: var(--pill);
-  color: #fff;
-  background: rgba(255, 79, 115, 0.15);
+  color: var(--lt-danger);
+  background: color-mix(in srgb, var(--lt-danger) 15%, transparent);
   font-weight: 850;
   transition: transform 120ms ease,
     background 120ms ease;
@@ -472,7 +472,7 @@ button:disabled{
   place-items: center;
   font-size: 34px;
   font-weight: 900;
-  color: #06100b;
+  color: var(--button-text-on-accent);
   background: var(--accent);
   transform: none;
   animation: sadWiggle 1.8s ease-in-out infinite;
@@ -575,8 +575,8 @@ button:disabled{
 }
 
 ::-webkit-scrollbar-thumb{
-  background: rgba(255, 255, 255, 0.13);
-  border: 3px solid rgba(0, 0, 0, 0.45);
+  background: var(--lt-border-strong);
+  border: 3px solid var(--lt-bg);
   border-radius: var(--pill);
 }
 
@@ -743,7 +743,7 @@ button:disabled{
   min-height: 54px;
 
   padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--lt-fill-subtle);
 }
 
 .songButton{
@@ -808,7 +808,7 @@ button:disabled{
 
 .hero{
   border-radius: 15px;
-  border-inline: 1px solid rgba(255, 255, 255, 0.075);
+  border-inline: 1px solid var(--lt-border);
 }
 }
 
@@ -819,7 +819,7 @@ button:disabled{
   border-radius: 8px;
   border-left: 0;
   border-right: 0;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.92), rgba(12, 12, 12, 0.74) 52%, rgba(0, 0, 0, 0.72)),
+  background: linear-gradient(90deg, color-mix(in srgb, var(--lt-bg) 92%, transparent), color-mix(in srgb, var(--lt-bg-elevated) 74%, transparent) 52%, color-mix(in srgb, var(--lt-bg) 72%, transparent)),
     var(--panel);
 }
 
@@ -859,7 +859,7 @@ button:disabled{
   border: 1px solid rgba(var(--accent-rgb), .34);
   border-radius: 999px;
   color: var(--accent-2);
-  background: rgba(8,8,9,.74);
+  background: var(--lt-glass-background);
   box-shadow: 0 14px 34px rgba(0,0,0,.42), 0 0 34px rgba(var(--accent-rgb), .12);
   backdrop-filter: blur(14px) saturate(145%);
   font-size: 12px;
@@ -1018,8 +1018,8 @@ button:disabled{
 }
 
 .ambientSurface{
-  border: 1px solid rgba(255,255,255,.09) !important;
-  background: rgba(8,8,8,.86) !important;
+  border: 1px solid var(--lt-border) !important;
+  background: var(--lt-glass-background) !important;
 }
 
 .ambientSurface::before{
@@ -1029,7 +1029,7 @@ button:disabled{
   inset: -2px !important;
   z-index: 0 !important;
 
-  background-image: linear-gradient(90deg, rgba(0,0,0,.86) 0%, rgba(0,0,0,.42) 44%, rgba(0,0,0,.2) 100%),
+  background-image: linear-gradient(90deg, color-mix(in srgb, var(--lt-bg) 86%, transparent) 0%, color-mix(in srgb, var(--lt-bg) 42%, transparent) 44%, color-mix(in srgb, var(--lt-bg) 20%, transparent) 100%),
     var(--cover-url, none) !important;
   background-size: cover !important;
   background-position: center !important;
@@ -1044,7 +1044,7 @@ button:disabled{
   inset: 0 !important;
   z-index: 0 !important;
   pointer-events: none !important;
-  background: linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.28) 55%, rgba(0,0,0,.38)),
+  background: linear-gradient(90deg, color-mix(in srgb, var(--lt-bg) 72%, transparent), color-mix(in srgb, var(--lt-bg) 28%, transparent) 55%, color-mix(in srgb, var(--lt-bg) 38%, transparent)),
     repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 9px),
     linear-gradient(180deg, rgba(255,255,255,.035), transparent 34%) !important;
 }
@@ -1155,8 +1155,8 @@ button:disabled{
   z-index: 120 !important;
   border-radius: 999px !important;
   padding: 12px 18px !important;
-  color: #fff !important;
-  background: rgba(10,10,12,.88) !important;
+  color: var(--lt-text) !important;
+  background: var(--lt-glass-background) !important;
   border: 1px solid rgba(var(--accent-rgb), .52) !important;
   box-shadow: 0 14px 44px rgba(0,0,0,.45), 0 0 28px rgba(var(--accent-rgb), .13) !important;
   backdrop-filter: blur(18px) saturate(150%) !important;
@@ -1245,13 +1245,13 @@ body.isResizingPlayer{
 [data-ambient="on"] .ambientSurface::after{
   display: block !important;
   content: "" !important;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.58) 44%, rgba(0, 0, 0, 0.38) 100%),
+  background: linear-gradient(90deg, color-mix(in srgb, var(--lt-bg) 88%, transparent) 0%, color-mix(in srgb, var(--lt-bg) 58%, transparent) 44%, color-mix(in srgb, var(--lt-bg) 38%, transparent) 100%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 44%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 10px) !important;
 }
 
 [data-ambient="off"] .ambientSurface::after{
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.58)) !important;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--lt-bg) 88%, transparent), color-mix(in srgb, var(--lt-bg) 58%, transparent)) !important;
 }
 
 .appShell{
@@ -1276,7 +1276,7 @@ body.isResizingPlayer{
   height: 100%;
   border: 0;
   border-radius: 0;
-  background: #000;
+  background: var(--lt-bg);
   cursor: ew-resize;
   -webkit-app-region: no-drag;
 }
@@ -1289,7 +1289,7 @@ body.isResizingPlayer{
   left: 6px;
   width: 1px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--lt-border);
   transition: width 140ms ease,
     background 140ms ease,
     box-shadow 140ms ease,
@@ -1466,10 +1466,10 @@ button { transition: color var(--lt-control-motion) ease, background-color var(-
   min-width: 40px !important;
   display: inline-grid !important;
   place-items: center !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--lt-border) !important;
   border-radius: 13px !important;
-  color: rgba(255, 255, 255, 0.86) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--lt-text) !important;
+  background: var(--lt-fill) !important;
   box-shadow: none !important;
   line-height: 1 !important;
 }
@@ -1524,11 +1524,11 @@ button { transition: color var(--lt-control-motion) ease, background-color var(-
 .app .ambientSurface::after,
 .app[data-ambient="on"] .ambientSurface::after{
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.58) 54%, rgba(0, 0, 0, 0.76)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(0, 0, 0, 0.18)) !important;
+    linear-gradient(90deg, color-mix(in srgb, var(--lt-bg) 88%, transparent), color-mix(in srgb, var(--lt-bg) 58%, transparent) 54%, color-mix(in srgb, var(--lt-bg) 76%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--lt-text) 2.5%, transparent), color-mix(in srgb, var(--lt-bg) 18%, transparent)) !important;
   background-image:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.58) 54%, rgba(0, 0, 0, 0.76)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(0, 0, 0, 0.18)) !important;
+    linear-gradient(90deg, color-mix(in srgb, var(--lt-bg) 88%, transparent), color-mix(in srgb, var(--lt-bg) 58%, transparent) 54%, color-mix(in srgb, var(--lt-bg) 76%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--lt-text) 2.5%, transparent), color-mix(in srgb, var(--lt-bg) 18%, transparent)) !important;
   background-size: auto !important;
 }
 
@@ -1615,7 +1615,7 @@ body,
 
 .whatsNewSubtext{
   margin: 0 0 18px !important;
-  color: rgba(255,255,255,0.68) !important;
+  color: var(--lt-muted) !important;
   line-height: 1.52 !important;
 }
 
@@ -1632,7 +1632,7 @@ body,
 .app .sidebar .nav .navItem:hover,
 .app .sidebar .nav .navItem.active{
   transform: translate3d(0,0,0) !important;
-  border-color: color-mix(in srgb, var(--accent) 28%, rgba(255,255,255,.08)) !important;
+  border-color: color-mix(in srgb, var(--lt-accent) 28%, var(--lt-border)) !important;
 }
 
 /* lightweight analytics / recap page.
@@ -1660,7 +1660,7 @@ body,
   width: 4px !important;
   height: 8px !important;
   border-radius: 0 999px 999px 0 !important;
-  background: #fff !important;
+  background: var(--lt-accent) !important;
   opacity: 0 !important;
   transform: translateY(-50%) scaleY(.35) !important;
   transform-origin: left center !important;
@@ -1703,11 +1703,11 @@ body,
 
 .sidebar .navItem.active .navIcon,
 .sidebar .navItem.active .navText strong{
-  color: #fff !important;
+  color: var(--lt-text) !important;
 }
 
 .sidebar .navItem.active .navText small{
-  color: rgba(255,255,255,.62) !important;
+  color: var(--lt-muted) !important;
 }
 
 @media (prefers-reduced-motion: reduce){

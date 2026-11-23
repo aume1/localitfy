@@ -347,3 +347,28 @@ test("position: a remote moves the progress on from the last report without new 
   assert.equal(session.livePositionMs({ ...state, rate: 1.5 }, 3000), 13_000);
   assert.equal(session.livePositionMs(state, 1_000_000), 60_000);
 });
+
+test("async snapshots stream every chunk in order and never send a partial library", async () => {
+  const fixture = await syncFixture();
+  const listOriginal = fixture.repositories.songs.list;
+  try {
+    const sample = fixture.repositories.songs.get("a");
+    const ids = Array.from({ length: 270 }, (_, index) => "song-" + index);
+    fixture.repositories.songs.list = () => ids.map(id => ({ ...sample, id }));
+    const headers = { Authorization: "Bearer " + fixture.phone.pairing.token };
+    const response = await send({ url: fixture.url + "/v1/snapshot", headers });
+    assert.equal(response.status, 200);
+    const snapshot = JSON.parse(response.body);
+    assert.deepEqual(snapshot.songs.map(song => song.id), ids);
+    assert.equal(snapshot.songs[0].file.ext, "mp3");
+    assert.equal(snapshot.songs[0].file.size, 5);
+    fixture.repositories.songs.list = () => [{ ...sample, filePath: sample.filePath + ".missing" }];
+    const unavailable = await send({ url: fixture.url + "/v1/snapshot", headers });
+    assert.equal(unavailable.status, 400);
+    assert.match(JSON.parse(unavailable.body).error, /Desktop audio files are unavailable/);
+    assert.ok(!unavailable.body.includes('"songs"'), "missing audio must not appear as a partial snapshot");
+  } finally {
+    fixture.repositories.songs.list = listOriginal;
+    await fixture.close();
+  }
+});
