@@ -10,7 +10,7 @@ function SettingRow({ label, help, range = false, children }: { label: string; h
   return <label className={range ? "rangeRow" : "toggleRow"} title={range ? `${label}: ${help || ""}` : help || label}>
     <span className={range ? "rangeRowCopy" : "toggleRowCopy"}>
       <span className="settingsLabelLine"><strong>{label}</strong></span>
-      {help ? <small>{help}</small> : null}
+      {help ? <small className="settingsRowHelpVisuallyHidden">{help}</small> : null}
     </span>
     {children}
   </label>;
@@ -112,11 +112,11 @@ export function SettingsChoiceGroup<T extends string>({ label, value, options, o
   return <div id={id} className="settingsChoiceGroup" role="group" aria-label={label}>
     <span className="settingsChoiceGroupLabel">{label}</span>
     <div className="settingsChoiceRowV491">
-      {options.map(option => <button key={option.value} type="button"
+      {options.map(option => <button key={option.value} type="button" title={option.description || option.label}
         className={`${compact ? "settingsChoicePillV491" : "settingsChoice"} ${value === option.value ? "active" : ""}`.trim()}
         aria-pressed={value === option.value} disabled={disabled} onClick={() => onChange(option.value)}>
         <strong>{option.label}</strong>
-        {option.description ? <small>{option.description}</small> : null}
+        {!compact && option.description ? <small>{option.description}</small> : null}
       </button>)}
     </div>
   </div>;

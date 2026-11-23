@@ -1,7 +1,8 @@
 import { IconButton } from "../../shared/ui/IconButton";
 import "./home.css";
 import { Fragment, lazy, Suspense, useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { AudioLines, Maximize2, Minimize2, Play, Shuffle, SlidersHorizontal, Smartphone } from "lucide-react";
+import { Maximize2, Minimize2, Shuffle, SlidersHorizontal, Smartphone } from "lucide-react";
+import { SolidIcon } from "../../shared/ui/SolidIcon";
 import { isAndroidApp } from "../../app/platform";
 import { Cover } from "../covers/Cover";
 import { MascotStateArt } from "../../shared/ui/LocaltifyViewUi";
@@ -123,7 +124,7 @@ export default function HomeView(props: HomeViewProps) {
 
           <div className="homeJumpActions">
             <button className="homeStartButton" type="button" onClick={needsPhoneSync ? () => actions.nav.go("settings", "nav") : startListening} disabled={!needsPhoneSync && !currentSong && playableSongCount === 0}>
-              {needsPhoneSync ? <Smartphone size={12} aria-hidden="true" /> : <Play size={12} fill="currentColor" strokeWidth={2.3} aria-hidden="true" />}
+              {needsPhoneSync ? <Smartphone size={12} aria-hidden="true" /> : <SolidIcon name="play" size={13} />}
               <span>{needsPhoneSync ? "Set up phone sync" : android ? (currentSong ? "Play" : "Shuffle music") : currentSong ? "Play track" : "Start Listening"}</span>
             </button>
             {!needsPhoneSync ? <IconButton className="homeRoundButton" type="button" onClick={shuffleLibrarySongsAction} disabled={playableSongCount < 2} aria-label="shuffle library" title="Shuffle library">
@@ -159,7 +160,7 @@ export default function HomeView(props: HomeViewProps) {
                     <strong>{song.title || prettyTitle(song.title, 6)}</strong>
                     <small>{prettyMeta(song.artist)}</small>
                   </span>
-                  <span className="homeListenPlay" aria-hidden="true">{active && isPlaying ? <AudioLines size={16} /> : <Play size={14} fill="currentColor" />}</span>
+                  <span className="homeListenPlay" aria-hidden="true">{active && isPlaying ? <SolidIcon name="equalizer" size={16} /> : <SolidIcon name="play" size={16} />}</span>
                 </button>
               );
             })}

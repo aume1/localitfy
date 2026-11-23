@@ -249,7 +249,8 @@ test("media play overlay remains visible on touch and focusable on keyboard", ()
   const css = read("src/shared/ui/media-card.css");
   assert.match(css, /@media \(hover: none\), \(pointer: coarse\)/);
   assert.match(css, /\.mediaCardPlay:focus-visible/);
-  assert.match(css, /color: var\(--button-text-on-accent\)/);
+  assert.match(css, /color: var\(--lt-text\)/);
+  assert.match(css, /background: var\(--lt-surface-raised\)/);
 });
 
 test("page search, settings controls and sidebar use the shared token and icon system", () => {
@@ -259,7 +260,7 @@ test("page search, settings controls and sidebar use the shared token and icon s
   assert.match(page, /\.pageHeaderSearch:focus-visible/);
   assert.match(page, /outline: 2px solid var\(--lt-accent\)/);
   assert.doesNotMatch(settings.slice(settings.indexOf(".settingsPage.settingsPageV027 {"),settings.indexOf("}",settings.indexOf(".settingsPage.settingsPageV027 {"))), /--settings-text:/);
-  assert.match(sidebar, /className="navLucideIcon" size=\{20\} strokeWidth=\{2\}/);
+  assert.match(sidebar, /className="navSolidIcon" name=\{item.icon\} size=\{20\}/);
 });
 
 

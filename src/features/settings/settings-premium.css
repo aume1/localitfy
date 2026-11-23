@@ -305,15 +305,15 @@
   border: 1px solid var(--lt-border); border-radius: 8px;
 }
 .settingsPage.settingsPageV027 .settingsCategoryContent { min-width: 0; max-width: 100%; }
-.settingsPage.settingsPageV027 .settingsCategoryPage { gap: 6px; }
+.settingsPage.settingsPageV027 .settingsCategoryPage { gap: 10px; }
 .settingsPage.settingsPageV027 .settingsCategoryHeader {
   min-height: 48px; padding: 0 0 14px; margin: 0 0 4px;
   align-items: center; border-bottom: 1px solid var(--lt-border);
 }
 .settingsPage.settingsPageV027 .settingsCategoryHeader h4 { font-size: 22px; line-height: 1.25; font-weight: 660; }
 .settingsPage.settingsPageV027 .settingsPanelCard {
-  min-width: 0; display: grid; gap: 13px;
-  padding: 18px 0 20px; margin: 0;
+  min-width: 0; display: grid; gap: 12px;
+  padding: 16px 0 18px; margin: 0;
   border: 0; border-bottom: 1px solid var(--lt-border);
   border-radius: 0; background: transparent; box-shadow: none;
 }
@@ -342,7 +342,7 @@
   border-color: color-mix(in srgb,var(--lt-accent) 28%,var(--lt-border));
 }
 .settingsPage.settingsPageV027 :is(.settingsChoicePillV491,.settingsChoice,.cleanerOptionV440) {
-  min-height: 52px; padding: 11px 12px; gap: 5px;
+  min-height: 44px; padding: 9px 11px; gap: 4px;
   border: 1px solid var(--lt-border); border-radius: 9px;
   background: transparent; color: var(--lt-text);
 }
@@ -437,4 +437,108 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
+}
+
+.settingsPage.settingsPageV027 .settingsRowHelpVisuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.settingsPage.settingsPageV027 .settingsChoicePillV491 {
+  min-height: 39px;
+  padding: 8px 10px;
+  justify-items: center;
+  text-align: center;
+}
+.settingsPage.settingsPageV027 .settingsPlaybackColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(16px, 2.5vw, 30px);
+}
+.settingsPage.settingsPageV027 .settingsPlaybackColumn {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+.settingsPage.settingsPageV027 .settingsPlaybackColumn > .settingsPanelCard:last-child { border-bottom-color: transparent; }
+.settingsPage.settingsPageV027 .settingsDisclosureBody .settingsMiniGrid { display: grid; gap: 2px 20px; }
+.settingsPage.settingsPageV027 .settingsAppearanceExtras { margin-top: 6px; }
+.settingsPage.settingsPageV027 .settingsDiscordExtras { margin-top: 4px; }
+.settingsPage.settingsPageV027 .discordToggleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 24px;
+}
+.settingsPage.settingsPageV027 .discordHeroCard { gap: 10px; }
+.settingsPage.settingsPageV027 .discordPreviewMock {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--lt-border);
+  border-radius: var(--lt-radius-item);
+  background: var(--lt-surface-soft);
+}
+.settingsPage.settingsPageV027 .discordPreviewIcon {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: var(--lt-radius-item);
+  background: color-mix(in srgb, var(--lt-accent) 12%, var(--lt-surface-raised));
+  color: var(--lt-accent);
+}
+.settingsPage.settingsPageV027 .discordPreviewText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 3px;
+}
+.settingsPage.settingsPageV027 .discordPreviewText :is(strong,small,.discordPreviewBadge) {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.settingsPage.settingsPageV027 .discordPreviewText strong { color: var(--lt-text); font-size: 13px; font-weight: 650; }
+.settingsPage.settingsPageV027 .discordPreviewText small { color: var(--lt-muted); font-size: 12px; }
+.settingsPage.settingsPageV027 .discordPreviewBadge {
+  color: var(--lt-muted);
+  font-size: 10px;
+  text-transform: capitalize;
+}
+.settingsPage.settingsPageV027 .settingsConnectionState { font-size: 12px; color: var(--lt-muted); }
+.settingsPage.settingsPageV027 .settingsMaintenanceDisclosure .settingsDisclosureBody { gap: 16px; }
+.settingsPage.settingsPageV027 .metadataCleanerModeGridV441 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.settingsPage.settingsPageV027 .metadataCleanerModeGridV441 .cleanerOptionV440 {
+  min-height: 40px;
+  padding: 8px 12px;
+  justify-items: center;
+}
+.settingsPage.settingsPageV027 .metadataCleanerPreviewItemV425 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.settingsPage.settingsPageV027 .settingsArtworkSection .settingsActionRow { justify-content: flex-start; }
+.settingsPage.settingsPageV027 .settingsArtworkSection .settingsActionButton { width: auto; }
+@media (max-width: 850px) {
+  .settingsPage.settingsPageV027 .settingsPlaybackColumns,
+  .settingsPage.settingsPageV027 .discordToggleGrid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .settingsPage.settingsPageV027 .metadataCleanerModeGridV441 { grid-template-columns: minmax(0, 1fr); }
 }

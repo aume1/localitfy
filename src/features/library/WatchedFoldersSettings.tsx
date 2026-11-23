@@ -75,7 +75,7 @@ export default function WatchedFoldersSettings({ settings, updateSetting }: Watc
 
   const byFolder = new Map((status?.folders || []).map((entry) => [folderKey(entry.folder), entry]));
   return <div className="settingsPanelCard settingsFocusPanelV491">
-    <div className="settingsPanelHeader"><div><strong>Watched folders</strong><span>New songs in these folders are added to your library while localtify is open, and on launch for anything added while it was closed. Songs already in your library are skipped, and deleted files show as missing.</span></div></div>
+    <div className="settingsPanelHeader"><div><strong>Watched folders</strong><span>New music is added automatically.</span></div></div>
     {folders.length ? <ul className="watchedFolderList" aria-label="Watched folders">
       {folders.map((folder) => {
         const entry = byFolder.get(folderKey(folder));
@@ -86,7 +86,7 @@ export default function WatchedFoldersSettings({ settings, updateSetting }: Watc
             onClick={() => void updateSetting("watchedFolders", folders.filter((item) => item !== folder))}><X size={13} /></button>
         </li>;
       })}
-    </ul> : <p>No folders watched yet. Add the folders where you keep or download music.</p>}
+    </ul> : <p>No folders watched.</p>}
     <div className="settingsActionRow settingsActionRowCleanV491">
       <button type="button" className="settingsActionButton settingsPrimaryAction" disabled={folders.length >= 20} onClick={() => void addFolder()}><FolderPlus size={14} /> Add folder</button>
       {folders.length ? <button type="button" className="settingsActionButton" disabled={checking || status?.scanning} onClick={() => void checkNow()}>

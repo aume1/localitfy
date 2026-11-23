@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode } from "react";
-import { Play } from "lucide-react";
+import { SolidIcon } from "./SolidIcon";
 import "./media-card.css";
 
 export type MediaCardProps = Omit<HTMLAttributes<HTMLDivElement>, "onClick" | "children"> & {
@@ -30,7 +30,7 @@ export function MediaCard({ onOpen, onPlay, openLabel, playLabel, cover, coverCl
         {onPlay ? (
           <button className="mediaCardPlay" type="button" aria-label={playLabel || "play"} title={playLabel || "play"}
             onClick={(event) => { event.stopPropagation(); void onPlay(); }}>
-            <Play size={15} fill="currentColor" strokeWidth={2} aria-hidden="true" />
+            <SolidIcon name="play" size={17} />
           </button>
         ) : null}
       </span>

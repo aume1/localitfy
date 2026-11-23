@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { LikeHeartAnimationV443 } from "../../../shared/ui/LikeHeartAnimation";
+import { SolidIcon } from "../../../shared/ui/SolidIcon";
 import { GripVertical } from "lucide-react";
 import type { CSSProperties, DragEvent, MouseEvent as ReactMouseEvent, PointerEvent } from "react";
 import { usePageVirtualizer } from "../../../shared/hooks/usePageVirtualizer";
@@ -118,7 +119,7 @@ export const SongRowItem = memo(function SongRowItem({
         aria-label="add to playlist"
         title="add to playlist"
       >
-        +
+        <SolidIcon name="add" size={16} />
       </button>
 
     </article>

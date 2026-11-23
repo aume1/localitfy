@@ -1,5 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { IconButton } from "../../shared/ui/IconButton";
+import { SolidIcon } from "../../shared/ui/SolidIcon";
 import { Search, X, ChevronRight } from "lucide-react";
 import { matchSettingsControls } from "./settings.search";
 import { settingsCategoryTabs } from "./settings.constants";
@@ -29,6 +30,7 @@ export default function SettingsRail({
   tabs, activeCategory, search, resultLabel, onSearchChange, onCategoryChange
 }: SettingsRailProps) {
   const selectedRef = useRef<HTMLButtonElement>(null);
+  const railRef = useRef<HTMLElement>(null);
   const matches = useMemo(() => matchSettingsControls(search, settingsCategoryTabs.map(tab => tab.id)), [search]);
   function openControl(category: SettingsCategory, target: string) {
     onSearchChange("");
@@ -38,6 +40,9 @@ export default function SettingsRail({
       const element = document.getElementById(target);
       if (!element && attempts++ < 18) { window.setTimeout(reveal, 75); return; }
       if (!element) return;
+      if (element instanceof HTMLDetailsElement) element.open = true;
+      const disclosure = element.closest("details");
+      if (disclosure) disclosure.open = true;
       element.scrollIntoView({ block: "start", behavior: "auto" });
       const control = element.querySelector<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), summary");
       control?.focus({ preventScroll: true });
@@ -45,12 +50,21 @@ export default function SettingsRail({
     window.setTimeout(reveal, 70);
   }
   useLayoutEffect(() => {
-    // Deep-linked sections (Discover in particular) can sit below the rail fold.
-    // Reveal the selected item without moving keyboard focus or resetting search.
-    selectedRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const selected = selectedRef.current;
+    const rail = railRef.current;
+    if (!selected || !rail) return;
+    const rect = selected.getBoundingClientRect();
+    const bounds = rail.getBoundingClientRect();
+    if (rect.top < bounds.top + 8) rail.scrollTop -= bounds.top + 8 - rect.top;
+    else if (rect.bottom > bounds.bottom - 8) rail.scrollTop += rect.bottom - bounds.bottom + 8;
+    const nav = selected.closest("nav");
+    if (!nav) return;
+    const navBounds = nav.getBoundingClientRect();
+    if (rect.left < navBounds.left + 8) nav.scrollLeft -= navBounds.left + 8 - rect.left;
+    else if (rect.right > navBounds.right - 8) nav.scrollLeft += rect.right - navBounds.right + 8;
   }, [activeCategory]);
   return (
-    <aside className="settingsCategoryRail settingsCategoryRailV027 settingsCategoryRailPage" aria-label="Settings navigation">
+    <aside ref={railRef} className="settingsCategoryRail settingsCategoryRailV027 settingsCategoryRailPage" aria-label="Settings navigation">
       <div className="settingsSearchBoxV027">
         <label htmlFor="settings-section-search">Search settings</label>
         <div className="settingsSearchField">
@@ -80,13 +94,12 @@ export default function SettingsRail({
           return <div className="settingsNavGroup" key={group.label}>
             <h3 className="settingsNavCaption">{group.label}</h3>
             {items.map((tab) => {
-              const Icon = tab.icon;
               const selected = activeCategory === tab.id;
               return <button key={tab.id} ref={selected ? selectedRef : undefined} className={`settingsCategoryButton ${selected ? "active" : ""}`}
                 type="button" onClick={() => onCategoryChange(tab.id)} title={tab.description}
                 aria-current={selected ? "page" : undefined}>
                 <span className="settingsCategoryIcon" aria-hidden="true">
-                  <Icon className="settingsLucideIcon" size={20} strokeWidth={1.9} />
+                  <SolidIcon className="settingsSolidIcon" name={tab.icon} size={20} />
                 </span>
                 <span className="settingsCategoryCopy"><strong>{tab.label}</strong></span>
               </button>;

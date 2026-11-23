@@ -184,15 +184,14 @@ main.app.app > .appShell > .sidebar :is(.navIcon, .navIconMotionV468) {
   transform: none !important;
   filter: none !important;
 }
-main.app.app > .appShell > .sidebar .navLucideIcon {
+main.app.app > .appShell > .sidebar .navSolidIcon {
   display: block !important;
   width: 20px !important;
   height: 20px !important;
   margin: 0 !important;
   color: currentColor !important;
-  stroke: currentColor !important;
-  stroke-width: 1.9 !important;
-  fill: none !important;
+  stroke: none !important;
+  fill: currentColor !important;
   filter: none !important;
   animation: none !important;
   transform: none !important;

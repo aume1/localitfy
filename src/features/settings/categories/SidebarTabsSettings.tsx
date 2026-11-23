@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Eye, EyeOff } from "lucide-react";
 import { isAndroidApp } from "../../../app/platform";
+import { SolidIcon } from "../../../shared/ui/SolidIcon";
 import { DESKTOP_ONLY_VIEWS, navItems } from "../../shell/navigation.constants";
 import { canMoveSidebarItem, moveSidebarItem, normalizeSidebarHidden, resolveSidebarGroups, toggleSidebarItemHidden } from "../../shell/sidebarLayout";
 import type { Settings } from "../settings.types";
@@ -22,9 +23,7 @@ export default function SidebarTabsSettings({ settings, updateSetting }: Sidebar
       <div className="settingsPanelHeader">
         <div>
           <strong>{isAndroidApp() ? "Tabs" : "Sidebar tabs"}</strong>
-          <span>{isAndroidApp()
-            ? "The first four shown pages are the tabs at the bottom; the rest are under more."
-            : "Reorder or hide tabs in each section. You can also right-click a tab in the sidebar."}</span>
+          <span>{isAndroidApp() ? "The first four pages appear in your bottom bar." : "Move or hide sidebar tabs."}</span>
         </div>
         <button
           className="settingsTinyButton"
@@ -47,12 +46,11 @@ export default function SidebarTabsSettings({ settings, updateSetting }: Sidebar
               {group.orderedItems.map((itemId) => {
                 const item = navItems.find((entry) => entry.id === itemId);
                 if (!item || (isAndroidApp() && DESKTOP_ONLY_VIEWS.has(itemId))) return null;
-                const Icon = item.icon;
                 const isHidden = hiddenSet.has(itemId);
 
                 return (
                   <li key={itemId} className={`sidebarTabsRow ${isHidden ? "isHidden" : ""}`}>
-                    <Icon className="sidebarTabsIcon" size={16} strokeWidth={2.4} aria-hidden="true" />
+                    <SolidIcon className="sidebarTabsIcon" name={item.icon} size={16} />
                     <span className="sidebarTabsLabel">{item.label}</span>
                     <button
                       type="button"

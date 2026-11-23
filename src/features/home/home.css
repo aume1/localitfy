@@ -319,7 +319,7 @@
   width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px var(--lt-space-3);
+  gap: 4px var(--lt-space-2);
   padding: 0;
   background: transparent;
 }
@@ -328,8 +328,8 @@
 .homeListenRow {
   position: relative;
   min-width: 0;
-  min-height: 60px;
-  padding: 6px 34px 6px 6px;
+  min-height: 62px;
+  padding: 6px 36px 6px 7px;
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
   align-items: center;
@@ -342,17 +342,17 @@
   text-align: left;
   cursor: pointer;
   transform: none !important;
-  transition: border-color 130ms ease, background-color 130ms ease;
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .homeListenGrid > .homeListenRow:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .app .homeListenRow:hover,
 .app .homeListenRow:focus-visible {
-  background: var(--lt-fill-hover);
+  background: color-mix(in srgb, var(--lt-text) 5%, transparent);
   box-shadow: none !important;
   transform: none !important;
 }
-.app .homeListenRow.active { background: var(--lt-fill-selected); }
+.app .homeListenRow.active { background: color-mix(in srgb, var(--lt-accent) 3%, transparent); }
 
 .homeListenCover,
 .homeListenCover .coverImage {
@@ -367,9 +367,9 @@
 .homeListenCopy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .homeListenCopy strong { color:var(--lt-text); font-size:14px; font-weight:600; }
 .homeListenCopy small { color:var(--lt-muted); font-size:var(--lt-text-base); font-weight:500; }
-.homeListenPlay { position:absolute; right:11px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; color:var(--lt-text); background:var(--lt-fill-selected); box-shadow:none; opacity:0; transition:opacity 120ms ease; }
+.homeListenPlay { position:absolute; right:9px; width:28px; height:28px; display:grid; place-items:center; border-radius:50%; color:var(--lt-text); background:var(--lt-surface-raised); box-shadow:none; opacity:0; transition:opacity 150ms ease; }
 .homeListenPlay svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.8; }
-.homeListenRow.playing .homeListenPlay { background: transparent; }
+.homeListenRow.playing .homeListenPlay { color:var(--lt-accent); background:transparent; }
 .homeListenRow:hover .homeListenPlay,
 .homeListenRow:focus-visible .homeListenPlay,
 .homeListenRow.playing .homeListenPlay { opacity:1; }

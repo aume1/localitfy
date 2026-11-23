@@ -111,22 +111,22 @@ button:disabled:active {
 }
 
 
-.navLucideIcon,
-.settingsLucideIcon {
+.navSolidIcon,
+.settingsSolidIcon {
   transform-box: fill-box;
   transform-origin: center;
   transition: transform 180ms var(--motion-pop), opacity 150ms ease;
 }
 
-.navLucideIcon *,
-.settingsLucideIcon * {
+.navSolidIcon *,
+.settingsSolidIcon * {
   vector-effect: non-scaling-stroke;
 }
 
-.navItem:hover .navLucideIcon,
-.navItem:focus-visible .navLucideIcon,
-.settingsCategoryButton:hover .settingsLucideIcon,
-.settingsCategoryButton:focus-visible .settingsLucideIcon {
+.navItem:hover .navSolidIcon,
+.navItem:focus-visible .navSolidIcon,
+.settingsCategoryButton:hover .settingsSolidIcon,
+.settingsCategoryButton:focus-visible .settingsSolidIcon {
   transform: translate3d(0, -1px, 0) scale(1.05);
 }
 

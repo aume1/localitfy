@@ -4,7 +4,7 @@ import type { UpdateSetting } from "../settings.shared";
 import { RangeRow, ToggleRow, SettingSection, SettingsChoiceGroup } from "../settings.shared";
 import { ArcDropdownMenu } from "../../../shared/ui/ArcDropdownMenu";
 import ScrobbleSettings from "../../scrobbling/ScrobbleSettings";
-import { isAndroidApp, computerName } from "../../../app/platform";
+import { isAndroidApp, getLocaltifyPlatformInfo } from "../../../app/platform";
 
 const PhoneScrobbleStatus = lazy(() => import("../../../platform/android/PhoneScrobbleStatus"));
 
@@ -13,11 +13,13 @@ export default function PlaybackSettings({ settings, updateSetting }: {
   updateSetting: UpdateSetting;
 }) {
   const phone = isAndroidApp();
+  const supportsAnalysis = getLocaltifyPlatformInfo().id === "mac";
   return <section className="settingsCategoryPage settingsDeclutterPageV491 settingsPlaybackCleanV491" aria-label="Playback settings">
     <div className="settingsCategoryHeader settingsCategoryHeaderCleanV491"><h4>Playback</h4></div>
-    <div className="settingsTwoColumn settingsTwoColumnCleanV491">
+    <div className="settingsTwoColumn settingsTwoColumnCleanV491 settingsPlaybackColumns">
+      <div className="settingsPlaybackColumn">
       <SettingSection id="settings-playback-transitions" title="Transitions"
-        description="How Localtify moves between songs." className="settingsFocusPanelV491">
+        className="settingsFocusPanelV491">
         <ToggleRow label="Crossfade" help="Blend between tracks."
           checked={settings.crossfadeEnabled} onChange={value => void updateSetting("crossfadeEnabled", value)} />
         <RangeRow label="Crossfade duration" value={settings.crossfadeSeconds} min={0} max={10} step={0.5}
@@ -25,8 +27,18 @@ export default function PlaybackSettings({ settings, updateSetting }: {
         <ToggleRow label="Gapless playback" help="Play consecutive tracks without added silence."
           checked={settings.gaplessPlayback} onChange={value => void updateSetting("gaplessPlayback", value)} />
       </SettingSection>
+      <SettingSection id="settings-playback-sleep" title="Queue & sleep"
+        className="settingsFocusPanelV491">
+        {supportsAnalysis && settings.experimentalMusicAnalysis ? <ToggleRow label="Song radio"
+          checked={settings.songRadio} onChange={value => void updateSetting("songRadio", value)} /> : null}
+        <SettingsChoiceGroup label="Sleep timer" compact value={String(settings.sleepTimerMinutes)}
+          options={[{value:"0",label:"Off"},{value:"15",label:"15 min"},{value:"30",label:"30 min"},{value:"60",label:"1 hour"},{value:"120",label:"2 hours"}]}
+          onChange={value => void updateSetting("sleepTimerMinutes", Number(value))} />
+      </SettingSection>
+      </div>
+      <div className="settingsPlaybackColumn">
       <SettingSection id="settings-playback-listening" title="Listening"
-        description="Speed, volume, and what happens when you select music." className="settingsFocusPanelV491">
+        className="settingsFocusPanelV491">
         <RangeRow label="Playback speed" value={settings.playbackSpeed} min={0.75} max={1.5} step={0.05}
           suffix="×" onChange={value => void updateSetting("playbackSpeed", value)} />
         <ToggleRow label="Autoplay when selecting" help="Immediately play a song when selected."
@@ -40,18 +52,8 @@ export default function PlaybackSettings({ settings, updateSetting }: {
         <ToggleRow label="Remember per-song volume" help="Use your saved level for each track."
           checked={settings.perSongVolumeMemory} onChange={value => void updateSetting("perSongVolumeMemory", value)} />
       </SettingSection>
-      <SettingSection id="settings-playback-sleep" title="Queue & sleep"
-        description="Automatic music selection and stopping." className="settingsFocusPanelV491">
-        <ToggleRow label="Song radio" disabled={phone}
-          help={phone ? `Managed on your ${computerName()}; sync to update it.`
-            : settings.experimentalMusicAnalysis ? "Play similar songs when the queue ends." : "Requires local audio analysis to be enabled."}
-          checked={settings.songRadio} onChange={value => void updateSetting("songRadio", value)} />
-        <SettingsChoiceGroup label="Sleep timer" compact value={String(settings.sleepTimerMinutes)}
-          options={[{value:"0",label:"Off"},{value:"15",label:"15 min"},{value:"30",label:"30 min"},{value:"60",label:"1 hour"},{value:"120",label:"2 hours"}]}
-          onChange={value => void updateSetting("sleepTimerMinutes", Number(value))} />
-      </SettingSection>
       <SettingSection id="settings-playback-effects" title="Audio effects"
-        description="Sound processing for the current session." className="settingsFocusPanelV491 settingsAudioEffectsPanel">
+        className="settingsFocusPanelV491 settingsAudioEffectsPanel">
         <div className="settingsSelectField settingsSelectFieldV491">
           <span>Effect</span>
           <ArcDropdownMenu ariaLabel="Audio effect" value={settings.audioEffectMode}
@@ -68,6 +70,7 @@ export default function PlaybackSettings({ settings, updateSetting }: {
         {settings.audioEffectMode === "daycore" ? <RangeRow label="Reverb" value={settings.audioReverbAmount}
           min={0} max={70} step={5} suffix="%" onChange={value => void updateSetting("audioReverbAmount", value)} /> : null}
       </SettingSection>
+      </div>
     </div>
     {phone ? <Suspense fallback={null}><PhoneScrobbleStatus /></Suspense>
       : <ScrobbleSettings lastfmApiKey={settings.lastfmApiKey}

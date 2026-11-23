@@ -1,6 +1,6 @@
 import type { SettingsCategory } from "./settings.types";
 import { settingsCategoryTabs } from "./settings.constants";
-import { isAndroidApp } from "../../app/platform";
+import { getLocaltifyPlatformInfo, isAndroidApp } from "../../app/platform";
 
 export function normalizeSettingsSearch(value: string) {
   return value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase().replace(/\s+/g, " ");
@@ -21,6 +21,7 @@ export type SettingsControlLink = {
   target: string;
   keywords: string;
   desktopOnly?: boolean;
+  macOnly?: boolean;
 };
 
 export const SETTINGS_CONTROL_LINKS: readonly SettingsControlLink[] = [
@@ -48,7 +49,7 @@ export const SETTINGS_CONTROL_LINKS: readonly SettingsControlLink[] = [
   { id: "discord", label: "Discord presence and privacy", description: "Discord", category: "discord", target: "settings-discord-privacy", keywords: "rpc status activity buttons hide" },
   { id: "discord-style", label: "Discord status text", description: "Discord", category: "discord", target: "settings-discord-status", keywords: "rich presence status style second line text" },
   { id: "discord-artwork", label: "Discord artwork", description: "Discord", category: "discord", target: "settings-discord-artwork", keywords: "rpc rich presence cover images pixel art" },
-  { id: "analysis", label: "Audio similarity model", description: "Audio analysis", category: "experimental", target: "settings-analysis-model", keywords: "local ai inference embeddings battery" },
+  { id: "analysis", label: "Audio similarity model", description: "Audio analysis", category: "experimental", target: "settings-analysis-model", keywords: "local ai inference embeddings battery", macOnly: true },
   { id: "history", label: "Listening history", description: "Audio analysis", category: "experimental", target: "settings-analysis-history", keywords: "privacy delete listen scrobble record" },
   { id: "updates", label: "Automatic updates", description: "Updates", category: "updates", target: "settings-updates", keywords: "check restart install version" },
   { id: "reset", label: "Reset settings", description: "Advanced", category: "advanced", target: "settings-advanced-reset", keywords: "defaults factory restore appearance player discord" },
@@ -60,7 +61,7 @@ export function matchSettingsControls(query: string, allowed: readonly SettingsC
   if (!words.length) return [];
   const available = new Set(allowed);
   return SETTINGS_CONTROL_LINKS.filter(link =>
-    available.has(link.category) && (!link.desktopOnly || !isAndroidApp()) &&
+    available.has(link.category) && (!link.desktopOnly || !isAndroidApp()) && (!link.macOnly || getLocaltifyPlatformInfo().id === "mac") &&
     words.every(word => normalizeSettingsSearch(`${link.label} ${link.description} ${link.keywords}`).includes(word))
   );
 }

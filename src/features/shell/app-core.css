@@ -652,16 +652,6 @@ button:disabled{
   font-weight: 900;
 }
 
-.songRow.playing .songMeta strong::after{
-  content: "  playing";
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.78;
-}
-
 .circleButton.main:not(.playerBar *){
   position: relative;
   overflow: hidden;

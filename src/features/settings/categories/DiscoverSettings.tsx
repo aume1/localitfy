@@ -81,16 +81,15 @@ export default function DiscoverSettings({ settings, updateSetting }: Props) {
 
   return <section className="settingsCategoryPage discoverProviderSettings" aria-label="Discover and providers">
     <div className="settingsCategoryHeader">
-      <div><p className="eyebrow">discovery</p><h4>Discover & providers</h4></div>
-      <span>Music beyond your library, on your terms</span>
+      <h4>Discover</h4>
     </div>
-    <SettingSection id="settings-discover-enabled" title="Music discovery" description="Search music without an account." icon={<Compass size={20} aria-hidden="true" />}>
+    <SettingSection id="settings-discover-enabled" title="Music discovery" icon={<Compass size={20} aria-hidden="true" />}>
       <ToggleRow label="Enable Discover" help="When enabled, catalog and artwork searches may contact music services. Last.fm recommendations use your library metadata." checked={settings.discoverEnabled}
         onChange={value => void updateSetting("discoverEnabled", value)} />
-      <p className="settingsHintText">Local music and your existing playlists remain available when Discover is off.</p>
+      <p className="settingsHintText">Searches may contact music providers. Your local library works without Discover.</p>
     </SettingSection>
 
-    <SettingSection id="settings-discover-lastfm" title="Last.fm recommendations" description="Optional personal API key." icon={<KeyRound size={20} aria-hidden="true" />}>
+    <SettingSection id="settings-discover-lastfm" title="Last.fm recommendations" icon={<KeyRound size={20} aria-hidden="true" />}>
       <div className="discoverProviderStatus" role="status">
         <span className={`discoverProviderDot ${lastfmCheck === "ok" ? "ready" : ""}`} aria-hidden="true" />
         <span>{sourceLabel}</span>
@@ -99,16 +98,16 @@ export default function DiscoverSettings({ settings, updateSetting }: Props) {
       </div>
       {checking ? <p className="settingsHintText" role="status">Checking Last.fm…</p> : null}
       {connectionLabel ? <p className="settingsHintText" role="status">{connectionLabel}</p> : null}
-      {source === "missing" ? <p className="settingsHintText">The application has no configured default key. Your copy can still search public music, but personalized Last.fm recommendations need an application key.</p> : null}
+      {source === "missing" ? <p className="settingsHintText">No key configured. Add one for Last.fm recommendations.</p> : null}
       <details className="settingsDisclosure discoverProviderAdvanced" open={editingKey} onToggle={event => setEditingKey(event.currentTarget.open)}>
-        <summary>Advanced · use a personal Last.fm key</summary>
+        <summary>API key options</summary>
         <div className="settingsDisclosureBody">
           <label className="settingsSelectField">
             <span>Last.fm API key override</span>
             <input type="password" value={keyDraft} autoComplete="off" spellCheck={false} maxLength={32}
               placeholder="32-character application key" onChange={event => setKeyDraft(event.currentTarget.value.trim())} />
           </label>
-          <p className="settingsHintText">Only enter a Last.fm API key, never the shared secret. This override is saved in your local settings.</p>
+          <p className="settingsHintText">Use your API key, not the shared secret. Saved locally.</p>
           <div className="settingsActionRow discoverProviderActions">
             <Button variant="primary" size="sm" type="button" className="settingsActionButton settingsPrimaryAction" disabled={saving || !VALID_KEY.test(keyDraft)}
               onClick={() => void saveOverride(keyDraft)}>Use this key</Button>
@@ -122,8 +121,5 @@ export default function DiscoverSettings({ settings, updateSetting }: Props) {
       </details>
     </SettingSection>
 
-    <SettingSection title="Data and privacy" description="Discover is opt-in. Third-party music searches receive the terms you choose; personalized requests may send track and artist names.">
-      <p className="settingsHintText">Default keys bundled with an installed desktop app are public identifiers, not protected secrets. Truly private credentials require a server-side proxy.</p>
-    </SettingSection>
   </section>;
 }

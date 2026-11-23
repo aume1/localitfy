@@ -1,8 +1,7 @@
-import { BarChart3, Compass, Disc3, Download, Home, LibraryBig, Settings as SettingsIcon } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import type { SolidIconName } from "../../shared/ui/SolidIcon";
 import type { View } from "./view.types";
-export const navItems: Array<{ id: View; label: string; hint: string; icon: LucideIcon }> = [
-  { id:"home", label:"home", hint:"now playing", icon:Home }, { id:"library", label:"library", hint:"all songs", icon:LibraryBig }, { id:"albums", label:"albums", hint:"browse full albums", icon:Disc3 }, { id:"discover", label:"discover", hint:"new music", icon:Compass }, { id:"analytics", label:"analytics", hint:"stats", icon:BarChart3 }, { id:"downloads", label:"downloads", hint:"imports", icon:Download }, { id:"settings", label:"settings", hint:"controls", icon:SettingsIcon }
+export const navItems: Array<{ id: View; label: string; hint: string; icon: SolidIconName }> = [
+  { id:"home", label:"home", hint:"now playing", icon:"home" }, { id:"library", label:"library", hint:"all songs", icon:"library" }, { id:"albums", label:"albums", hint:"browse full albums", icon:"album" }, { id:"discover", label:"discover", hint:"new music", icon:"discover" }, { id:"analytics", label:"analytics", hint:"stats", icon:"analytics" }, { id:"downloads", label:"downloads", hint:"imports", icon:"download" }, { id:"settings", label:"settings", hint:"controls", icon:"settings" }
 ];
 export const sidebarNavGroups: Array<{ id:"library"|"tools"|"app"; label:string; itemIds:View[] }> = [
   { id:"library", label:"library", itemIds:["home","library","albums","discover"] }, { id:"tools", label:"tools", itemIds:["downloads","analytics"] }, { id:"app", label:"app", itemIds:["settings"] }

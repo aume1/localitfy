@@ -210,12 +210,12 @@
   background: transparent !important;
 }
 .app .libraryPage .songRow:hover:not(.songDragging):not(.songDropTarget) {
-  background: var(--lt-fill-hover) !important;
+  background: color-mix(in srgb, var(--lt-text) 5%, transparent) !important;
 }
 .app .libraryPage .songRow.active:not(.songDragging):not(.songDropTarget) {
-  background: var(--lt-fill-selected) !important;
-  border-color: color-mix(in srgb, var(--lt-accent) 18%, transparent) !important;
-  border-inline-start-color: var(--lt-accent) !important;
+  background: color-mix(in srgb, var(--lt-accent) 3%, transparent) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .libraryPage .songButton {
@@ -356,7 +356,7 @@
   .libraryPage .songArt .coverImage { width: 42px !important; height: 42px !important; }
 }
 
-.libraryPage .songRow.selected:not(.songDragging):not(.songDropTarget) { background: var(--lt-fill-selected) !important; outline: 2px solid var(--lt-border-strong); outline-offset: -2px; }
+.app .libraryPage .songRow.selected:not(.songDragging):not(.songDropTarget) { background: color-mix(in srgb, var(--lt-accent) 9%, transparent) !important; outline: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lt-accent) 24%, transparent), inset 3px 0 0 var(--lt-accent) !important; }
 .librarySelectionTools { display: flex; flex-wrap: wrap; gap: var(--lt-gap-control); align-items: center; }
 .librarySelectionTools .pageHeaderCount { margin-inline-end: auto; }
 

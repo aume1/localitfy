@@ -70,8 +70,10 @@ export default function ScrobbleSettings({ lastfmApiKey, saveLastfmApiKey }: Scr
       onClick={() => void run(`history-${service}`, () => window.localitfy.sendScrobbleHistory(service))}>{busy === `history-${service}` ? "Sending…" : "Send history"}</button>
   </div> : null;
 
-  return <div className="settingsPanelCard settingsFocusPanelV491">
-    <div className="settingsPanelHeader"><div><strong>Scrobbling</strong><span>Share what you play with Last.fm or ListenBrainz for stats, charts and recommendations across apps. A song counts once you’ve heard half of it or 4 minutes; songs under 30 seconds don’t count.</span></div></div>
+  return <details className="settingsDisclosure settingsScrobbleDisclosure">
+    <summary>Scrobbling</summary>
+    <div className="settingsDisclosureBody">
+      <div className="settingsPanelCard settingsFocusPanelV491">
 
     <div className="scrobbleService">
       <div className="scrobbleServiceHead"><strong>Last.fm</strong>
@@ -92,7 +94,7 @@ export default function ScrobbleSettings({ lastfmApiKey, saveLastfmApiKey }: Scr
           <button type="button" className="scrobbleLink" onClick={() => openLink("https://www.last.fm/api/account/create")}>New API account <ExternalLink size={12} /></button>
         </div>
       )}
-      {!status.lastfm.connected ? <small>Use the API key and shared secret from the same Last.fm API account. Last.fm only shows the shared secret once, when you create the account; if you didn’t save it, create a new one. Its key also replaces the one Discover uses. Connecting opens Last.fm so you can approve this app.</small> : null}
+      {!status.lastfm.connected ? <small>Use the API key and secret from the same Last.fm application. You'll approve the connection in your browser.</small> : null}
     </div>
 
     <div className="scrobbleService">
@@ -116,5 +118,7 @@ export default function ScrobbleSettings({ lastfmApiKey, saveLastfmApiKey }: Scr
       {waiting ? <button type="button" className="settingsActionButton" disabled={busy === "send"} onClick={() => void run("send", () => window.localitfy.sendScrobblesNow())}>Send now</button> : null}
     </div> : null}
     {error || status.lastError ? <p role="alert">{error || status.lastError}</p> : null}
-  </div>;
+      </div>
+    </div>
+  </details>;
 }

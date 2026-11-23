@@ -25,6 +25,7 @@ function home(android, songs, hidden = []) {
     "../../app/platform": { isAndroidApp: () => android },
     "../covers/Cover": { Cover: () => null },
     "../../shared/ui/LocaltifyViewUi": { MascotStateArt: () => null },
+    "../../shared/ui/SolidIcon": { SolidIcon: () => null },
     "../search/search.utils": { prettyMeta: String, prettyTitle: String },
     "./homeLayout": layout,
     "./useHomeDay": { useHomeDay: () => "2026-11-18" },

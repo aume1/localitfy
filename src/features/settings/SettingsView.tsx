@@ -1,7 +1,7 @@
 import { PageHeader } from "../../shared/ui/PageHeader";
 import "./settings.css";
 import "./settings-premium.css";
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import SettingsRail from "./SettingsRail";
 import type { SettingsRailProps } from "./SettingsRail";
 import type { SettingsCategory } from "./settings.types";
@@ -17,8 +17,17 @@ export default function SettingsView({
   renderSettingsCategoryContent, settingsRail, settingsCategory
 }: SettingsViewProps) {
   const selectedTab = settingsCategoryTabs.find((tab) => tab.id === settingsCategory);
+  const pageRef = useRef<HTMLElement>(null);
+  const lastCategory = useRef(settingsCategory);
+
+  useLayoutEffect(() => {
+    if (lastCategory.current === settingsCategory) return;
+    lastCategory.current = settingsCategory;
+    pageRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+  }, [settingsCategory]);
+
   return (
-    <section data-page-section="settings" className="settingsPage settingsPageV027">
+    <section ref={pageRef} data-page-section="settings" className="settingsPage settingsPageV027">
       <PageHeader title="Settings" />
       <div className="settingsLayout settingsPageLayoutV027">
         <SettingsRail {...settingsRail} />

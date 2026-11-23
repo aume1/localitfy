@@ -1,4 +1,3 @@
-import { computerName } from "../../app/platform";
 import { useEffect, useState } from "react";
 import { Smartphone, X } from "lucide-react";
 import "../library/watched-folders.css";
@@ -33,7 +32,7 @@ export default function PhoneSyncSettings() {
 
   const address = status?.addresses[0] ? `${status.addresses[0]}:${status.port}` : "";
   return <div className="settingsPanelCard settingsFocusPanelV491">
-    <div className="settingsPanelHeader"><div><strong>Phone sync</strong><span>Keeps the localtify Android app in step with this {computerName()} over your home Wi-Fi: songs, covers, likes, playlists and play counts, in both directions. Nothing leaves your network.</span></div></div>
+    <div className="settingsPanelHeader"><div><strong>Phone sync</strong><span>Sync your phone over local Wi-Fi.</span></div></div>
     <div className="settingsActionRow settingsActionRowCleanV491">
       <button type="button" className={`settingsActionButton ${status?.enabled ? "" : "settingsPrimaryAction"}`} disabled={busy || !status}
         onClick={() => void run(() => window.localitfy.setPhoneSyncEnabled(!status?.enabled))}>{status?.enabled ? "Turn off" : "Turn on"}</button>

@@ -40,6 +40,9 @@ export default function LyricsSettings({ settings, songs, updateSetting }: {
       </div>
       {cacheStatus ? <p role="status" className="settingsHintText">{cacheStatus}</p> : null}
     </SettingSection>
-    <div id="settings-lyrics-tagging"><TaggingSettings settings={settings} songs={songs} updateSetting={updateSetting} /></div>
+    <details id="settings-lyrics-tagging" className="settingsDisclosure">
+      <summary>MusicBrainz tagging</summary>
+      <div className="settingsDisclosureBody"><TaggingSettings settings={settings} songs={songs} updateSetting={updateSetting} /></div>
+    </details>
   </section>;
 }

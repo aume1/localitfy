@@ -12,7 +12,7 @@ type Props={
 export default function UpdateSettings({settings,updateSetting,appVersion,lastUpdateCheckedLabel,updatePrompt,manualUpdateCheck,askUpdaterToDownload,askUpdaterToInstall,openUpdateChangelog}:Props) {
   const status=updatePrompt.status,hasUpdate=["available","downloading","downloaded"].includes(status);
   return <section className="settingsCategoryPage settingsDeclutterPageV491 settingsUpdatesPage settingsUpdatesCleanV491" aria-label="Update settings">
-    <div className="settingsCategoryHeader settingsCategoryHeaderCleanV491"><div><p className="eyebrow">Updates</p><h4>Keep Localtify current</h4></div><span>v{appVersion}</span></div>
+    <div className="settingsCategoryHeader settingsCategoryHeaderCleanV491"><h4>Updates</h4><span>v{appVersion}</span></div>
     <div id="settings-updates" className="settingsPanelCard settingsFocusPanelV491"><div className="settingsPanelHeader"><div>
       <strong>{hasUpdate?"Version "+updatePrompt.version+" available":"Installed version "+appVersion}</strong>
       <span>{status==="downloading"?"Downloading update · "+Math.round(updatePrompt.percent)+"%":status==="downloaded"?"Ready to install when you restart":status==="error"?updatePrompt.message:"Last successful check: "+lastUpdateCheckedLabel}</span>

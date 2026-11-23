@@ -3,6 +3,7 @@ import type { MouseEvent as ReactMouseEvent } from "react";
 import { ArrowDown, ArrowUp, EyeOff, SlidersHorizontal } from "lucide-react";
 import { navItems, primaryNavigationView } from "./navigation.constants";
 import { ContextMenuLayer } from "../../shared/ui/ContextMenuLayer";
+import { SolidIcon } from "../../shared/ui/SolidIcon";
 import { canMoveSidebarItem, moveSidebarItem, resolveSidebarGroups, sidebarGroupForView, toggleSidebarItemHidden } from "./sidebarLayout";
 import type { SidebarNavOrder } from "./sidebarLayout";
 import type { View } from "./view.types";
@@ -49,8 +50,6 @@ export default function SidebarNav({ view, changeView, sidebarNavOrder, sidebarH
               {group.visibleItems.map((itemId) => {
                 const item = navItems.find((entry) => entry.id === itemId);
                 if (!item) return null;
-                const Icon = item.icon;
-
                 return (
                   <button
                     key={item.id}
@@ -66,7 +65,7 @@ export default function SidebarNav({ view, changeView, sidebarNavOrder, sidebarH
                     <span className="navDiscordPillV468" aria-hidden="true" />
                     <span className={`navIcon navIcon-${item.id}`} aria-hidden="true">
                       <span className="navIconMotionV468">
-                        <Icon className="navLucideIcon" size={20} strokeWidth={2} fill="none" />
+                        <SolidIcon className="navSolidIcon" name={item.icon} size={20} />
                       </span>
                     </span>
                     <span className="navText">

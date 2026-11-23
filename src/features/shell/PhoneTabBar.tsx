@@ -5,6 +5,7 @@ import { resolveSidebarGroups } from "./sidebarLayout";
 import type { SidebarNavOrder } from "./sidebarLayout";
 import type { View } from "./view.types";
 import { useModalFocus } from "../../shared/hooks/useModalFocus";
+import { SolidIcon } from "../../shared/ui/SolidIcon";
 
 const TAB_COUNT = 4;
 
@@ -58,10 +59,9 @@ export default function PhoneTabBar({ view, changeView, sidebarNavOrder, sidebar
   const tabButton = (id: View) => {
     const item = navItems.find((entry) => entry.id === id);
     if (!item) return null;
-    const Icon = item.icon;
     return (
       <button key={id} type="button" className={`phoneTab ${primaryNavigationView(view) === id ? "active" : ""}`} onClick={() => go(id)} aria-current={primaryNavigationView(view) === id ? "page" : undefined}>
-        <span className="phoneTabIcon" aria-hidden="true"><Icon size={22} strokeWidth={2.2} /></span>
+        <span className="phoneTabIcon" aria-hidden="true"><SolidIcon name={item.icon} size={22} /></span>
         <span className="phoneTabLabel">{item.label}</span>
       </button>
     );
@@ -88,10 +88,9 @@ export default function PhoneTabBar({ view, changeView, sidebarNavOrder, sidebar
               {more.map((id) => {
                 const item = navItems.find((entry) => entry.id === id);
                 if (!item) return null;
-                const Icon = item.icon;
                 return (
                   <button key={id} type="button" className={`phoneMoreItem ${primaryNavigationView(view) === id ? "active" : ""}`} onClick={() => go(id)}>
-                    <span className="phoneMoreIcon" aria-hidden="true"><Icon size={22} strokeWidth={2.2} /></span>
+                    <span className="phoneMoreIcon" aria-hidden="true"><SolidIcon name={item.icon} size={22} /></span>
                     <span>{item.label}</span>
                   </button>
                 );

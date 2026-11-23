@@ -1082,20 +1082,6 @@ body{
   transform: none !important;
 }
 
-.app .navLucideIcon{
-  display: block !important;
-
-  stroke-linecap: round !important;
-  stroke-linejoin: round !important;
-
-}
-
-.app .navLucideIcon *{
-  stroke: currentColor !important;
-  fill: currentColor !important;
-  fill-opacity: .10 !important;
-  stroke-width: 2.05 !important;
-}
 
 .app{
   --control-circle: 42px;
@@ -1326,13 +1312,6 @@ body.localitfyThemePainting .app *{
   opacity: 0.92;
 }
 
-.navLucideIcon{
-
-  transform: none !important;
-  rotate: 0deg !important;
-
-  filter: none !important;
-}
 
 .buttonInlineIcon{
   transform: none !important;
@@ -1350,12 +1329,6 @@ body.localitfyThemePainting .app *{
   color: currentColor;
 }
 
-.navLucideIcon{
-  width: 25px !important;
-  height: 25px !important;
-
-  filter: drop-shadow(0 0 10px rgba(var(--lt-accent-rgb), 0.10));
-}
 
 .navDivider{
   height: 1px !important;
@@ -1388,15 +1361,6 @@ body.localitfyThemePainting .app *{
   color: currentColor !important;
 }
 
-.app .navLucideIcon{
-  width: 22px !important;
-  height: 22px !important;
-  stroke: currentColor !important;
-  fill: currentColor !important;
-  fill-opacity: .22 !important;
-  stroke-width: 2.85 !important;
-  filter: drop-shadow(0 0 12px color-mix(in oklab, var(--lt-accent) 20%, transparent)) !important;
-}
 
 .app .navDivider{
   width: calc(100% - 28px) !important;
@@ -1813,11 +1777,8 @@ button {
   border-radius: 5px;
 }
 
-.navLucideIcon,
 .navIcon {
-  transform-origin: center;
   transition: transform 260ms cubic-bezier(.22,.9,.28,1), color 220ms ease, opacity 220ms ease, filter 220ms ease;
-
 }
 
 .app,
@@ -1843,28 +1804,6 @@ button {
   box-shadow: none !important;
 }
 
-.navLucideIcon{
-  display: block !important;
-  overflow: visible !important;
-  fill: none !important;
-  fill-opacity: 0 !important;
-  stroke: currentColor !important;
-  stroke-width: 2.65 !important;
-  stroke-linecap: round !important;
-  stroke-linejoin: round !important;
-}
-
-.navLucideIcon path,
-.navLucideIcon polyline,
-.navLucideIcon line,
-.navLucideIcon circle,
-.navLucideIcon rect{
-  fill: none !important;
-  fill-opacity: 0 !important;
-  stroke: currentColor !important;
-  stroke-dasharray: none !important;
-  stroke-dashoffset: 0 !important;
-}
 
 .titleLogoImage{
   width: 18px !important;
@@ -2761,55 +2700,12 @@ body.isResizingPlayer .app *{
   color: var(--lt-muted) !important;
 }
 
-.app .sidebar .navItem .navLucideIcon{
-  transform-origin: 50% 50% !important;
-  transform-box: fill-box !important;
-  overflow: visible !important;
-}
-
-.app .sidebar .navItem:hover .navLucideIcon{
-  animation: localtifySidebarIconPopV472 520ms cubic-bezier(.16, 1, .3, 1) both !important;
-}
-
-.app .sidebar .navItem[aria-label="open albums"]:hover .navLucideIcon,
-.app .sidebar .navItem[aria-label="open settings"]:hover .navLucideIcon{
-  animation: localtifySidebarIconSpinV472 680ms cubic-bezier(.16, 1, .3, 1) both !important;
-}
-
-.app .sidebar .navItem[aria-label="open liked"]:hover .navLucideIcon{
-  animation: localtifySidebarIconHeartV472 620ms cubic-bezier(.18, .9, .2, 1.1) both !important;
-}
-
-@keyframes localtifySidebarIconPopV472{
-  0%{ transform: translate3d(0,0,0) scale(1); }
-  35%{ transform: translate3d(0,-3px,0) scale(1.14); }
-  70%{ transform: translate3d(0,1px,0) scale(.98); }
-  100%{ transform: translate3d(0,0,0) scale(1.04); }
-}
-
-@keyframes localtifySidebarIconSpinV472{
-  0%{ transform: rotate(0deg) scale(1); }
-  55%{ transform: rotate(180deg) scale(1.13); }
-  100%{ transform: rotate(360deg) scale(1.04); }
-}
-
-@keyframes localtifySidebarIconHeartV472{
-  0%{ transform: scale(1); }
-  24%{ transform: scale(1.28); }
-  48%{ transform: scale(.92); }
-  72%{ transform: scale(1.14); }
-  100%{ transform: scale(1.04); }
-}
 
 @media (prefers-reduced-motion: reduce){
   .app .sidebar .navItem::before{
     transition: none !important;
   }
 
-  .app .sidebar .navItem:hover .navLucideIcon{
-    animation: none !important;
-    transform: none !important;
-  }
 }
 
 
@@ -2973,12 +2869,6 @@ body.isResizingPlayer .app *{
   color: color-mix(in srgb, var(--text) 62%, transparent) !important;
 }
 
-.app .sidebar .navItem:hover .navLucideIcon,
-.app .sidebar .navItem[aria-label="open albums"]:hover .navLucideIcon,
-.app .sidebar .navItem[aria-label="open settings"]:hover .navLucideIcon,
-.app .sidebar .navItem[aria-label="open liked"]:hover .navLucideIcon{
-  animation: none !important;
-}
 
 .app .sidebarNavGroupV467 .navDivider{
   width: calc(100% - 34px) !important;
