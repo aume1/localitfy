@@ -66,6 +66,8 @@ export function normalizeMacAddress(input: string) {
   }
 }
 
+class PlaylistSyncConflict extends Error {}
+
 async function call<T>(path: string, options: { method?: string; body?: unknown; token?: string; base?: string } = {}): Promise<T> {
   const base = options.base || phoneLibrary.pairing?.url;
   if (!base) throw new Error(`This phone is not paired with a ${computerName()} yet`);
@@ -84,12 +86,14 @@ async function call<T>(path: string, options: { method?: string; body?: unknown;
   }
   let parsed: unknown = {};
   try { parsed = response.body ? JSON.parse(response.body) : {}; } catch { /* non-JSON error page */ }
+  if (response.status === 409 && (parsed as {code?: string})?.code === "PLAYLIST_CONFLICT") throw new PlaylistSyncConflict();
   if (response.status < 200 || response.status >= 300) throw new Error((parsed as { error?: string })?.error || `Your ${computerName()} answered with error ${response.status}`);
   return parsed as T;
 }
 
 export async function pairWithMac(address: string, code: string) {
   if (running || changingPairing) throw new Error("Wait for the current sync or pairing before changing pairing");
+  if (phoneLibrary.detachedPairing) throw new Error("Restore the saved pairing before pairing another computer; an unacknowledged batch is retained.");
   if (phoneLibrary.pendingSync) throw new Error(`Finish the pending sync with your paired ${computerName()} before changing pairing`);
   const base = normalizeMacAddress(address);
   if (!base) throw new Error(`Enter the ${computerName()}'s address, for example 192.168.1.20`);
@@ -107,15 +111,84 @@ export async function pairWithMac(address: string, code: string) {
   } finally { changingPairing = false; }
 }
 
-export async function forgetMac() {
+export async function forgetMac(pausePending = false) {
   if (running || changingPairing) throw new Error("Wait for the current sync or pairing before unpairing");
-  if (phoneLibrary.pendingSync) throw new Error("Finish the pending sync before unpairing so acknowledged edits are not sent twice");
+  if (phoneLibrary.pendingSync && !pausePending) throw new Error("Finish the pending sync before unpairing so acknowledged edits are not sent twice");
   changingPairing = true;
   try {
+    await phoneLibrary.flushWrites(true);
     const previous = phoneLibrary.pairing;
+    const batch = phoneLibrary.pendingSync;
+    const detached = phoneLibrary.detachedPairing;
+    if (batch && !previous) throw new Error("Pending sync has no pairing");
+    if (batch && previous) phoneLibrary.detachedPairing = {pairing: previous, batch};
     phoneLibrary.pairing = null;
-    try { await phoneLibrary.save(["pairing"]); }
-    catch (error) { phoneLibrary.pairing = previous; throw error; }
+    phoneLibrary.pendingSync = null;
+    try { await phoneLibrary.save(["pairing", "pendingSync", "detachedPairing"]); }
+    catch (error) {
+      phoneLibrary.pairing = previous;
+      phoneLibrary.pendingSync = batch;
+      phoneLibrary.detachedPairing = detached;
+      throw error;
+    }
+  } finally { changingPairing = false; }
+}
+
+export async function restorePausedPairing(address?: string) {
+  if (running || changingPairing || phoneLibrary.pairing) throw new Error("Wait for the current pairing or sync");
+  const saved = phoneLibrary.detachedPairing;
+  if (!saved) throw new Error("No saved pairing");
+  const url = address?.trim() ? normalizeMacAddress(address) : saved.pairing.url;
+  if (!url) throw new Error("Enter a valid computer address");
+  changingPairing = true;
+  try {
+    await phoneLibrary.flushWrites(true);
+    // Verify the original credential before restoring its exact receipt sequence.
+    await call<Snapshot>("/v1/snapshot", {base: url, token: saved.pairing.token});
+    phoneLibrary.pairing = {...saved.pairing, url};
+    phoneLibrary.pendingSync = saved.batch;
+    phoneLibrary.detachedPairing = null;
+    try { await phoneLibrary.save(["pairing", "pendingSync", "detachedPairing"]); }
+    catch (error) { phoneLibrary.pairing = null; phoneLibrary.pendingSync = null; phoneLibrary.detachedPairing = saved; throw error; }
+    setPairedComputerPlatform(saved.pairing.platform);
+  } finally { changingPairing = false; }
+}
+
+export async function archivePausedPairing() {
+  if (running || changingPairing || phoneLibrary.pairing) throw new Error("Wait for the current pairing or sync");
+  const saved = phoneLibrary.detachedPairing;
+  if (!saved) throw new Error("No saved pairing");
+  changingPairing = true;
+  try {
+    await phoneLibrary.flushWrites(true);
+    const { token: _token, ...computer } = saved.pairing;
+    const { pairingToken: _pairingToken, ...batch } = saved.batch;
+    const previous = {
+      recoveryArchives: phoneLibrary.recoveryArchives, detachedPairing: saved,
+      base: phoneLibrary.base, pendingEvents: phoneLibrary.pendingEvents,
+      likeClock: phoneLibrary.likeClock, clockOffset: phoneLibrary.clockOffset
+    };
+    // Keep the visible library intact, but do not replay uncertain old deltas under a new credential.
+    phoneLibrary.recoveryArchives = [...previous.recoveryArchives, structuredClone({
+      at: Date.now(), computer, batch, remoteSongs: phoneLibrary.remoteSongs,
+      edits: phoneLibrary.edits, base: phoneLibrary.base,
+      playlists: phoneLibrary.playlists, pendingEvents: phoneLibrary.pendingEvents
+    })];
+    phoneLibrary.base = {
+      songs: Object.fromEntries(phoneLibrary.phoneSongFields().map(song => [song.id, baseFields(song)])),
+      playlists: structuredClone(phoneLibrary.playlists)
+    };
+    phoneLibrary.pendingEvents = [];
+    phoneLibrary.likeClock = {};
+    phoneLibrary.clockOffset = 0;
+    phoneLibrary.detachedPairing = null;
+    try { await phoneLibrary.save(["recoveryArchives", "detachedPairing", "base", "pendingEvents", "likeClock", "clockOffset"]); }
+    catch (error) {
+      const laterEvents = phoneLibrary.pendingEvents;
+      Object.assign(phoneLibrary, previous);
+      for (const event of laterEvents) phoneLibrary.recordPlayEvent(event);
+      throw error;
+    }
   } finally { changingPairing = false; }
 }
 
@@ -173,13 +246,15 @@ async function exchangeEdits() {
       // When each like was tapped, so a newer change on the Mac isn't undone by an older one from here.
       for (const [id, change] of Object.entries(songs)) if (change.liked !== undefined && phoneLibrary.likeClock[id]) change.likedAt = phoneLibrary.likeClock[id];
       const playlists = phonePlaylistChanges(phoneLibrary.base.playlists, before.playlists, sentPlaylists);
+      const byId = new Map(before.playlists.map(item => [item.id, item]));
+      const playlistExpected: [string, SyncPlaylist | null][] = [...new Set([...playlists.put.map(item => item.id), ...playlists.delete])].map(id => [id, byId.get(id) ?? null]);
       // Copy exact event versions, including active plays. Never acknowledge a later version that was not sent.
       const playEvents = structuredClone(phoneLibrary.pendingEvents.slice(0, 20000));
       if (!Object.keys(songs).length && !playlists.put.length && !playlists.delete.length && !playEvents.length) {
         if (await adoptSnapshot(before, { sentSongs, sentPlaylists, playEvents })) continue;
         return;
       }
-      batch = { sequence: (phoneLibrary.pairing?.sequence || 0) + 1, pairingToken: phoneLibrary.pairing?.token || "", songs, playlists, playEvents, sentSongs, sentPlaylists };
+      batch = { sequence: (phoneLibrary.pairing?.sequence || 0) + 1, pairingToken: phoneLibrary.pairing?.token || "", songs, playlists, playEvents, sentSongs, sentPlaylists, playlistExpected };
       phoneLibrary.pendingSync = batch;
     }
     if (batch.pairingToken !== phoneLibrary.pairing?.token) throw new Error("This pending sync belongs to another pairing");
@@ -187,7 +262,18 @@ async function exchangeEdits() {
     await phoneLibrary.save(["pendingSync", "edits", "playlists", "pendingEvents", "remoteSongs", "base"]);
     report({ phase: "merging", message: "Merging changes…" });
     const { sequence, songs, playlists, playEvents } = batch;
-    const receipt = await call<{ sequence: number }>("/v1/changes", { method: "POST", body: { sequence, songs, playlists, playEvents } });
+    let receipt: {sequence: number};
+    try {
+      receipt = await call<{ sequence: number }>("/v1/changes", { method: "POST", body: { sequence, songs, playlists, playEvents, ...(batch.playlistExpected !== undefined ? {playlistExpected: batch.playlistExpected} : {}) } });
+    } catch (error) {
+      // Only this explicit rejection proves that the receipt and all edits were rolled back.
+      // A network failure must replay the original immutable batch.
+      if (!(error instanceof PlaylistSyncConflict)) throw error;
+      phoneLibrary.pendingSync = null;
+      try { await phoneLibrary.save(["pendingSync"]); }
+      catch (failure) { phoneLibrary.pendingSync = batch; throw failure; }
+      continue;
+    }
     if (receipt.sequence !== sequence) throw new Error(`Your ${computerName()} did not acknowledge this sync batch. Update and restart localtify there`);
     const after = await call<Snapshot>("/v1/snapshot");
     requireCurrentProtocol(after);
@@ -345,6 +431,7 @@ export function syncNow() {
     await LocaltifyNative.setSyncActive({ active: true }).catch(() => undefined);
     try {
       featuresChanged = false;
+      await phoneLibrary.flushWrites(true);
       await exchangeEdits();
       markMacReachable();
       // Today's mixes are made on the Mac; keep a copy so they are there away from home too.

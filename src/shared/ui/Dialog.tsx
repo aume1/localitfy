@@ -1,6 +1,7 @@
 import { useRef, type ReactNode, type MouseEvent, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useAppReducedMotion } from "../hooks/useAppReducedMotion";
 import { useModalFocus } from "../hooks/useModalFocus";
 
 type Props = {
@@ -15,7 +16,7 @@ export default function Dialog({ open, onClose, children, className, backdropCla
   label, labelledBy, describedBy, role = "dialog", portal = true,
   dismissible = true, animated = true }: Props) {
   const dialogRef = useModalFocus<HTMLDivElement>(open);
-  const reduced = useReducedMotion();
+  const reduced = useAppReducedMotion();
   const pointerStart = useRef<{ x: number; y: number; target: EventTarget | null } | null>(null);
   if (!open) return null;
   const isTop = () => Array.from(document.querySelectorAll('[aria-modal="true"]')).at(-1) === dialogRef.current;

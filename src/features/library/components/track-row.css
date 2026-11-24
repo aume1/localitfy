@@ -1,0 +1,19 @@
+.ltTrackRow {
+  --track-focus-offset: 2px;
+  --track-hover: color-mix(in srgb, var(--lt-text) 5%, transparent);
+  --track-active: color-mix(in srgb, var(--lt-accent) 3%, transparent);
+  --track-selected: color-mix(in srgb, var(--lt-accent) 9%, transparent);
+}
+.ltTrackRow[data-track-missing="true"] :is(.trackRowIndex,.playlistTrackMain,.songButton) {
+  cursor: default;
+}
+.ltTrackRow :is(.iconAction,.songButton,.playlistTrackMain,.trackRowIndex,.playlistTrackGrip):focus-visible {
+  outline: 2px solid var(--lt-accent);
+  outline-offset: var(--track-focus-offset);
+}
+
+.ltTrackMetadata { min-width: 0; display: grid; gap: 3px; }
+.ltTrackMetadata :is(strong,small) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ltTrackDuration { color: var(--lt-muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+
+.ltTrackRow:focus-visible { outline: 2px solid var(--lt-accent); outline-offset: var(--track-focus-offset, -2px); }

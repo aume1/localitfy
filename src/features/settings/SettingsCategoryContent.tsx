@@ -26,9 +26,7 @@ type SettingsCategoryContentProps =
     "libraryScanMessage" | "pixelArtBusy" | "randomizeAllCovers"
   > &
   Pick<AdvancedSettingsProps,
-    "diagnosticsInfo" | "diagnosticsCopied" | "copyDiagnosticsInfo" | "updatePrompt" |
-    "manualUpdateCheck" | "askUpdaterToInstall" | "libraryRenderLimitRef" |
-    "setLibraryRenderLimit" | "platformInfo" | "resetDiscordSettings" |
+    "diagnosticsInfo" | "diagnosticsCopied" | "copyDiagnosticsInfo" | "platformInfo" | "resetDiscordSettings" |
     "resetAppearanceSettings" | "resetPlayerLayoutSettings" |
     "resetLibraryLayoutSettings" | "resetAllSettingsSafely"
   > & {
@@ -36,7 +34,7 @@ type SettingsCategoryContentProps =
     settingsCategory: SettingsCategory;
     setSettingsCategory?: (category: SettingsCategory) => void;
     APP_VERSION: string;
-    INITIAL_LIBRARY_RENDER_LIMIT: number;
+    sleepDeadline: number;
     coverColorSyncOptions: AppearanceSettingsProps["coverColorSyncOptions"];
     selectedCoverColorSyncMode: AppearanceSettingsProps["selectedCoverColorSyncMode"];
     updateCoverColorSyncMode: AppearanceSettingsProps["updateCoverColorSyncMode"];
@@ -47,6 +45,9 @@ type SettingsCategoryContentProps =
     discordCleanupOptions: LibrarySettingsProps["cleanupOptions"];
     downloadFolderLabel: string;
     chooseDownloadFolder: () => void | Promise<void>;
+    updatePrompt: import("../updates/update.types").UpdatePromptState;
+    manualUpdateCheck: () => void;
+    askUpdaterToInstall: () => void;
     askUpdaterToDownload: () => unknown;
     openUpdateChangelog: () => unknown;
     lastUpdateCheckedLabel: string;
@@ -57,7 +58,7 @@ const SettingsCategoryContent = memo(function SettingsCategoryContent(p: Setting
 
   switch (p.settingsCategory) {
     case "appearance": return <AppearanceSettings settings={p.settings} updateSetting={p.updateSetting} coverColorSyncOptions={p.coverColorSyncOptions} selectedCoverColorSyncMode={p.selectedCoverColorSyncMode} updateCoverColorSyncMode={p.updateCoverColorSyncMode} openAdvanced={() => p.setSettingsCategory?.("advanced")} />;
-    case "playback": return <PlaybackSettings settings={p.settings} updateSetting={p.updateSetting} />;
+    case "playback": return <PlaybackSettings settings={p.settings} updateSetting={p.updateSetting} sleepDeadline={p.sleepDeadline} />;
     case "lyrics": return <LyricsSettings settings={p.settings} songs={p.songs || []} updateSetting={p.updateSetting} />;
     case "discord": return <DiscordSettings settings={p.settings} updateSetting={p.updateSetting} discordPreview={p.discordPreview} discordStyleOptions={p.discordStyleOptions} discordSecondLineOptions={p.discordSecondLineOptions} discordArtModeOptions={p.discordArtModeOptions} />;
     case "covers":
@@ -68,7 +69,7 @@ const SettingsCategoryContent = memo(function SettingsCategoryContent(p: Setting
     case "updates": return <UpdateSettings settings={p.settings} updateSetting={p.updateSetting} appVersion={p.APP_VERSION} lastUpdateCheckedLabel={p.lastUpdateCheckedLabel} updatePrompt={p.updatePrompt} manualUpdateCheck={p.manualUpdateCheck} askUpdaterToDownload={p.askUpdaterToDownload} askUpdaterToInstall={p.askUpdaterToInstall} openUpdateChangelog={p.openUpdateChangelog} />;
     case "about": return <AboutSettings appVersion={p.APP_VERSION} platformInfo={platformInfo} songs={p.songs} onViewChangelog={p.openUpdateChangelog} />;
     case "experimental": return <ExperimentalSettings settings={p.settings} songs={p.songs || []} updateSetting={p.updateSetting} />;
-    case "advanced": return <AdvancedSettings settings={p.settings} updateSetting={p.updateSetting} appVersion={p.APP_VERSION} diagnosticsInfo={p.diagnosticsInfo} diagnosticsCopied={p.diagnosticsCopied} copyDiagnosticsInfo={p.copyDiagnosticsInfo} updatePrompt={p.updatePrompt} manualUpdateCheck={p.manualUpdateCheck} askUpdaterToInstall={p.askUpdaterToInstall} libraryScanBusy={p.libraryScanBusy} rebuildSearchIndexAction={p.rebuildSearchIndexAction} libraryRenderLimitRef={p.libraryRenderLimitRef} initialLibraryRenderLimit={p.INITIAL_LIBRARY_RENDER_LIMIT} setLibraryRenderLimit={p.setLibraryRenderLimit} platformInfo={platformInfo} resetDiscordSettings={p.resetDiscordSettings} resetAppearanceSettings={p.resetAppearanceSettings} resetPlayerLayoutSettings={p.resetPlayerLayoutSettings} resetLibraryLayoutSettings={p.resetLibraryLayoutSettings} resetAllSettingsSafely={p.resetAllSettingsSafely} />;
+    case "advanced": return <AdvancedSettings settings={p.settings} updateSetting={p.updateSetting} diagnosticsInfo={p.diagnosticsInfo} diagnosticsCopied={p.diagnosticsCopied} copyDiagnosticsInfo={p.copyDiagnosticsInfo} platformInfo={platformInfo} resetDiscordSettings={p.resetDiscordSettings} resetAppearanceSettings={p.resetAppearanceSettings} resetPlayerLayoutSettings={p.resetPlayerLayoutSettings} resetLibraryLayoutSettings={p.resetLibraryLayoutSettings} resetAllSettingsSafely={p.resetAllSettingsSafely} />;
     default: return null;
   }
 });

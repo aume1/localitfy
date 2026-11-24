@@ -61,3 +61,25 @@ test("Download activity keeps visible retry/open actions without duplicating the
   assert.match(menu, /attention && item.error/);
   assert.match(view, /className="downloadsRowAction" disabled=\{working\} onClick=\{retry\}/);
 });
+
+
+test("Spotify credentials migrate to encrypted storage and logout removes the file", async () => {
+  const {createRequire} = await import("node:module");
+  const {default: os} = await import("node:os");
+  const {default: path} = await import("node:path");
+  const {createSpotifyClient} = createRequire(import.meta.url)("../../electron/runtime/spotify-client.cjs");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "localtify-spotify-"));
+  try {
+    const file = path.join(dir, "spotify-oauth.json");
+    fs.writeFileSync(file, JSON.stringify({accessToken:"old-access",refreshToken:"old-refresh",expiresAt:99999999}));
+    const safeStorage = {isEncryptionAvailable:()=>true,encryptString:value=>Buffer.from(value).reverse(),decryptString:value=>Buffer.from(value).reverse().toString()};
+    const client = createSpotifyClient({app:{getPath:()=>dir},safeStorage});
+    assert.equal(client.getSpotifyStatus().loggedIn,true);
+    const stored=fs.readFileSync(file,"utf8");
+    assert.ok(!stored.includes("old-refresh"));
+    assert.equal(JSON.parse(stored).version,1);
+    assert.equal(createSpotifyClient({app:{getPath:()=>dir},safeStorage}).getSpotifyStatus().loggedIn,true);
+    assert.equal(client.logoutSpotify().loggedIn,false);
+    assert.equal(fs.existsSync(file),false);
+  } finally { fs.rmSync(dir,{recursive:true,force:true}); }
+});

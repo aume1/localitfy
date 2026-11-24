@@ -47,8 +47,10 @@ test("permanent visual owners remain explicit and co-located", () => {
   }
 
   const settingsCss = read("src/features/settings/settings.css");
-  assert.equal(settingsCss.includes(".settingsCategoryRail nav"), true, "Settings layout should style its own navigation");
-  assert.equal(settingsCss.includes(".modalWrap"), false, "Settings styles must not affect unrelated modals");
+  const settingsPremiumCss = read("src/features/settings/settings-premium.css");
+  assert.ok(settingsView.includes('import "./settings-premium.css";'), "SettingsView must own premium settings CSS");
+  assert.match(settingsPremiumCss, /\.settingsPage\.settingsPageV027 \.settingsCategoryRail nav\s*\{[^}]*display:\s*grid/, "Settings layout should style its own navigation");
+  assert.equal((settingsCss + settingsPremiumCss).includes(".modalWrap"), false, "Settings styles must not affect unrelated modals");
 });
 
 

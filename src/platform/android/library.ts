@@ -12,9 +12,11 @@ export type RemoteSong = SyncSongFields & Record<string, unknown> & { file: File
 /** `platform` is the computer's process.platform ("darwin", "win32", "linux"), for calling it a Mac or a PC. */
 export type Pairing = { url: string; token: string; name: string; platform?: string; sequence?: number };
 export type SyncRecord = { at: number; ok: boolean; message: string };
-type Saved = "remoteSongs" | "edits" | "base" | "playlists" | "settings" | "macFeatures" | "pendingEvents" | "files" | "pairing" | "lastSync" | "pendingSync" | "likeClock" | "clockOffset";
+type Saved = "recoveryArchives" | "detachedPairing" | "remoteSongs" | "edits" | "base" | "playlists" | "settings" | "macFeatures" | "pendingEvents" | "files" | "pairing" | "lastSync" | "pendingSync" | "likeClock" | "clockOffset";
 
 type LocalFiles = Record<string, { audio?: string; audioExt?: string; cover?: string; coverExt?: string }>;
+
+type RecoveryArchive = { at: number; computer: Omit<Pairing, "token">; batch: Omit<SyncBatch, "pairingToken">; remoteSongs: RemoteSong[]; edits: Record<string, Partial<Song>>; base: PhoneLibrary["base"]; playlists: SyncPlaylist[]; pendingEvents: PlayEvent[] };
 
 export const fileKey = (info: FileInfo | null | undefined) => (info ? `${info.size}-${info.mtimeMs}` : "");
 
@@ -32,6 +34,8 @@ export class PhoneLibrary {
   pendingEvents: PlayEvent[] = [];
   files: LocalFiles = {};
   pairing: Pairing | null = null;
+  detachedPairing: { pairing: Pairing; batch: SyncBatch } | null = null;
+  recoveryArchives: RecoveryArchive[] = [];
   lastSync: SyncRecord | null = null;
   pendingSync: SyncBatch | null = null;
   /** When each song's like last changed (Mac clock): a tap here, or one adopted from the Mac. The newest wins. */
@@ -42,6 +46,8 @@ export class PhoneLibrary {
   revision = 0;
   private loading: Promise<void> | null = null;
   private checkpointDirty = false;
+  private pendingWrite: Promise<void> = Promise.resolve();
+  private dirtyKeys = new Set<Saved>();
   private indexedSongs: RemoteSong[] | null = null;
   private songsById = new Map<string, RemoteSong>();
   private indexedEvents: PlayEvent[] | null = null;
@@ -71,7 +77,7 @@ export class PhoneLibrary {
   load() {
     this.loading ??= (async () => {
       try { this.paths = await LocaltifyNative.getPaths(); } catch { /* keep defaults outside the app */ }
-      const [remoteSongs, edits, base, playlists, settings, macFeatures, pendingEvents, files, pairing, lastSync, pendingSync, likeClock, clockOffset] = await Promise.all([
+      const [remoteSongs, edits, base, playlists, settings, macFeatures, pendingEvents, files, pairing, lastSync, pendingSync, likeClock, clockOffset, detachedPairing, recoveryArchives] = await Promise.all([
         readValue<RemoteSong[]>("remoteSongs", []),
         readValue<Record<string, Partial<Song>>>("edits", {}),
         readValue("base", this.base),
@@ -85,9 +91,11 @@ export class PhoneLibrary {
         readValue<SyncRecord | null>("lastSync", null),
         readValue<SyncBatch | null>("pendingSync", null),
         readValue<Record<string, number>>("likeClock", {}),
-        readValue<number>("clockOffset", 0)
+        readValue<number>("clockOffset", 0),
+        readValue<PhoneLibrary["detachedPairing"]>("detachedPairing", null),
+        readValue<RecoveryArchive[]>("recoveryArchives", [])
       ]);
-      Object.assign(this, { remoteSongs, edits, base, playlists, settings, macFeatures, pendingEvents, files, pairing, lastSync, pendingSync, likeClock, clockOffset });
+      Object.assign(this, { remoteSongs, edits, base, playlists, settings, macFeatures, pendingEvents, files, pairing, lastSync, pendingSync, likeClock, clockOffset, detachedPairing, recoveryArchives });
     })().catch(error => {
       // A transient IndexedDB open or read failure must not permanently
       // poison the boot promise for the lifetime of the WebView.
@@ -99,7 +107,36 @@ export class PhoneLibrary {
 
   save(keys: Saved[]) {
     const selected = this.checkpointDirty ? [...new Set([...keys, ...this.checkpointKeys])] : keys;
-    return writeValues(Object.fromEntries(selected.map((key) => [key, this[key]])));
+    for (const key of selected) this.dirtyKeys.add(key);
+    const write = this.pendingWrite.catch(() => undefined).then(async () => {
+      const snapshot = [...this.dirtyKeys];
+      if (!snapshot.length) return;
+      this.dirtyKeys.clear();
+      try { await writeValues(Object.fromEntries(snapshot.map(key => [key, this[key]]))); }
+      catch (error) {
+        for (const key of snapshot) this.dirtyKeys.add(key);
+        throw error;
+      }
+    });
+    this.pendingWrite = write;
+    void write.catch(() => undefined);
+    return write;
+  }
+
+  async flushWrites(retry = false) {
+    for (;;) {
+      const pending = this.pendingWrite;
+      try { await pending; } catch {
+        if (this.pendingWrite === pending) {
+          if (!retry || !this.dirtyKeys.size) throw new Error("Could not save phone library. Retry the change or sync again.");
+          retry = false;
+          await this.save([...this.dirtyKeys]);
+        }
+      }
+      if (this.pendingWrite !== pending) continue;
+      if (!this.dirtyKeys.size) return;
+      await this.save([...this.dirtyKeys]);
+    }
   }
 
   private readonly checkpointKeys = ["remoteSongs", "playlists", "base", "edits", "pendingEvents", "macFeatures", "pairing", "pendingSync"] as const;
@@ -166,7 +203,7 @@ export class PhoneLibrary {
     this.edits[id] = { ...previous, ...patch };
     if (typeof patch.liked === "boolean") this.likeClock[id] = Date.now() + this.clockOffset;
     this.revision += 1;
-    void this.save(typeof patch.liked === "boolean" ? ["edits", "likeClock"] : ["edits"]);
+    void this.save(typeof patch.liked === "boolean" ? ["edits", "likeClock"] : ["edits"]).catch(() => undefined);
     return this.toSong(remote);
   }
 
@@ -187,27 +224,34 @@ export class PhoneLibrary {
       else delete this.edits[id];
     }
     this.likeClock[id] = changedAt;
-    void this.save(["remoteSongs", "base", "edits", "likeClock"]);
+    void this.save(["remoteSongs", "base", "edits", "likeClock"]).catch(() => undefined);
     return before !== liked;
   }
 
-  savePlaylists(playlists: SyncPlaylist[]) {
+  savePlaylists(playlists: SyncPlaylist[], finishMigration = false) {
     this.playlists = playlists.map(({ id, name, songIds, createdAt, coverArtwork }) => ({ id, name, songIds: [...songIds], createdAt, ...(coverArtwork ? { coverArtwork } : {}) }));
     this.revision += 1;
-    void this.save(["playlists"]);
+    if (finishMigration) this.settings = {...this.settings, playlistMigrationCompleted: true};
+    void this.save(finishMigration ? ["playlists", "settings"] : ["playlists"]).catch(() => undefined);
     return this.playlists;
   }
 
   recordPlayEvent(event: PlayEvent) {
+    // A still-running playback session must not replay an archived event on another computer.
+    if (this.recoveryArchives.some(archive => archive.pendingEvents.some(old => old.id === event.id) || archive.batch.playEvents.some(old => old.id === event.id))) return true;
     const indices = this.pendingEventIndex();
     const index = indices.get(event.id);
-    if (index !== undefined) this.pendingEvents[index] = event;
+    if (index !== undefined) {
+      const previous = this.pendingEvents[index];
+      if (previous.updatedAt > event.updatedAt || (previous.outcome !== "active" && event.outcome === "active")) return true;
+      this.pendingEvents[index] = event;
+    }
     else {
       indices.set(event.id, this.pendingEvents.length);
       this.pendingEvents.push(event);
     }
     this.revision += 1;
-    void this.save(["pendingEvents"]);
+    void this.save(["pendingEvents"]).catch(() => undefined);
     return true;
   }
 }

@@ -1683,11 +1683,6 @@ html{
   -webkit-text-fill-color: color-mix(in srgb, var(--lt-text) 74%, transparent) !important;
 }
 
-button svg,
-.circleButton svg {
-  fill: none !important;
-  stroke: currentColor !important;
-}
 
 .app,
 .app *{
@@ -1744,19 +1739,6 @@ button {
   display: none !important;
 }
 
-.topList{
-  overflow: hidden !important;
-  contain: paint;
-}
-
-.app.viewSwitching .ambientSurface::before,
-.app.viewSwitching .ambientSurface::after,
-.app.viewSwitching .coverAura,
-.app.viewSwitching .albumAura {
-  animation-play-state: paused !important;
-  opacity: .28 !important;
-  filter: none !important;
-}
 
 .titleLogoImage,
 .buttonInlineIcon{
@@ -1814,17 +1796,7 @@ button {
   object-fit: contain !important;
 }
 
-.app.viewSwitching .ambientSurface {
-  transition-duration: 90ms;
-}
 
-.app.viewSwitching .ambientSurface::before,
-.app.viewSwitching .ambientSurface::after,
-.app.viewSwitching .coverAura {
-  animation-play-state: paused;
-  filter: none;
-  opacity: .18;
-}
 .app .appToast{
   top: 58px !important;
   right: 22px !important;
@@ -1950,13 +1922,6 @@ body.localtifyIdle .app:not(.songDragActive) .secretLayer{
   background-image: none !important;
 }
 
-.app.viewSwitching,
-.app.viewSwitching .pageTransition,
-.app.viewSwitching .ambientSurface,
-.app.viewSwitching .coverAura{
-  filter: none !important;
-  opacity: 1 !important;
-}
 
 .pageTransition,
 .pageTransition > *{
@@ -2061,10 +2026,6 @@ body::after,
   transform: translate3d(0,0,0);
 }
 
-.app.viewSwitching .pageTransition {
-  opacity: 1 !important;
-  transform: translate3d(0,0,0) !important;
-}
 
 .app .sidebarNav button{
   transform: translate3d(0,0,0) !important;
@@ -2573,7 +2534,7 @@ body,
   align-items: center;
   justify-content: center;
   gap: 9px;
-  color: #08070c;
+  color: var(--button-text-on-accent);
   background: var(--lt-accent);
   font-weight: 920;
   box-shadow: 0 12px 28px rgba(var(--lt-accent-rgb), .14);
@@ -2632,93 +2593,12 @@ body.isResizingPlayer .app *{
 }
 
 
-.app .sidebar,
-.app .sidebar .nav{
-  overflow: visible !important;
-}
-
-.app .sidebar .navItem{
-  position: relative !important;
-  overflow: visible !important;
-}
-
-.app .sidebar .navItem::after{
-  content: none !important;
-  display: none !important;
-}
-
-.app .sidebar .navItem::before{
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  left: -14px !important;
-  top: 50% !important;
-  width: 4px !important;
-  height: 8px !important;
-  border-radius: 0 999px 999px 0 !important;
-  background: #fff !important;
-  opacity: 0 !important;
-  transform: translateY(-50%) scaleY(.35) !important;
-  transform-origin: left center !important;
-  pointer-events: none !important;
-  z-index: 99 !important;
-  box-shadow: 0 0 12px rgba(255,255,255,.22) !important;
-  transition:
-    height 180ms cubic-bezier(.16, 1, .3, 1),
-    opacity 140ms ease,
-    transform 180ms cubic-bezier(.16, 1, .3, 1) !important;
-}
-
-.app .sidebar .navItem:hover::before,
-.app .sidebar .navItem:focus-visible::before{
-  height: 18px !important;
-  opacity: .76 !important;
-  transform: translateY(-50%) scaleY(1) !important;
-}
-
-.app .sidebar .navItem.active::before{
-  height: 34px !important;
-  opacity: 1 !important;
-  transform: translateY(-50%) scaleY(1) !important;
-}
-
-.app .sidebar .navItem.active:hover::before,
-.app .sidebar .navItem.active:focus-visible::before{
-  height: 40px !important;
-}
-
-.app .sidebar .navItem.active,
-.app .sidebar .navItem.active:hover,
-.app .sidebar .navItem.active:focus-visible{
-
-  background-color: transparent !important;
-  background-image: none !important;
-
-}
-
-.app .sidebar .navItem.active .navText small{
-  color: var(--lt-muted) !important;
-}
-
-
-@media (prefers-reduced-motion: reduce){
-  .app .sidebar .navItem::before{
-    transition: none !important;
-  }
-
-}
-
-
-.app{
-  --accent-contrast: var(--button-text-on-accent, #06100b);
-}
-
 .app :is(.mainAction, .heroMain, .circleButton.main:not(.playerBar *), .settingsActionButton.isPrimary, .settingsTinyButton.isPrimary){
   color: var(--accent-contrast) !important;
   text-shadow: none !important;
 }
 
-.app :is(.mainAction, .heroMain, .circleButton.main:not(.playerBar *), .settingsActionButton.isPrimary, .settingsTinyButton.isPrimary) :is(svg, .buttonInlineIcon){
+.app :is(.mainAction, .heroMain, .circleButton.main:not(.playerBar *), .settingsActionButton.isPrimary, .settingsTinyButton.isPrimary) :is(svg:not(.ltSolidIcon), .buttonInlineIcon:not(.ltSolidIcon)){
   color: currentColor !important;
   stroke: currentColor !important;
   fill: none;
@@ -2795,111 +2675,6 @@ body.isResizingPlayer .app *{
   100%{ opacity: 1; width: min(1240px, calc(100vw - var(--workspace-sidebar-current, 236px) - 116px)); transform: translate3d(0,0,0) scale(1); filter: blur(0); }
 }
 
-
-.app .sidebar .navItem::before,
-.app .sidebar .navItem::after{
-  content: none !important;
-  display: none !important;
-  opacity: 0 !important;
-  box-shadow: none !important;
-}
-
-.app .sidebar .navItem{
-  min-height: 46px !important;
-  border-radius: 16px !important;
-  border: 1px solid transparent !important;
-  background: transparent !important;
-  background-image: none !important;
-  color: color-mix(in srgb, var(--text) 62%, transparent) !important;
-  transform: translate3d(0,0,0) !important;
-  box-shadow: none !important;
-  transition:
-    transform 170ms cubic-bezier(.16, 1, .3, 1),
-    color 150ms ease,
-    background-color 150ms ease,
-    border-color 150ms ease,
-    box-shadow 150ms ease !important;
-}
-
-.app .sidebar .navItem:hover,
-.app .sidebar .navItem:focus-visible{
-  color: color-mix(in srgb, var(--text) 92%, transparent) !important;
-  background: rgba(255,255,255,.045) !important;
-  border-color: rgba(255,255,255,.075) !important;
-  box-shadow: none !important;
-}
-
-.app .sidebar .navItem.active,
-.app .sidebar .navItem.active:hover,
-.app .sidebar .navItem.active:focus-visible{
-  color: var(--lt-text) !important;
-  background:
-    linear-gradient(180deg, rgba(var(--lt-accent-rgb), .135), rgba(var(--lt-accent-rgb), .072)),
-    rgba(var(--lt-accent-rgb), .052) !important;
-  border-color: rgba(var(--lt-accent-rgb), .24) !important;
-  box-shadow: inset 0 0 0 1px rgba(var(--lt-accent-rgb), .06) !important;
-}
-
-.app .sidebar .navItem .navIcon{
-  color: color-mix(in srgb, var(--text) 66%, transparent) !important;
-  opacity: 1 !important;
-  transform: translate3d(0,0,0) scale(1) !important;
-  filter: none !important;
-  transition:
-    transform 170ms cubic-bezier(.16, 1, .3, 1),
-    color 150ms ease,
-    opacity 150ms ease !important;
-}
-
-.app .sidebar .navItem:hover .navIcon,
-.app .sidebar .navItem:focus-visible .navIcon,
-.app .sidebar .navItem.active .navIcon{
-  color: var(--lt-text) !important;
-}
-
-.app .sidebar .navItem.active .navText strong,
-.app .sidebar .navItem.active:hover .navText strong,
-.app .sidebar .navItem.active:focus-visible .navText strong{
-  color: var(--lt-text) !important;
-}
-
-.app .sidebar .navItem.active .navText small,
-.app .sidebar .navItem.active:hover .navText small,
-.app .sidebar .navItem.active:focus-visible .navText small{
-  color: color-mix(in srgb, var(--text) 62%, transparent) !important;
-}
-
-
-.app .sidebarNavGroupV467 .navDivider{
-  width: calc(100% - 34px) !important;
-  height: 1px !important;
-  margin: 4px 17px !important;
-  background: rgba(var(--lt-accent-rgb), .12) !important;
-  opacity: .58 !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-}
-
-@media (max-width: 860px){
-  .app .sidebarGroupLabelV467{
-    display: none !important;
-  }
-
-  .app .sidebarNavGroupV467 + .sidebarNavGroupV467{
-    margin-top: 4px !important;
-  }
-
-  .app .sidebar .navItem,
-.app .sidebar .navItem:hover,
-.app .sidebar .navItem.active{
-    transform: none !important;
-  }
-}
-
-.app .sidebarBottom{
-  border-top-color: var(--lt-border) !important;
-  gap: 0 !important;
-}
 
 .app .mainAction.importMainAction.iconTextButton{
   position: relative !important;
@@ -2984,12 +2759,6 @@ body.isResizingPlayer .app *{
   font-weight: 650 !important;
 }
 
-.app{
-  --panel-calm-bg: var(--lt-surface-soft);
-  --panel-calm-bg-strong: var(--lt-surface-soft);
-  --panel-calm-shadow: none;
-  --panel-calm-shadow-hover: none;
-}
 
 .app :is(.active, .selected, .playing, .loggedIn):is(.panel, .ambientSurface){
   border-color: rgba(var(--lt-accent-rgb), .22) !important;
@@ -3009,12 +2778,6 @@ body.isResizingPlayer .app *{
 .app :is(.content, .pageTransition, .songList){
   overscroll-behavior: contain;
   contain: layout style;
-}
-
-.app{
-  --outline-calm-v487: color-mix(in oklab, var(--lt-border) 84%, var(--lt-accent) 16%) !important;
-  --outline-hover-v487: color-mix(in oklab, var(--lt-border) 68%, var(--lt-accent) 32%) !important;
-  --outline-active-v487: color-mix(in oklab, var(--lt-border) 30%, var(--lt-accent) 70%) !important;
 }
 
 
@@ -3046,24 +2809,4 @@ body.isResizingPlayer .app *{
   border-left: 0 !important;
   border-right: 0 !important;
   outline: 0 !important;
-}
-
-.app .sidebar :is(.navItem, .navIcon, .sidebarGroupLabelV467),
-.sidebar :is(.navItem, .navIcon, .sidebarGroupLabelV467){
-  outline: 0 !important;
-  box-shadow: none !important;
-}
-
-.app .sidebar :is(.navItem),
-.sidebar :is(.navItem){
-  border-color: transparent !important;
-}
-
-.app .sidebar :is(.navItem.active, .navItem[aria-current="page"]),
-.sidebar :is(.navItem.active, .navItem[aria-current="page"]){
-  border-color: transparent !important;
-  box-shadow: none !important;
-  background:
-    linear-gradient(180deg, rgba(var(--lt-accent-rgb), .10), rgba(var(--lt-accent-rgb), .045)),
-    rgba(255,255,255,.030) !important;
 }

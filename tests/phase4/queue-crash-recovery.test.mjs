@@ -21,7 +21,7 @@ test("player runtime saves queue, shuffle and repeat with stable keys", () => {
 
 test("only remembered startup song uses stored playback position", () => {
   const app = read("src/App.tsx");
-  assert.match(app, /nextSettings\.rememberLastSong && nextSettings\.rememberPlaybackPosition/);
+  assert.match(read("src/app/runtime/prepareBootstrap.ts"), /nextSettings\.rememberLastSong && nextSettings\.rememberPlaybackPosition/);
   assert.match(app, /startupResumePositionRef\.current\?\.songId !== songId/);
   assert.match(app, /pending\?\.songId === currentSong\.id/);
   assert.match(app, /audio\.currentTime = seekTo/);

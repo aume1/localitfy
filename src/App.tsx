@@ -1,10 +1,10 @@
+import { startTrackPointerSession } from "./features/library/components/trackPointerSession";
+import { createSleepTimer } from "./features/player/sleepTimer";
 import { lazy, startTransition, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent, DragEvent, MouseEvent as ReactMouseEvent, SyntheticEvent } from "react";
-import { HtmlAudioEngine } from "./features/player/engine/htmlAudioEngine";
-import { createPlayerController } from "./features/player/engine/playerController";
 import { useNativeMediaSession } from "./features/player/useNativeMediaSession";
-import type { ListeningOutcome } from "./features/player/listeningHistory";
 import { usePlayerRuntime } from "./features/player";
+import { createCrossfadePlayback } from "./features/player/crossfadePlayback";
 import { usePlaybackProgressLoop } from "./features/player/usePlayerRuntime";
 import { resolveCachedPlaybackUrl } from "./features/player/playbackUrlCache";
 import { useSongRadio } from "./features/player/useSongRadio";
@@ -31,7 +31,7 @@ import { useCoversController } from "./features/covers";
 import type { VirtualSongRowsProps } from "./features/library/components/SongRows";
 import { useLibraryController, useLibraryDerivedState } from "./features/library";
 import { subscribeWatchedFoldersChange } from "./features/library/watchedFolderBridge";
-import { patchLibrarySong, replaceLibrarySong } from "./features/search/incrementalLibraryIndex";
+import { patchLibrarySong } from "./features/search/incrementalLibraryIndex";
 import { pickRecentlyAdded, pickListenNow } from "./features/home/homeShelfPicks";
 import { createMetadataCleanPreview } from "./features/library/metadataCleanPreview";
 import {
@@ -44,27 +44,22 @@ import { resolveAutoTransitionTarget } from "./features/player/resolveAutoTransi
 import { useNavigationHistory } from "./features/shell/useNavigationHistory";
 import { revealSidebarSettingsPanel } from "./features/shell/sidebarLayout";
 import CatBuddy from "./CatBuddy";
+import { prepareBootstrap } from "./app/runtime/prepareBootstrap";
+import { useLibraryActions } from "./features/library/useLibraryActions";
+import { useOrderedLibrary } from "./features/library/useOrderedLibrary";
 import { runLocaltifyIdleTask } from "./app/runtime/idle";
 import { useBodyRuntimeClasses } from "./app/runtime/useBodyRuntimeClasses";
 import { useAppLifecycleRuntime } from "./app/runtime/useAppLifecycleRuntime";
-import { applyVisualCustomizationDefaults, migrateVisualSettings } from "./features/settings/visualCustomization";
+import { applyVisualCustomizationDefaults } from "./features/settings/visualCustomization";
 import { getLocaltifyPlatformInfo } from "./app/platform";
 import {
   markOnboardingSeenForThisRelease,
   shouldOpenOnboardingForThisRelease
 } from "./features/onboarding/onboardingRelease";
 import {
-  INITIAL_LIBRARY_RENDER_LIMIT,
-  LIBRARY_RENDER_BATCH_SIZE,
-  START_WITH_WINDOWS_DEFAULT_KEY,
-  V013_DEFAULTS_KEY,
   screensaverImage
 } from "./core/app.constants";
 import {
-  CODERPIXEL_ARTIST_EASTER_EGG
-} from "./features/library/library.constants";
-import {
-  V013_RELEASE_DEFAULTS,
   coverColorSyncOptions,
   defaultSettings,
   settingsCategoryTabs
@@ -81,18 +76,14 @@ import {
   discordSecondLineOptions,
   discordStyleOptions
 } from "./features/discord/discord.constants";
-import { PLAYLIST_STORAGE_KEY } from "./features/playlists/playlist.constants";
 import { clamp, formatTime } from "./shared/utils/format";
 import { useStableCallback } from "./shared/hooks/useStableCallback";
-import { makeLocalId, readLocalJson } from "./shared/storage/localStorage";
+import { makeLocalId } from "./shared/storage/localStorage";
 import {
   applyLibraryOrder,
   createImportAnimationState,
   getSongPlaybackSourceKey,
   isPlayableSong,
-  maybeApplyCoderpixelArtist,
-  reorderSongList,
-  saveLibraryOrder,
   stableSongSourceKey
 } from "./features/library";
 import {
@@ -117,7 +108,6 @@ import {
   normalizeThemeId
 } from "./features/settings";
 import { buildDiscordPreview, buildDiscordSongSearchUrl } from "./features/discord";
-import { cleanPlaylistList } from "./features/playlists";
 import type {
   LibraryDropSide,
   LibraryDropTarget,
@@ -144,18 +134,19 @@ function MainModeApp() {
   const [similarRequest, setSimilarRequest] = useState<SimilarSeedRequest | null>(null);
   const songContextAnchorRef = useRef<HTMLElement | null>(null);
 
+  const playerRuntime = usePlayerRuntime({ defaultVolume: defaultSettings.volume, setAudioElementVolume });
   const {
-    listeningHistoryRef, audioRef, playerEngineRef, playerControllerRef, playbackTransitionRef,
-    crossfadeIntervalRef, crossfadeAutoStartedRef, crossfadeAutoTargetRef, crossfadeMainPauseGuardRef,
-    crossfadeLastStartAtRef, crossfadeHandoffClearTimerRef, crossfadeRecoveryTimerRef, crossfadeHandoffRef, fadeIntervalRef,
+    ensurePlayerController, flushListeningEvents, listeningHistoryRef, audioRef, playbackTransitionRef,
+    crossfadeAutoStartedRef, crossfadeMainPauseGuardRef, crossfadeHandoffRef,
     animationFrameRef, progressLoopTimeoutRef,
-    pendingPlayRef, countPlayRef, playCountSongIdRef, playCountListenedRef, playCountLastTimeRef,
-    sleepTimerRef, positionSaveRef, nextAudioRef, playbackUrlCacheRef, playbackUrlPendingRef,
+    pendingPlayRef, resetPlayCountTracker, armPlayCount, tickPlayCountTracker, finishCountedPlay, hasActivePlayCount, stopProgressLoop,
+    positionSaveRef, nextAudioRef, playbackUrlCacheRef, playbackUrlPendingRef,
     lastQueueHistoryRef, songRef, timeRef, durationRef, playingRef, volumeRef, effectiveVolumeRef, lastNonZeroVolumeRef,
     beatFrameRef, beatFrameTimerRef, audioEffectRuntimeRef,
     beatSmoothRef, beatReactiveTargetCacheRef, beatLastPaintSignatureRef,
     progressDomSignatureRef, isVolumeDragging, setIsVolumeDragging, volumeDraft, setVolumeDraft,
-    volumeDraftRef, volumeDraftFrameRef, liveVolumeFrameRef, liveVolumePendingPercentRef, fadeFrameRef,
+    volumeDraftRef, volumeDraftFrameRef, liveVolumeFrameRef, liveVolumePendingPercentRef,
+    stopFade, fadeAudio, stopCrossfadeAuto, clearCrossfadeHandoffSoon,
     currentId, setCurrentId, isPlaying, setIsPlaying, isShuffle, setIsShuffle, repeatMode, setRepeatMode,
     currentTime, setCurrentTime, currentDuration, setCurrentDuration, isSeeking, setIsSeeking,
     seekDraftPercent, setSeekDraftPercent, seekDraftPercentRef, isSeekingRef, seekDraftFrameRef,
@@ -164,7 +155,7 @@ function MainModeApp() {
     crossfadePreviewSongId, setCrossfadePreviewSongId, nowPlayingTransitionKey, setNowPlayingTransitionKey,
     playQueue, setPlayQueue, setQueueHistory, repeatPlaylist,
     queueDropHot, setQueueDropHot, queueDropHotRef
-  } = usePlayerRuntime({ defaultVolume: defaultSettings.volume });
+  } = playerRuntime;
 
   const startupResumePositionRef = useRef<{ songId: string; time: number } | null>(null);
   const bootedRef = useRef(false);
@@ -182,13 +173,9 @@ function MainModeApp() {
   const scrollIdleTimerRef = useRef<number | null>(null);
   const rendererQuietUntilRef = useRef(0);
   const dragPreviewRef = useRef<HTMLDivElement | null>(null);
-  const viewSwitchTimerRef = useRef<number | null>(null);
   const heroReflowTimerRef = useRef<number | null>(null);
   const heroCoverMotionTimerRef = useRef<number | null>(null);
   const appRootRef = useRef<HTMLElement | null>(null);
-  const activeViewRef = useRef<View>("home");
-  const libraryOrderSaveTimerRef = useRef<number | null>(null);
-  const lastSavedOrderRef = useRef<string[]>([]);
   const selectSongBurstTimerRef = useRef<number | null>(null);
   const selectSongBurstIntentRef = useRef<{ songId: string; shouldPlay?: boolean } | null>(null);
   const selectSongLastCommitRef = useRef({ key: "", time: 0 });
@@ -198,22 +185,25 @@ function MainModeApp() {
   const [bootError, setBootError] = useState<string | null>(null);
   const [bootLogCopied, setBootLogCopied] = useState(false);
   const [bootRetryKey, setBootRetryKey] = useState(0);
-  const [songs, setSongs] = useState<Song[]>([]);
+  const {songs, setSongs, getSong, moveSong} = useOrderedLibrary(ready);
+  const flushPlaylistsRef = useRef<() => Promise<boolean>>(async () => true);
+  const flushSongEditsRef = useRef<() => Promise<boolean>>(async () => true);
   const { appToast, showAppToast } = useAppToast();
   const {
-    settings, setSettings, settingsRef,
+    settings, setSettings, settingsRef, settingsSaveError, retrySettingsSave,
     settingsCategory, setSettingsCategory,
     settingsSearch, setSettingsSearch, deferredSettingsSearch,
     themeSettling,
     themeMotionReady, setThemeMotionReady,
     writeSettings,
-    saveSettingsSafely, persistSettings, updateSetting, updateSettingsPatch, resetDiscordSettings, resetAppearanceSettings, resetPlayerLayoutSettings, resetLibraryLayoutSettings, resetAllSettingsSafely, updateCoverColorSyncMode,
+    flushSettings, saveSettingsSafely, persistSettings, updateSetting, updateSettingsPatch, resetDiscordSettings, resetAppearanceSettings, resetPlayerLayoutSettings, resetLibraryLayoutSettings, resetAllSettingsSafely, updateCoverColorSyncMode,
     themeSettlingTimerRef,
     themePaintIdleTimerRef,
     themeSettlingRef
   } = useSettingsController({
     initialSettings: () => applyVisualCustomizationDefaults(defaultSettings as Settings),
     bootedRef, volumeDraftRef, setStatusText, showAppToast,
+    flushExtra: async () => (await Promise.all([flushPlaylistsRef.current(), flushListeningEvents(), flushSongEditsRef.current()])).every(Boolean),
     applyLiveVolumePercent, kickThemeSettle
   });
   const [heroMotion, setHeroMotion] = useState<"idle" | "expanding" | "compacting">("idle");
@@ -223,7 +213,6 @@ function MainModeApp() {
   const isAppBackgroundedRef = useRef(isAppBackgrounded);
   const [diagnosticsCopied, setDiagnosticsCopied] = useState(false);
   const [performanceStatus, setPerformanceStatus] = useState<{ok?:boolean;electronVersion?:string;chromeVersion?:string}|null>(null);
-  const [isViewSwitching, setIsViewSwitching] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(() => shouldOpenOnboardingForThisRelease());
   const {
     editorSong, setEditorSong,
@@ -235,8 +224,6 @@ function MainModeApp() {
     query, setQuery, deferredQuery,
     libraryFilterMode, setLibraryFilterMode,
     librarySortMode, setLibrarySortMode,
-    libraryRenderLimit, setLibraryRenderLimit,
-    libraryRenderLimitRef, libraryListLengthRef,
     songContextMenu, setSongContextMenu,
     libraryScanBusy, setLibraryScanBusy,
     libraryScanMessage, setLibraryScanMessage,
@@ -249,12 +236,24 @@ function MainModeApp() {
     libraryDropSide, setLibraryDropSide,
     draggedSongIdRef, libraryDragOverSongIdRef, libraryDropSideRef,
     libraryDropPullRef, libraryDropVisualSongIdRef, libraryDropVisualSideRef,
-    librarySongElementRefs, pointerLibraryDragRef, pointerLibraryDragFrameRef
+    librarySongElementRefs, pointerLibraryDragRef
   } = useLibraryController();
 
   const { libraryIndex, mostPlayed, missingSongsForLibrary, visibleSongs, libraryOrderLocked, songsById, songIndexById, playableSongs } = useLibraryDerivedState({
-    songs, deferredQuery, view, libraryFilterMode, librarySortMode, libraryRenderLimit, libraryListLengthRef, libraryRenderLimitRef
+    songs, deferredQuery, view, libraryFilterMode, librarySortMode
   });
+
+  const {replaceSong, commitCovers, patchSongLocal, saveSongEdit, toggleLike, flushSongEdits} = useLibraryActions({
+    getSong, songIndexById, setSongs, setEditorSong, showAppToast,
+    invalidateSource: song => {
+      const key = getSongPlaybackSourceKey(song);
+      if (!key) return;
+      playbackUrlCacheRef.current.delete(key);
+      playbackUrlPendingRef.current.delete(`${key}:normal`);
+      playbackUrlPendingRef.current.delete(`${key}:force`);
+    }
+  });
+  useLayoutEffect(() => { flushSongEditsRef.current = flushSongEdits; }, [flushSongEdits]);
 
   const albumsController = useAlbumsController({
     view, songs, songsById, setSongs, setLibraryScanBusy, setLibraryScanMessage,
@@ -275,7 +274,7 @@ function MainModeApp() {
     openUpdateChangelog,
     closeWhatsNew,
     askUpdaterToDownload,
-    askUpdaterToInstall,
+    askUpdaterToInstall: installUpdate,
     manualUpdateCheck,
     handleUpdateLater,
 
@@ -287,6 +286,8 @@ function MainModeApp() {
     setStatusText,
     showAppToast
   });
+  const askUpdaterToInstall = useStableCallback(async () => { if (await flushSettings() && await flushPlaylistsRef.current() && await flushListeningEvents() && await flushSongEditsRef.current()) await installUpdate(); });
+  const closeWindowSafely = useStableCallback(async () => { if (await flushSettings() && await flushPlaylistsRef.current() && await flushListeningEvents() && await flushSongEditsRef.current()) await window.localitfy.closeWindow(); });
   const {
     isThreeAm,
     screensaverVisible, setScreensaverVisible,
@@ -360,18 +361,26 @@ function MainModeApp() {
 
   // Do not auto-close it just because songs exist; import completion is handled inside Onboarding.
 
+  const [analysisSupported, setAnalysisSupported] = useState(false);
+  useEffect(() => {
+    if (view !== "settings") return;
+    let active = true;
+    void window.localitfy.getAnalysisStatus().then(status => { if (active) setAnalysisSupported(status.supported); }).catch(() => { if (active) setAnalysisSupported(false); });
+    return () => { active = false; };
+  }, [view]);
+  const availableSettingsTabs = useMemo(() => settingsCategoryTabs.map(tab => tab.id === "experimental" && analysisSupported ? { ...tab, label: "Analysis & history" } : tab), [analysisSupported]);
   const settingsSearchQuery = normalizeSettingsSearch(deferredSettingsSearch);
 
   const visibleSettingsTabs = useMemo(() => {
-    if (!settingsSearchQuery) return settingsCategoryTabs;
+    if (!settingsSearchQuery) return availableSettingsTabs;
     const controlCategories = new Set(
-      matchSettingsControls(settingsSearchQuery, settingsCategoryTabs.map(tab => tab.id))
+      matchSettingsControls(settingsSearchQuery, availableSettingsTabs.map(tab => tab.id), analysisSupported)
         .map(result => result.category)
     );
-    return settingsCategoryTabs.filter(tab =>
+    return availableSettingsTabs.filter(tab =>
       settingsTabMatchesSearch(tab, settingsSearchQuery) || controlCategories.has(tab.id)
     );
-  }, [settingsSearchQuery]);
+  }, [settingsSearchQuery, availableSettingsTabs, analysisSupported]);
 
   const settingsSearchResultLabel = settingsSearchQuery
     ? visibleSettingsTabs.length
@@ -398,18 +407,6 @@ function MainModeApp() {
   function changeView(nextView: View, _source: "nav" | "onboarding" | "settings" | "unknown" = "nav") {
     setLyricsOpen(false);
     if (nextView === "covers") nextView = "library";
-    if (view === nextView) return;
-
-    if (viewSwitchTimerRef.current !== null) {
-      window.clearTimeout(viewSwitchTimerRef.current);
-      viewSwitchTimerRef.current = null;
-    }
-
-    // v0.2.8: switching sections should feel instant. The old viewSwitching
-    // timer forced extra renders and briefly paused the app ambience, which made
-    // every page feel like it was loading. Keep the page change low-priority,
-    // but do not add the extra visual shutdown state.
-    setIsViewSwitching(false);
 
     startTransition(() => {
       setView(nextView);
@@ -417,27 +414,10 @@ function MainModeApp() {
   }
 
   useEffect(() => {
-    if (view !== "library" && view !== "liked") return;
-    if (libraryRenderLimitRef.current === INITIAL_LIBRARY_RENDER_LIMIT) return;
-
-    libraryRenderLimitRef.current = INITIAL_LIBRARY_RENDER_LIMIT;
-    setLibraryRenderLimit(INITIAL_LIBRARY_RENDER_LIMIT);
-  }, [view, deferredQuery, settings.denseList]);
-
-  useEffect(() => {
-    activeViewRef.current = view;
-  }, [view]);
-
-  useEffect(() => {
     return () => {
       if (selectSongBurstTimerRef.current !== null) {
         window.clearTimeout(selectSongBurstTimerRef.current);
         selectSongBurstTimerRef.current = null;
-      }
-
-      if (viewSwitchTimerRef.current !== null) {
-        window.clearTimeout(viewSwitchTimerRef.current);
-        viewSwitchTimerRef.current = null;
       }
 
       if (heroReflowTimerRef.current !== null) {
@@ -482,20 +462,7 @@ function MainModeApp() {
     };
   }
 
-  function ensurePlayerController() {
-    const audio = audioRef.current;
-    if (!audio) return null;
 
-    if (!playerEngineRef.current || playerEngineRef.current.element !== audio) {
-      playerControllerRef.current?.destroy();
-
-      const engine = new HtmlAudioEngine(audio);
-      playerEngineRef.current = engine;
-      playerControllerRef.current = createPlayerController(engine);
-    }
-
-    return playerControllerRef.current;
-  }
 
   const visualCurrentSong = useMemo(() => {
     if (!crossfadePreviewSongId) return currentSong;
@@ -540,7 +507,7 @@ function MainModeApp() {
   const songTransitionCounterRef = useRef(0);
   const {
     playlists,
-    setPlaylists,
+    setPlaylists, initializePlaylists, flushPlaylists,
     newPlaylistName,
     setNewPlaylistName,
     playlistPickerName,
@@ -574,12 +541,11 @@ function MainModeApp() {
     upsertSpotifyPlaylistFromImport
   } = usePlaylistsController({
     songsById,
-    songIndexById,
-    bootedRef,
     changeView,
     setStatusText,
     showAppToast
   });
+  useLayoutEffect(() => { flushPlaylistsRef.current = flushPlaylists; }, [flushPlaylists]);
   const {
     retryDownloads,
     downloadText,
@@ -636,27 +602,6 @@ function MainModeApp() {
   }, [visualCurrentSong?.id, visualCurrentSong?.filePath, visualCurrentSong?.title, visualCurrentSong?.artist, visualCurrentSong?.coverUrl]);
 
   useEffect(() => {
-    if (!ready) return;
-    const lastOrder = lastSavedOrderRef.current;
-    if (lastOrder.length === songs.length && songs.every((song, i) => song.id === lastOrder[i])) return;
-    let cancelIdle: (() => void) | undefined;
-    libraryOrderSaveTimerRef.current = window.setTimeout(() => {
-      libraryOrderSaveTimerRef.current = null;
-      cancelIdle = runLocaltifyIdleTask(() => {
-        saveLibraryOrder(songs);
-        lastSavedOrderRef.current = songs.map(song => song.id);
-      }, 1600);
-    }, 520);
-    return () => {
-      if (libraryOrderSaveTimerRef.current !== null) {
-        window.clearTimeout(libraryOrderSaveTimerRef.current);
-        libraryOrderSaveTimerRef.current = null;
-      }
-      cancelIdle?.();
-    };
-  }, [ready, songs]);
-
-  useEffect(() => {
     draggedSongIdRef.current = draggedSongId;
   }, [draggedSongId]);
 
@@ -677,18 +622,6 @@ function MainModeApp() {
       scrollBusyRef.current = true;
       rendererQuietUntilRef.current = performance.now() + 900;
       appRootRef.current?.classList.add("isScrolling");
-
-      const nearBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - 680;
-      const activeView = activeViewRef.current;
-      const shouldLoadMore = nearBottom && (activeView === "library" || activeView === "liked" || activeView === "home");
-
-      if (shouldLoadMore && libraryRenderLimitRef.current < libraryListLengthRef.current) {
-        setLibraryRenderLimit((limit) => {
-          const nextLimit = Math.min(libraryListLengthRef.current, limit + LIBRARY_RENDER_BATCH_SIZE);
-          libraryRenderLimitRef.current = nextLimit;
-          return nextLimit;
-        });
-      }
 
       if (scrollIdleTimerRef.current !== null) {
         window.clearTimeout(scrollIdleTimerRef.current);
@@ -769,11 +702,6 @@ function MainModeApp() {
         appRootRef.current.classList.remove("isScrolling");
       }
 
-      if (libraryOrderSaveTimerRef.current !== null) {
-        window.clearTimeout(libraryOrderSaveTimerRef.current);
-        libraryOrderSaveTimerRef.current = null;
-      }
-
       if (scrollBusyFrameRef.current !== null) {
         window.cancelAnimationFrame(scrollBusyFrameRef.current);
         scrollBusyFrameRef.current = null;
@@ -835,8 +763,8 @@ function MainModeApp() {
     settings.coverColorSyncMode ?? (settings.showAmbientGradient ? "normal" : "off")
   );
   const effectiveCoverColorSyncMode: CoverColorSyncMode = selectedCoverColorSyncMode;
-  const effectiveAmbient = !isViewSwitching && effectiveCoverColorSyncMode !== "off";
-  const effectiveNotes = !isViewSwitching && (settings.showFloatingNotes || isThreeAm);
+  const effectiveAmbient = effectiveCoverColorSyncMode !== "off";
+  const effectiveNotes = (settings.showFloatingNotes || isThreeAm);
   function beginFastThemePaint() {
 
     document.body.classList.add("localitfyThemePainting");
@@ -1443,60 +1371,16 @@ function MainModeApp() {
     return () => {
       clearBeatTimers();
     };
-  }, [ready, isPlaying, currentSong?.id, isAppBackgrounded, settings.animatedGlow, settings.reducedMotion, settings.volume, settings.playbackSpeed, settings.audioEffectMode, settings.audioEffectAmount, settings.audioReverbAmount, view, settingsCategory, isViewSwitching, isSeeking, isVolumeDragging]);
+  }, [ready, isPlaying, currentSong?.id, isAppBackgrounded, settings.animatedGlow, settings.reducedMotion, settings.volume, settings.playbackSpeed, settings.audioEffectMode, settings.audioEffectAmount, settings.audioReverbAmount, view, settingsCategory, isSeeking, isVolumeDragging]);
 
-
-  function resetPlayCountTracker(outcome: Exclude<ListeningOutcome, "active"> = "interrupted") {
-    listeningHistoryRef.current?.finish(outcome);
-    countPlayRef.current = false;
-    playCountSongIdRef.current = "";
-    playCountListenedRef.current = 0;
-    playCountLastTimeRef.current = 0;
-  }
-
-  function armPlayCount(songId: string, startTime = 0) {
-    countPlayRef.current = true;
-    playCountSongIdRef.current = songId;
-    playCountListenedRef.current = 0;
-    playCountLastTimeRef.current = Math.max(0, Number.isFinite(startTime) ? startTime : 0);
-  }
-
-  function tickPlayCountTracker(nextTime: number) {
-    if (audioRef.current) listeningHistoryRef.current?.sample(audioRef.current);
-    const song = songRef.current;
-    if (!song || !countPlayRef.current || playCountSongIdRef.current !== song.id) return;
-
-    const safeNextTime = Math.max(0, Number.isFinite(nextTime) ? nextTime : 0);
-    const delta = safeNextTime - playCountLastTimeRef.current;
-
-    // Count real listening progress only. Big jumps are usually seeking, not listening.
-    if (delta > 0 && delta < 3) {
-      playCountListenedRef.current += delta;
-    }
-
-    playCountLastTimeRef.current = safeNextTime;
-  }
 
   function markSongCompletedForPlayCount(song: Song | null, outcome: "ended" | "transition" = "ended") {
-    if (audioRef.current) listeningHistoryRef.current?.sample(audioRef.current);
-    listeningHistoryRef.current?.finish(outcome);
-    if (!song || !countPlayRef.current || playCountSongIdRef.current !== song.id) return false;
-
-    const duration = Math.max(0, Number(durationRef.current || song.duration || 0));
-    const listened = playCountListenedRef.current;
-    const required = duration > 0 ? Math.max(8, duration * 0.82) : 8;
-
-    resetPlayCountTracker();
-
-    if (listened + 1 < required) return false;
-
-    const latest = songs.find((item) => item.id === song.id) || song;
-
+    if (!finishCountedPlay(song, outcome) || !song) return false;
+    const latest = getSong(song.id) || song;
     void patchSongLocal(song.id, {
       playCount: Math.max(0, Number(latest.playCount || 0)) + 1,
       lastPlayed: new Date().toISOString()
     });
-
     return true;
   }
   const triggerSecret = useCallback((mode: SecretTriggerMode, message: string) => {
@@ -1660,75 +1544,17 @@ function MainModeApp() {
       devPerfEnd("bootstrap:ipc", `${payload.songs?.length ?? 0} songs`);
 
 
-      const storedSettings = payload.settings || {};
-      const shouldApplyV013Defaults = window.localStorage.getItem(V013_DEFAULTS_KEY) !== "true";
-      const shouldApplyStartWithWindowsDefault = platformInfo.startupSettingSupported && typeof storedSettings.startWithWindows === "undefined";
-      const { settings: nextSettings, changed: visualSettingsChanged } = migrateVisualSettings(storedSettings, {
-        ...defaultSettings,
-        ...(shouldApplyV013Defaults ? V013_RELEASE_DEFAULTS : {})
-      }, shouldApplyV013Defaults ? V013_RELEASE_DEFAULTS : undefined);
-
-      // The redesigned desktop opens as an icon rail once. Preserve later explicit
-      // choices, and never modify Android navigation or an existing hover layout.
-      const sidebarMigrationKey = "localitfy.sidebar-rail-v1";
-      const migrateSidebar = platformInfo.id !== "android" && window.localStorage.getItem(sidebarMigrationKey) !== "true";
-      if (migrateSidebar && storedSettings.sidebarBehavior === undefined && nextSettings.sidebarBehavior === "fixed") nextSettings.sidebarBehavior = "slim";
-
-      if (shouldApplyStartWithWindowsDefault) {
-        nextSettings.startWithWindows = true;
-      }
-
-      if (!platformInfo.startupSettingSupported) {
-        nextSettings.startWithWindows = false;
-      }
-
-      const shouldPersistBootSettings =
-        shouldApplyV013Defaults || shouldApplyStartWithWindowsDefault ||
-        visualSettingsChanged || (migrateSidebar && nextSettings.sidebarBehavior !== storedSettings.sidebarBehavior);
-
-      if (shouldPersistBootSettings) {
-        writeSettings(nextSettings).then(() => {
-          if (shouldApplyV013Defaults) window.localStorage.setItem(V013_DEFAULTS_KEY, "true");
-          if (shouldApplyStartWithWindowsDefault) window.localStorage.setItem(START_WITH_WINDOWS_DEFAULT_KEY, "true");
-          if (migrateSidebar) window.localStorage.setItem(sidebarMigrationKey, "true");
-        }).catch(() => showAppToast("Could not save settings migration. It will be retried next time.", "error"));
-      } else if (migrateSidebar) {
-        window.localStorage.setItem(sidebarMigrationKey, "true");
-      }
-
-      const nextSongs = applyLibraryOrder(sanitizeSongList(payload.songs || []));
-      const validBootSongIds = new Set(nextSongs.map((song) => song.id));
-
-      const localPlaylists = cleanPlaylistList(readLocalJson<Playlist[]>(PLAYLIST_STORAGE_KEY, []), validBootSongIds);
-      const databasePlaylists = cleanPlaylistList(payload.playlists || [], validBootSongIds);
-      const initialPlaylists = databasePlaylists.length ? databasePlaylists : localPlaylists;
-
-      const initialSongId =
-        nextSettings.rememberLastSong &&
-        nextSettings.lastSongId &&
-        nextSongs.some((song) => song.id === nextSettings.lastSongId)
-          ? nextSettings.lastSongId
-          : nextSongs[0]?.id || "";
-      const initialSong = nextSongs.find((song) => song.id === initialSongId);
-      const savedTime = Number(initialSong?.playbackPosition || 0);
-      startupResumePositionRef.current =
-        nextSettings.rememberLastSong && nextSettings.rememberPlaybackPosition &&
-        initialSong && Number.isFinite(savedTime) && savedTime > 1 &&
-        (!initialSong.duration || savedTime < initialSong.duration - 2)
-          ? { songId: initialSongId, time: savedTime }
-          : null;
-
+      const {nextSettings, nextSongs, initialPlaylists, initialSongId, resumePosition} =
+        await prepareBootstrap(payload, platformInfo, writeSettings, showAppToast);
+      if (!mounted) return;
+      startupResumePositionRef.current = resumePosition;
 
       setSongs(nextSongs);
-      setPlaylists(initialPlaylists);
+      initializePlaylists(initialPlaylists);
       settingsRef.current = nextSettings;
       setSettings(nextSettings);
       setCurrentId(initialSongId);
       setReady(true);
-
-      if (!databasePlaylists.length && localPlaylists.length && window.localitfy.savePlaylists) {
-        window.localitfy.savePlaylists(localPlaylists).catch(() => undefined);
-      }
 
       cancelPixelArtLoad = runLocaltifyIdleTask(() => {
         if (!mounted) return;
@@ -1897,10 +1723,6 @@ function MainModeApp() {
       stopCrossfadeAuto();
       stopProgressLoop();
 
-      if (sleepTimerRef.current !== null) {
-        window.clearTimeout(sleepTimerRef.current);
-      }
-
       if (volumeDraftFrameRef.current !== null) {
         window.cancelAnimationFrame(volumeDraftFrameRef.current);
         volumeDraftFrameRef.current = null;
@@ -1911,10 +1733,7 @@ function MainModeApp() {
         liveVolumeFrameRef.current = null;
       }
 
-      if (fadeFrameRef.current !== null) {
-        window.cancelAnimationFrame(fadeFrameRef.current);
-        fadeFrameRef.current = null;
-      }
+      stopFade();
 
       releaseStandbyAudio();
       window.localitfy.clearDiscordActivity().catch(() => undefined);
@@ -2243,37 +2062,35 @@ function MainModeApp() {
   ]);
 
 
+  const [sleepDeadline, setSleepDeadline] = useState(0);
+  const expireSleepTimer = useStableCallback((minutes: number) => {
+    if (Number(settingsRef.current.sleepTimerMinutes) !== minutes) return;
+    stopFade();
+    stopCrossfadeAuto();
+    playbackTransitionRef.current.requestPause();
+    pendingPlayRef.current = false;
+    const controller = ensurePlayerController();
+    if (controller) controller.pause(); else audioRef.current?.pause();
+    setIsPlaying(false);
+    if (audioRef.current) applyAudioQualitySettings(audioRef.current, songRef.current);
+    setSleepDeadline(0);
+    void updateSetting("sleepTimerMinutes", 0);
+    setStatusText("Sleep timer finished");
+  });
   useEffect(() => {
-    if (sleepTimerRef.current !== null) {
-      window.clearTimeout(sleepTimerRef.current);
-      sleepTimerRef.current = null;
-    }
-
     const minutes = Number(settings.sleepTimerMinutes) || 0;
-    if (!isPlaying || minutes <= 0) return;
-
-    sleepTimerRef.current = window.setTimeout(() => {
-      const audio = audioRef.current;
-      const finishSleepTimer = () => {
-        setIsPlaying(false);
-        updateSetting("sleepTimerMinutes", 0).catch(() => undefined);
-        setStatusText("sleep timer faded out playback");
-      };
-
-      if (audio && !audio.paused && !settings.reducedMotion) {
-        fadeAudio(0, 2200, finishSleepTimer);
-      } else {
-        finishSleepTimer();
-      }
-    }, Math.max(1, minutes) * 60 * 1000);
-
+    if (minutes <= 0) { setSleepDeadline(0); return; }
+    const deadline = Date.now() + Math.max(1, minutes) * 60_000;
+    setSleepDeadline(deadline);
+    const timer = createSleepTimer(deadline, () => expireSleepTimer(minutes), { now: Date.now, schedule: (callback, delay) => window.setTimeout(callback, delay), clear: id => window.clearTimeout(id) });
+    document.addEventListener("visibilitychange", timer.check);
+    window.addEventListener("focus", timer.check);
     return () => {
-      if (sleepTimerRef.current !== null) {
-        window.clearTimeout(sleepTimerRef.current);
-        sleepTimerRef.current = null;
-      }
+      timer.cancel();
+      document.removeEventListener("visibilitychange", timer.check);
+      window.removeEventListener("focus", timer.check);
     };
-  }, [settings.sleepTimerMinutes, isPlaying]);
+  }, [settings.sleepTimerMinutes]);
 
   useEffect(() => {
     if (settings.volumeNormalization && currentSong && typeof currentSong.volumeGain !== "number" && window.localitfy.analyzeSongVolume) {
@@ -2499,54 +2316,6 @@ function MainModeApp() {
     return clamp(Math.max(3, Number(settings.crossfadeSeconds || 3)), 3, 6);
   }
 
-  function clearCrossfadeHandoffSoon(songId: string, delayMs = 1400) {
-    if (crossfadeHandoffClearTimerRef.current !== null) {
-      window.clearTimeout(crossfadeHandoffClearTimerRef.current);
-      crossfadeHandoffClearTimerRef.current = null;
-    }
-
-    crossfadeHandoffClearTimerRef.current = window.setTimeout(() => {
-      if (crossfadeHandoffRef.current?.songId === songId) {
-        crossfadeHandoffRef.current = null;
-      }
-
-      crossfadeHandoffClearTimerRef.current = null;
-    }, delayMs);
-  }
-
-  function stopCrossfadeAuto() {
-    playbackTransitionRef.current.crossfadeCancelled();
-    if (crossfadeIntervalRef.current !== null) {
-      window.clearInterval(crossfadeIntervalRef.current);
-      crossfadeIntervalRef.current = null;
-    }
-
-    if (crossfadeHandoffClearTimerRef.current !== null) {
-      window.clearTimeout(crossfadeHandoffClearTimerRef.current);
-      crossfadeHandoffClearTimerRef.current = null;
-    }
-
-    if (crossfadeRecoveryTimerRef.current !== null) {
-      window.clearTimeout(crossfadeRecoveryTimerRef.current);
-      crossfadeRecoveryTimerRef.current = null;
-    }
-    crossfadeAutoStartedRef.current = false;
-    crossfadeAutoTargetRef.current = "";
-    crossfadeMainPauseGuardRef.current = false;
-    crossfadeHandoffRef.current = null;
-    setCrossfadePreviewSongId("");
-
-    const nextAudio = nextAudioRef.current;
-    if (nextAudio) {
-      try {
-        nextAudio.pause();
-        nextAudio.currentTime = 0;
-        setAudioElementVolume(nextAudio, 0);
-      } catch {
-      }
-    }
-  }
-
   function getAutoTransitionTarget() {
     return resolveAutoTransitionTarget({
       playableSongs, currentSong, repeatMode, playQueue, songsById,
@@ -2584,239 +2353,9 @@ function MainModeApp() {
     }
   }
 
-  async function takeOverMainAudioFromCrossfade(target: ReturnType<typeof getAutoTransitionTarget>, nextAudio: HTMLAudioElement, safeVolume: number, version: number) {
-    const audio = audioRef.current;
-    if (!audio || !target?.song || !playbackTransitionRef.current.isCurrentCrossfade(target.song.id, version)) return;
-    const ownsHandoff = () => playbackTransitionRef.current.isCurrentCrossfade(target.song.id, version);
-
-    const handoffTime = Number.isFinite(nextAudio.currentTime) ? nextAudio.currentTime : 0;
-    const handoffUrl = nextAudio.src;
-
-    crossfadeHandoffRef.current = {
-      songId: target.song.id,
-      url: handoffUrl,
-      time: handoffTime,
-      volume: safeVolume
-    };
-
-    crossfadeMainPauseGuardRef.current = true;
-
-    try {
-      if (audio.src !== handoffUrl) {
-        audio.src = handoffUrl;
-      }
-
-      audio.currentTime = Math.max(0, handoffTime);
-      setAudioElementVolume(audio, 0);
-      applyPlaybackRateSettings(audio);
-      audio.preload = settings.gaplessPlayback ? "auto" : "metadata";
-
-      await audio.play();
-      if (!ownsHandoff()) return;
-
-      commitAutoTransitionTarget(target);
-
-      pendingPlayRef.current = false;
-      armPlayCount(target.song.id, Math.max(0, handoffTime));
-      listeningHistoryRef.current?.play(target.song.id, handoffTime, target.playlistId ?? null);
-      pushQueueHistory(target.song);
-      setCurrentId(target.song.id);
-      setCrossfadePreviewSongId("");
-      void rememberCurrentSong(target.song.id);
-      setCurrentTime(Math.max(0, handoffTime));
-      timeRef.current = Math.max(0, handoffTime);
-      setCurrentDuration(target.song.duration || nextAudio.duration || 0);
-      setIsPlaying(true);
-      setPlayerError("");
-      setStatusText(`crossfading into ${prettyTitle(target.song.title, 5)}`);
-      playbackTransitionRef.current.crossfadeFinished(target.song.id);
-
-      const blendMs = 420;
-      const blendStart = performance.now();
-      const blendGeneration = playbackTransitionRef.current.snapshot().generation;
-
-      const blendTimer = window.setInterval(() => {
-          if (!playbackTransitionRef.current.isCurrent(blendGeneration, target.song.id)) {
-            window.clearInterval(blendTimer);
-            if (crossfadeIntervalRef.current === blendTimer) crossfadeIntervalRef.current = null;
-            return;
-          }
-          const progressValue = clamp((performance.now() - blendStart) / blendMs, 0, 1);
-          const eased = 1 - Math.pow(1 - progressValue, 2.6);
-
-          setAudioElementVolume(audio, safeVolume * eased);
-          setAudioElementVolume(nextAudio, safeVolume * (1 - eased));
-
-          if (progressValue >= 1) {
-            window.clearInterval(blendTimer);
-            if (crossfadeIntervalRef.current === blendTimer) crossfadeIntervalRef.current = null;
-            setAudioElementVolume(audio, safeVolume);
-
-            try {
-              nextAudio.pause();
-              nextAudio.currentTime = 0;
-              setAudioElementVolume(nextAudio, 0);
-            } catch {
-            }
-
-            crossfadeMainPauseGuardRef.current = false;
-            clearCrossfadeHandoffSoon(target.song.id, 450);
-          }
-        }, 16);
-      crossfadeIntervalRef.current = blendTimer;
-    } catch {
-      if (!ownsHandoff()) return;
-      // Keep the already-playing hidden audio alive briefly so users do not hear a hard stop,
-      // then let the normal playback state-sync recover.
-      commitAutoTransitionTarget(target);
-      setCurrentId(target.song.id);
-      setCrossfadePreviewSongId("");
-      void rememberCurrentSong(target.song.id);
-      setIsPlaying(true);
-      crossfadeMainPauseGuardRef.current = false;
-      playbackTransitionRef.current.crossfadeFinished(target.song.id);
-
-      const recoveryGeneration = playbackTransitionRef.current.snapshot().generation;
-      crossfadeRecoveryTimerRef.current = window.setTimeout(() => {
-        crossfadeRecoveryTimerRef.current = null;
-        if (!playbackTransitionRef.current.isCurrent(recoveryGeneration, target.song.id)) return;
-        try {
-          nextAudio.pause();
-          nextAudio.currentTime = 0;
-          setAudioElementVolume(nextAudio, 0);
-        } catch {
-        }
-        clearCrossfadeHandoffSoon(target.song.id);
-      }, 950);
-    }
-  }
-
-  async function startAutoCrossfadeToNext() {
-    const audio = audioRef.current;
-    const current = songRef.current || currentSong;
-
-    if (
-      !audio ||
-      !current ||
-      !isPlaying ||
-      isSeekingRef.current ||
-      crossfadeAutoStartedRef.current ||
-      performance.now() - crossfadeLastStartAtRef.current < 900 ||
-      settings.reducedMotion ||
-      !settings.crossfadeEnabled
-    ) {
-      return;
-    }
-
-    const target = getAutoTransitionTarget();
-    if (!target?.song || target.song.id === current.id) return;
-
-    if (!playbackTransitionRef.current.crossfadeStarted(target.song.id)) return;
-    crossfadeAutoStartedRef.current = true;
-    crossfadeAutoTargetRef.current = target.song.id;
-    crossfadeLastStartAtRef.current = performance.now();
-
-    const version = playbackTransitionRef.current.snapshot().generation;
-    const playbackUrl = await resolvePlaybackUrl(target.song);
-    if (!crossfadeAutoStartedRef.current || !playbackTransitionRef.current.isCurrentCrossfade(target.song.id, version)) return;
-
-    if (!playbackUrl.ok || !playbackUrl.url || playbackUrl.fileExists === false) {
-      crossfadeAutoStartedRef.current = false;
-      crossfadeAutoTargetRef.current = "";
-      playbackTransitionRef.current.crossfadeCancelled();
-      setCrossfadePreviewSongId("");
-      try {
-        setAudioElementVolume(audio, getTargetAudioVolume(current));
-      } catch {
-      }
-      return;
-    }
-
-    if (!nextAudioRef.current) {
-      nextAudioRef.current = new Audio();
-      nextAudioRef.current.preload = "auto";
-      nextAudioRef.current.crossOrigin = "anonymous";
-    }
-
-    const nextAudio = nextAudioRef.current;
-    // This element may have been created earlier by the preloader. Enforce
-    // CORS before loading any URL or reusing it for a crossfade.
-    nextAudio.crossOrigin = "anonymous";
-    const safeVolume = getTargetAudioVolume(target.song);
-    const crossfadeMs = getAutoCrossfadeSeconds() * 1000;
-    const startVolume = audio.volume || getTargetAudioVolume(current);
-
-    try {
-      if (nextAudio.src !== playbackUrl.url) {
-        nextAudio.src = playbackUrl.url;
-        nextAudio.load();
-      }
-
-      setAudioElementVolume(nextAudio, 0);
-      applyPlaybackRateSettings(nextAudio);
-
-      await nextAudio.play();
-      if (!crossfadeAutoStartedRef.current || !playbackTransitionRef.current.isCurrentCrossfade(target.song.id, version)) return;
-
-      setCrossfadePreviewSongId(target.song.id);
-      stopFade();
-
-      const startTime = performance.now();
-
-      if (crossfadeIntervalRef.current !== null) {
-        window.clearInterval(crossfadeIntervalRef.current);
-      }
-
-      crossfadeIntervalRef.current = window.setInterval(() => {
-        const elapsed = performance.now() - startTime;
-        const rawProgress = clamp(elapsed / crossfadeMs, 0, 1);
-
-        const outgoingHold = 0.16;
-        const outgoingProgress = rawProgress <= outgoingHold
-          ? 0
-          : clamp((rawProgress - outgoingHold) / (1 - outgoingHold), 0, 1);
-        const outgoingFactor = 1 - Math.pow(outgoingProgress, 0.72);
-        const incomingFactor = Math.pow(rawProgress, 1.48);
-
-        setAudioElementVolume(audio, startVolume * outgoingFactor);
-        setAudioElementVolume(nextAudio, safeVolume * incomingFactor);
-
-        if (rawProgress >= 1) {
-          if (crossfadeIntervalRef.current !== null) {
-            window.clearInterval(crossfadeIntervalRef.current);
-            crossfadeIntervalRef.current = null;
-          }
-
-          setAudioElementVolume(audio, 0);
-          setAudioElementVolume(nextAudio, safeVolume);
-
-          markSongCompletedForPlayCount(current, "transition");
-          if (current.id) void patchSongLocal(current.id, { playbackPosition: 0 });
-
-          crossfadeAutoStartedRef.current = false;
-          crossfadeAutoTargetRef.current = "";
-
-          void takeOverMainAudioFromCrossfade(target, nextAudio, safeVolume, version);
-        }
-      }, 16);
-    } catch {
-      if (!playbackTransitionRef.current.isCurrentCrossfade(target.song.id, version)) return;
-      playbackTransitionRef.current.crossfadeCancelled();
-      crossfadeAutoStartedRef.current = false;
-      crossfadeAutoTargetRef.current = "";
-      crossfadeMainPauseGuardRef.current = false;
-      setCrossfadePreviewSongId("");
-      try {
-        setAudioElementVolume(audio, getTargetAudioVolume(current));
-      } catch {
-      }
-      try {
-        nextAudio.pause();
-        setAudioElementVolume(nextAudio, 0);
-      } catch {
-      }
-    }
-  }
+  const {startAutoCrossfadeToNext} = createCrossfadePlayback(playerRuntime, {
+    currentSong, isPlaying, settings, getAutoTransitionTarget, commitAutoTransitionTarget, setAudioElementVolume, applyPlaybackRateSettings, armPlayCount, pushQueueHistory, rememberCurrentSong, resolvePlaybackUrl, getTargetAudioVolume, markSongCompletedForPlayCount, patchSongLocal, getAutoCrossfadeSeconds
+  });
 
   function handleAudioTimeUpdate(event: SyntheticEvent<HTMLAudioElement>) {
     const audio = event.currentTarget;
@@ -2876,71 +2415,6 @@ function MainModeApp() {
     }
 
     playNext(true, "auto");
-  }
-
-  function stopFade() {
-    if (fadeIntervalRef.current !== null) {
-      window.clearInterval(fadeIntervalRef.current);
-      fadeIntervalRef.current = null;
-    }
-
-    if (fadeFrameRef.current !== null) {
-      window.cancelAnimationFrame(fadeFrameRef.current);
-      fadeFrameRef.current = null;
-    }
-  }
-
-  function stopProgressLoop() {
-    if (animationFrameRef.current !== null) {
-      window.cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    if (progressLoopTimeoutRef.current !== null) {
-      window.clearTimeout(progressLoopTimeoutRef.current);
-      progressLoopTimeoutRef.current = null;
-    }
-  }
-
-  function fadeAudio(target: number, duration: number, onDone?: () => void) {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    stopFade();
-
-    const safeTarget = clamp(Number(target) || 0, 0, 1);
-    const safeDuration = Math.max(0, Number(duration) || 0);
-    const startVolume = clamp(Number(audio.volume) || 0, 0, 1);
-    const delta = safeTarget - startVolume;
-
-    // No animation frames while hidden
-    if (safeDuration <= 0 || Math.abs(delta) < 0.002 || document.hidden) {
-      setAudioElementVolume(audio, safeTarget);
-      effectiveVolumeRef.current = safeTarget;
-      if (onDone) onDone();
-      return;
-    }
-
-    const startTime = performance.now();
-
-    const step = () => {
-      const progressValue = clamp((performance.now() - startTime) / safeDuration, 0, 1);
-      const eased = 1 - Math.pow(1 - progressValue, 2.2);
-      const nextVolume = clamp(startVolume + delta * eased, 0, 1);
-
-      setAudioElementVolume(audio, nextVolume);
-      effectiveVolumeRef.current = nextVolume;
-
-      if (progressValue >= 1) {
-        fadeFrameRef.current = null;
-        if (onDone) onDone();
-        return;
-      }
-
-      fadeFrameRef.current = window.requestAnimationFrame(step);
-    };
-
-    fadeFrameRef.current = window.requestAnimationFrame(step);
   }
 
   function getAudioErrorText(audio: HTMLAudioElement | null) {
@@ -3096,53 +2570,6 @@ function MainModeApp() {
     if (!id || !settingsRef.current.rememberLastSong) return;
     await persistSettings({ ...settingsRef.current, lastSongId: id }, true);
   }
-
-  function replaceSong(updated: Song | null) {
-    if (!updated) return;
-
-    setSongs((oldSongs) => replaceLibrarySong(oldSongs, updated, songIndexById.get(updated.id)));
-
-    if (editorSong?.id === updated.id) {
-      setEditorSong(updated);
-    }
-  }
-
-  function commitCovers(updates: Map<string, Partial<Song>>) {
-    setSongs(old => old.map(song => updates.has(song.id) ? { ...song, ...updates.get(song.id) } : song));
-    setEditorSong(old => old && updates.has(old.id) ? { ...old, ...updates.get(old.id) } : old);
-  }
-
-  async function patchSongLocal(id: string, patch: Partial<Song>) {
-    if (Object.prototype.hasOwnProperty.call(patch, "filePath") || Object.prototype.hasOwnProperty.call(patch, "url")) {
-      const cachedSong = songsById.get(id);
-      const cacheKey = getSongPlaybackSourceKey(cachedSong);
-      if (cacheKey) {
-        playbackUrlCacheRef.current.delete(cacheKey);
-        playbackUrlPendingRef.current.delete(`${cacheKey}:normal`);
-        playbackUrlPendingRef.current.delete(`${cacheKey}:force`);
-      }
-    }
-
-    const previousSong = songsById.get(id);
-    setSongs((oldSongs) => patchLibrarySong(oldSongs, id, patch, songIndexById.get(id)));
-
-    try {
-      const updated = await window.localitfy.patchSong(id, patch);
-      if (!updated) throw new Error("Song was not saved");
-      replaceSong(updated);
-    } catch {
-      if (previousSong) setSongs((current) => current.map((song) => {
-        if (song.id !== id) return song;
-        const rollback: Partial<Song> = {};
-        for (const key of Object.keys(patch) as (keyof Song)[]) {
-          if (Object.is(song[key], patch[key])) (rollback as Record<string, unknown>)[key] = previousSong[key];
-        }
-        return Object.keys(rollback).length ? { ...song, ...rollback } : song;
-      }));
-      showAppToast("Could not save song changes", "error");
-    }
-  }
-
 
   function openMetadataCleanPreview() {
     if (!songs.length || libraryScanBusy) return;
@@ -3383,25 +2810,12 @@ function MainModeApp() {
         })
       );
 
-      const rawImported = applyLibraryOrder(sanitizeSongList(await window.localitfy.importSongs()));
-      const { songs: imported, changedSongs } = maybeApplyCoderpixelArtist(
-        rawImported,
-        previousSongIds,
-        previousSongSources
-      );
+      const imported = applyLibraryOrder(sanitizeSongList(await window.localitfy.importSongs()));
 
       playbackUrlCacheRef.current.clear();
       playbackUrlPendingRef.current.clear();
       setSongs(imported);
       setLibraryScanMessage(`indexed ${imported.length} tracks • search, folders, and metadata ready`);
-
-      if (changedSongs.length > 0) {
-        void Promise.allSettled(
-          changedSongs.map((song) =>
-            window.localitfy.patchSong(song.id, { artist: CODERPIXEL_ARTIST_EASTER_EGG })
-          )
-        ).catch(() => undefined);
-      }
 
       const pickedSong =
         imported.find((song) => song.id === currentId) ||
@@ -3705,16 +3119,7 @@ function MainModeApp() {
   function moveSongToLibraryEnd(songId: string) {
     if (!songId || !songsById.has(songId)) return;
 
-    setSongs((previousSongs) => {
-      const currentIndex = previousSongs.findIndex((song) => song.id === songId);
-      if (currentIndex === -1 || currentIndex === previousSongs.length - 1) return previousSongs;
-
-      const draggedSong = previousSongs[currentIndex];
-      const nextSongs = previousSongs.filter((song) => song.id !== songId);
-      nextSongs.push(draggedSong);
-      saveLibraryOrder(nextSongs);
-      return nextSongs;
-    });
+    if (!moveSong(songId)) return;
 
     setStatusText("moved song to the end");
     pulseLibraryDropCommit();
@@ -3732,20 +3137,8 @@ function MainModeApp() {
 
   const findPointerLibraryTarget = useCallback(
     (clientX: number, clientY: number, sourceSongId: string): LibraryDropTarget | null => {
-      const getSideAndPull = (rect: DOMRect): Pick<LibraryDropTarget, "side" | "pull"> => {
-        const centerX = rect.left + rect.width / 2;
-        const halfWidth = Math.max(rect.width / 2, 1);
-        const side: LibraryDropSide = clientX < centerX ? "before" : "after";
-        const distanceFromCenter = Math.min(1, Math.abs(clientX - centerX) / halfWidth);
-        const distanceFromEdge = side === "before" ? Math.max(0, clientX - rect.left) : Math.max(0, rect.right - clientX);
-        const edgePull = 1 - Math.min(1, distanceFromEdge / Math.max(rect.width * 0.42, 1));
-        const pull = 10 + distanceFromCenter * 14 + edgePull * 26;
-
-        return { side, pull };
-      };
-
       const readCandidate = (element: Element | null): HTMLElement | null => {
-        const card = element instanceof HTMLElement ? element.closest<HTMLElement>("[data-library-song-id]") : null;
+        const card = element?.closest<HTMLElement>("[data-library-song-id]") ?? null;
         const songId = card?.dataset.librarySongId || "";
         if (!card || !songId || songId === sourceSongId) return null;
         return card;
@@ -3770,40 +3163,23 @@ function MainModeApp() {
       if (!targetCard) return null;
 
       const targetSongId = targetCard.dataset.librarySongId || "";
-      const rect = targetCard.getBoundingClientRect();
-      const { side, pull } = getSideAndPull(rect);
+      const { side, pull } = getLibraryDropSideInfoForElement(clientX, clientY, targetCard);
       return { songId: targetSongId, side, pull };
     },
     []
   );
 
   const moveSongInLibraryByPointer = useCallback((sourceSongId: string, targetSongId: string, side: LibraryDropSide) => {
-    let moved = false;
-
-    setSongs((previousSongs) => {
-      const nextSongs = reorderSongList(previousSongs, sourceSongId, targetSongId, side);
-      if (nextSongs === previousSongs) return previousSongs;
-
-      saveLibraryOrder(nextSongs);
-      moved = true;
-      return nextSongs;
-    });
-
-    if (moved) {
+    if (moveSong(sourceSongId, targetSongId, side)) {
       setStatusText("song order updated");
       pulseLibraryDropCommit();
       showAppToast("song order updated", "success");
     }
-  }, []);
+  }, [moveSong, showAppToast]);
 
   const finishPointerLibraryDrag = useCallback((shouldApplyDrop: boolean) => {
     const runtime = pointerLibraryDragRef.current;
     pointerLibraryDragRef.current = null;
-
-    if (pointerLibraryDragFrameRef.current !== null) {
-      window.cancelAnimationFrame(pointerLibraryDragFrameRef.current);
-      pointerLibraryDragFrameRef.current = null;
-    }
 
     document.body.classList.remove("localitfyLibraryPointerDragging");
     runtime?.sourceElement?.classList.remove("songCardPointerSource");
@@ -3815,8 +3191,10 @@ function MainModeApp() {
     endSongDrag();
   }, [moveSongInLibraryByPointer]);
 
+  useEffect(() => () => pointerLibraryDragRef.current?.cancel?.(), [view, libraryOrderLocked]);
+
   function startPointerSongDrag(event: PointerEvent<HTMLElement>, songId: string) {
-    if (event.button !== 0 || !songId || libraryOrderLocked) return;
+    if (event.button !== 0 || !songId || libraryOrderLocked || pointerLibraryDragRef.current) return;
 
     const blockedDragOrigin =
       event.target instanceof HTMLElement
@@ -3827,88 +3205,53 @@ function MainModeApp() {
 
     if (blockedDragOrigin) return;
 
-    const originIndex = songs.findIndex((song) => song.id === songId);
-    if (originIndex < 0) return;
+    if (!songsById.has(songId)) return;
 
     pointerLibraryDragRef.current = {
       songId,
-      originIndex,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
       active: false,
       latestTargetId: null,
       latestSide: "after",
       sourceElement: event.currentTarget
     };
 
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-
-    const onMove = (moveEvent: globalThis.PointerEvent) => {
-      const runtime = pointerLibraryDragRef.current;
-      if (!runtime || runtime.pointerId !== moveEvent.pointerId) return;
-
-      const distance = Math.hypot(moveEvent.clientX - runtime.startX, moveEvent.clientY - runtime.startY);
-      if (!runtime.active && distance < 7) return;
-
-      moveEvent.preventDefault();
-
-      if (!runtime.active) {
-        runtime.active = true;
-        draggedSongIdRef.current = runtime.songId;
-        setDraggedSongId(runtime.songId);
-        const song = songsById.get(runtime.songId);
-        setDraggedSongTitle(song ? prettyTitle(song.title, 7) : "song");
-        clearLibraryDragTarget("after");
-        setQueueDropHotSafely(false);
-        document.body.classList.add("localitfySongDragging", "localitfyLibraryPointerDragging", "localitfyNoSelect");
-        runtime.sourceElement?.classList.add("songCardPointerSource");
-      }
-
-      if (pointerLibraryDragFrameRef.current !== null) return;
-
-      const clientX = moveEvent.clientX;
-      const clientY = moveEvent.clientY;
-
-      pointerLibraryDragFrameRef.current = window.requestAnimationFrame(() => {
-        pointerLibraryDragFrameRef.current = null;
-        const latestRuntime = pointerLibraryDragRef.current;
-        if (!latestRuntime?.active) return;
-
-        const targetInfo = findPointerLibraryTarget(clientX, clientY, latestRuntime.songId);
-        if (!targetInfo) {
-          latestRuntime.latestTargetId = null;
-          libraryDragOverSongIdRef.current = "";
-          clearLibraryDragTarget(latestRuntime.latestSide);
-          return;
+    event.preventDefault();
+    pointerLibraryDragRef.current.cancel = startTrackPointerSession(event, {
+      move: (clientX, clientY) => {
+        const runtime = pointerLibraryDragRef.current;
+        if (!runtime) return;
+        if (!runtime.active) {
+          runtime.active = true;
+          draggedSongIdRef.current = runtime.songId;
+          setDraggedSongId(runtime.songId);
+          const song = songsById.get(runtime.songId);
+          setDraggedSongTitle(song ? prettyTitle(song.title, 7) : "song");
+          clearLibraryDragTarget("after");
+          setQueueDropHotSafely(false);
+          document.body.classList.add("localitfySongDragging", "localitfyLibraryPointerDragging", "localitfyNoSelect");
+          runtime.sourceElement?.classList.add("songCardPointerSource");
         }
-
-        latestRuntime.latestTargetId = targetInfo.songId;
-        latestRuntime.latestSide = targetInfo.side;
-        setLibraryDragTarget(targetInfo.songId, targetInfo.side, targetInfo.pull);
-      });
-    };
-
-    const stopListening = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onCancel);
-    };
-
-    const onUp = (upEvent: globalThis.PointerEvent) => {
-      if (pointerLibraryDragRef.current?.pointerId !== upEvent.pointerId) return;
-      stopListening();
-      finishPointerLibraryDrag(true);
-    };
-
-    const onCancel = () => {
-      stopListening();
-      finishPointerLibraryDrag(false);
-    };
-
-    window.addEventListener("pointermove", onMove, { passive: false });
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onCancel);
+        const target = findPointerLibraryTarget(clientX, clientY, runtime.songId);
+        runtime.latestTargetId = target?.songId ?? null;
+        if (target) {
+          runtime.latestSide = target.side;
+          setLibraryDragTarget(target.songId, target.side, target.pull);
+        } else {
+          libraryDragOverSongIdRef.current = "";
+          clearLibraryDragTarget(runtime.latestSide);
+        }
+      },
+      finish: (apply, x, y) => {
+        const runtime = pointerLibraryDragRef.current;
+        if (runtime && apply) {
+          runtime.active = true;
+          const target = findPointerLibraryTarget(x, y, runtime.songId);
+          runtime.latestTargetId = target?.songId ?? null;
+          if (target) runtime.latestSide = target.side;
+        }
+        finishPointerLibraryDrag(apply);
+      }
+    });
   }
 
   function startSongDrag(event: DragEvent<HTMLElement>, songId: string) {
@@ -3983,15 +3326,10 @@ function MainModeApp() {
 
     const side = getLibraryDropSide(event);
 
-    setSongs((previousSongs) => {
-      const nextSongs = reorderSongList(previousSongs, songId, targetSongId, side);
-      if (nextSongs === previousSongs) return previousSongs;
-      saveLibraryOrder(nextSongs);
-      return nextSongs;
-    });
-
-    setStatusText("library order updated");
-    pulseLibraryDropCommit();
+    if (moveSong(songId, targetSongId, side)) {
+      setStatusText("library order updated");
+      pulseLibraryDropCommit();
+    }
     endSongDrag();
   }
 
@@ -4034,15 +3372,10 @@ function MainModeApp() {
 
     const side = getLibraryDropSideForElement(event, dropElement);
 
-    setSongs((previousSongs) => {
-      const nextSongs = reorderSongList(previousSongs, songId, targetSongId, side);
-      if (nextSongs === previousSongs) return previousSongs;
-      saveLibraryOrder(nextSongs);
-      return nextSongs;
-    });
-
-    setStatusText("library order updated");
-    pulseLibraryDropCommit();
+    if (moveSong(songId, targetSongId, side)) {
+      setStatusText("library order updated");
+      pulseLibraryDropCommit();
+    }
     endSongDrag();
   }
 
@@ -4305,7 +3638,7 @@ function MainModeApp() {
       return;
     }
 
-    if (!countPlayRef.current && (timeRef.current <= 2 || currentTime <= 2)) {
+    if (!hasActivePlayCount() && (timeRef.current <= 2 || currentTime <= 2)) {
       armPlayCount(currentSong.id, timeRef.current || currentTime || 0);
     }
     pendingPlayRef.current = true;
@@ -4726,34 +4059,6 @@ function MainModeApp() {
     setIsVolumeDragging(false);
   }
 
-  function toggleLike(songId: string) {
-    const target = songsById.get(songId) || songs.find((song) => song.id === songId);
-    if (!target) return;
-
-    const nextLiked = !target.liked;
-    const toastTitle = prettyTitle(target.title, 5);
-
-    setSongs((oldSongs) =>
-      oldSongs.map((song) => (song.id === songId ? { ...song, liked: nextLiked } : song))
-    );
-
-    showAppToast(
-      nextLiked ? `added "${toastTitle}" to liked` : `removed "${toastTitle}" from liked`,
-      nextLiked ? "success" : "info"
-    );
-
-    void window.localitfy.patchSong(songId, { liked: nextLiked })
-      .then((updated) => {
-        replaceSong({ ...updated, liked: nextLiked });
-      })
-      .catch(() => {
-        setSongs((oldSongs) =>
-          oldSongs.map((song) => (song.id === songId ? { ...song, liked: target.liked } : song))
-        );
-        showAppToast("could not save like change", "error");
-      });
-  }
-
   function askRemoveSong(songId: string) {
     const target = songs.find((song) => song.id === songId);
     if (!target) return;
@@ -4927,17 +4232,11 @@ function MainModeApp() {
     requestLibraryGridSongSelect(songId, shouldPlay);
   });
 
-  const togglePlayCardAction = useStableCallback(() => {
-    togglePlay();
-  });
 
   const toggleLikeCardAction = useStableCallback((songId: string) => {
     toggleLike(songId);
   });
 
-  const openEditorCardAction = useStableCallback((song: Song) => {
-    openEditor(song);
-  });
 
   const openPlaylistPickerCardAction = useStableCallback((song: Song) => {
     openPlaylistPicker(song);
@@ -5002,13 +4301,13 @@ function MainModeApp() {
   async function saveEditor() {
     if (!editorSong) return;
 
-    await patchSongLocal(editorSong.id, {
+    const saved = await saveSongEdit(editorSong.id, {
       title: editTitle.trim() || "untitled",
       artist: editArtist.trim() || "unknown artist",
       album: editAlbum.trim() || "local files"
     });
 
-    setEditorSong(null);
+    if (saved) setEditorSong(current => current?.id === editorSong.id ? null : current);
   }
 
   function dismissOnboarding() {
@@ -5112,15 +4411,14 @@ function MainModeApp() {
           fallback={
             <div className="settingsPageCard settingsLazyLoading" role="status" aria-live="polite">
               <div className="settingsSectionTitle">
-                <span>settings</span>
-                <strong>loading this section</strong>
-                <small>only loading the panel you opened, so startup stays lighter.</small>
+                <strong>Loading settings…</strong>
               </div>
             </div>
           }
         >
           <SettingsCategoryContent
           settingsCategory={settingsCategory}
+        sleepDeadline={sleepDeadline}
         setSettingsCategory={(value: string) => setSettingsCategory(value as SettingsCategory)}
         settings={settings}
         updateSetting={updateSetting}
@@ -5158,9 +4456,6 @@ function MainModeApp() {
         diagnosticsCopied={diagnosticsCopied}
         diagnosticsInfo={diagnosticsInfo}
         platformInfo={platformInfo}
-        libraryRenderLimitRef={libraryRenderLimitRef}
-        INITIAL_LIBRARY_RENDER_LIMIT={INITIAL_LIBRARY_RENDER_LIMIT}
-        setLibraryRenderLimit={setLibraryRenderLimit}
         resetDiscordSettings={resetDiscordSettings}
         resetAppearanceSettings={resetAppearanceSettings}
         resetPlayerLayoutSettings={resetPlayerLayoutSettings}
@@ -5280,19 +4575,23 @@ function MainModeApp() {
   const libraryAreaDragOver = useStableCallback(handleLibraryAreaDragOver);
   const libraryAreaDragLeave = useStableCallback(handleLibraryAreaDragLeave);
   const libraryAreaDrop = useStableCallback(handleLibraryAreaDrop);
+  const moveLibraryRow = useStableCallback((songId: string, targetId: string, side: LibraryDropSide) => {
+    if (!libraryOrderLocked) moveSongInLibraryByPointer(songId, targetId, side);
+  });
   const libraryRows = useMemo<Omit<VirtualSongRowsProps, "list" | "className">>(() => ({
     currentId, isPlaying, draggedSongId, libraryDragOverSongId, libraryDropSide, draggedSongTitle,
     onAreaDragOver: libraryAreaDragOver, onAreaDragLeave: libraryAreaDragLeave, onAreaDrop: libraryAreaDrop,
-    onSelectSong: selectSongCardAction, onTogglePlay: togglePlayCardAction, onToggleLike: toggleLikeCardAction,
-    onOpenEditor: openEditorCardAction, onOpenPlaylistPicker: openPlaylistPickerCardAction,
+    onSelectSong: selectSongCardAction, onToggleLike: toggleLikeCardAction,
+    onOpenPlaylistPicker: openPlaylistPickerCardAction,
     onOpenSongContextMenu: openSongContextMenuCardAction, onStartSongDrag: startSongDragCardAction,
-    onPointerStartSongDrag: startPointerSongDragCardAction, registerLibrarySongElement,
+    onPointerStartSongDrag: libraryOrderLocked ? undefined : startPointerSongDragCardAction, registerLibrarySongElement,
+    onMoveSong: libraryOrderLocked ? undefined : moveLibraryRow,
     onDragOverSong: dragOverSongCardAction, onDragLeaveSong: dragLeaveSongCardAction,
     onDropSong: dropSongCardAction, onDragEnd: endSongDragCardAction
   }), [currentId, isPlaying, draggedSongId, libraryDragOverSongId, libraryDropSide, draggedSongTitle,
-    libraryAreaDragOver, libraryAreaDragLeave, libraryAreaDrop, selectSongCardAction, togglePlayCardAction,
-    toggleLikeCardAction, openEditorCardAction, openPlaylistPickerCardAction, openSongContextMenuCardAction,
-    startSongDragCardAction, startPointerSongDragCardAction, registerLibrarySongElement, dragOverSongCardAction,
+    libraryAreaDragOver, libraryAreaDragLeave, libraryAreaDrop, selectSongCardAction,
+    toggleLikeCardAction, openPlaylistPickerCardAction, openSongContextMenuCardAction,
+    startSongDragCardAction, startPointerSongDragCardAction, libraryOrderLocked, moveLibraryRow, registerLibrarySongElement, dragOverSongCardAction,
     dragLeaveSongCardAction, dropSongCardAction, endSongDragCardAction]);
 
   const localtifyAppViewProps: AppShellProps = {
@@ -5300,9 +4599,9 @@ function MainModeApp() {
       appRootRef,
       settings,
       platformInfo,
+      closeWindowSafely,
       themeMotionReady,
       showTopUpdateRibbon,
-      isViewSwitching,
       heroMotion,
       heroMotionAppClass,
       homeEntranceSettledClass,
@@ -5468,8 +4767,10 @@ function MainModeApp() {
     },
     settingsView: {
       renderSettingsCategoryContent,
+      settingsSaveError, retrySettingsSave,
       settingsRail: {
         tabs: visibleSettingsTabs,
+        analysisSupported,
         activeCategory: settingsCategory,
         search: settingsSearch,
         resultLabel: settingsSearchResultLabel,

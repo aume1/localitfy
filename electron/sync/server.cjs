@@ -200,6 +200,19 @@ function createSyncServer({ repositories, coverPath, statePath, serverName = "co
   }
 
   function applyChanges(body) {
+    // The receipt transaction checks the exact playlist baseline before changing any songs or events.
+    if (body?.playlistExpected !== undefined) {
+      if (!Array.isArray(body.playlistExpected)) throw new Error("Invalid playlist baseline");
+      const current = new Map(repositories.playlists.get().map(item => [item.id, item]));
+      const touched = new Set([...((body.playlists?.put || []).map(item => item.id)), ...(body.playlists?.delete || [])]);
+      const canonical = item => item ? [item.id, item.name, item.songIds, item.createdAt, item.coverArtwork || ""] : null;
+      const expected = new Map(body.playlistExpected);
+      if (expected.size !== touched.size || [...touched].some(id => !expected.has(id) || JSON.stringify(canonical(current.get(id))) !== JSON.stringify(canonical(expected.get(id))))) {
+        const error = new Error("Playlist changed while syncing; rebase required");
+        error.code = "PLAYLIST_CONFLICT";
+        throw error;
+      }
+    }
     const result = { songs: 0, playlists: 0, playEvents: 0 };
     const finishedEvents = [];
     const likes = [];
@@ -353,7 +366,7 @@ function createSyncServer({ repositories, coverPath, statePath, serverName = "co
     return new Promise((resolve, reject) => {
       const next = http.createServer((request, response) => {
         handle(request, response).catch((error) => {
-          if (!response.headersSent) send(response, 400, { error: error?.message || "bad request" });
+          if (!response.headersSent) send(response, error?.code === "PLAYLIST_CONFLICT" ? 409 : 400, { error: error?.message || "bad request", ...(error?.code === "PLAYLIST_CONFLICT" ? {code: error.code} : {}) });
           else response.destroy();
         });
       });

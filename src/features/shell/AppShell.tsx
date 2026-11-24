@@ -1,5 +1,7 @@
 import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useStableCallback } from "../../shared/hooks/useStableCallback";
+import { AppReducedMotionContext } from "../../shared/hooks/useAppReducedMotion";
+import { MotionConfig } from "motion/react";
 import type { CollectionMenuStore } from "./collectionMenuStore";
 import type { CSSProperties } from "react";
 import { FolderPlus } from "lucide-react";
@@ -77,7 +79,7 @@ export default function AppShell(props: AppShellProps) {
   } = props;
 
   const {
-    appRootRef, settings, platformInfo, themeMotionReady, showTopUpdateRibbon, isViewSwitching,
+    appRootRef, settings, platformInfo, themeMotionReady, showTopUpdateRibbon,
     heroMotion, heroMotionAppClass, homeEntranceSettledClass, isAppBackgrounded, scrollBusyRef,
     themeSettling, effectiveTheme,
     effectiveAmbient, effectiveCoverColorSyncMode, effectiveNotes, statusText, draggedSongTitle
@@ -134,6 +136,8 @@ export default function AppShell(props: AppShellProps) {
 
 
   return (
+    <MotionConfig reducedMotion={settings.reducedMotion ? "always" : "user"}>
+    <AppReducedMotionContext.Provider value={settings.reducedMotion}>
     <AppActionsContext.Provider value={actions}>
     <ArtworkAmbientContext.Provider value={artworkEnabled}>
     <PageAtmosphereContext.Provider value={atmosphereContext}>
@@ -141,7 +145,7 @@ export default function AppShell(props: AppShellProps) {
       ref={appRootRef}
       className={`app ${settings.animatedGlow ? "animatedGlow" : ""} ${
         settings.compactPlayer ? "compactPlayer" : ""
-      } ${settings.denseList ? "denseList" : ""} ${themeMotionReady ? "themeMotionReady" : "themeMotionBooting"} animatedBackgrounds ${settings.reducedMotion ? "reducedMotion" : ""} ${showTopUpdateRibbon ? "updateRibbonVisible" : ""} ${isViewSwitching ? "viewSwitching" : ""} ${heroMotionAppClass} ${homeEntranceSettledClass} ${isSeeking || isVolumeDragging ? "playerScrubbing" : ""} ${isAppBackgrounded ? "appBackgrounded" : ""} ${scrollBusyRef.current ? "isScrolling" : ""} ${themeSettling ? "themeSettling" : ""} ${draggedSongId ? "songDragActive" : ""} ${isPlaying ? "appAudioPlaying" : "appAudioIdle"} ${
+      } ${settings.denseList ? "denseList" : ""} ${themeMotionReady ? "themeMotionReady" : "themeMotionBooting"} animatedBackgrounds ${settings.reducedMotion ? "reducedMotion" : ""} ${showTopUpdateRibbon ? "updateRibbonVisible" : ""} ${heroMotionAppClass} ${homeEntranceSettledClass} ${isSeeking || isVolumeDragging ? "playerScrubbing" : ""} ${isAppBackgrounded ? "appBackgrounded" : ""} ${scrollBusyRef.current ? "isScrolling" : ""} ${themeSettling ? "themeSettling" : ""} ${draggedSongId ? "songDragActive" : ""} ${isPlaying ? "appAudioPlaying" : "appAudioIdle"} ${
         secretMode !== "none" ? `secretActive secret-${secretMode}` : ""
       }`}
       style={
@@ -185,7 +189,7 @@ export default function AppShell(props: AppShellProps) {
     >
 
       {artworkEnabled && workspaceSources.length ? <WorkspaceArtworkBackdrop sources={workspaceSources} /> : null}
-      <TitleBar showWindowButtons={platformId !== "mac"} history={nav}>
+      <TitleBar showWindowButtons={platformId !== "mac"} history={nav} onClose={frame.closeWindowSafely}>
         {!isAndroidApp()?updateBanner:null}
       </TitleBar>
 
@@ -292,6 +296,8 @@ export default function AppShell(props: AppShellProps) {
     </PageAtmosphereContext.Provider>
     </ArtworkAmbientContext.Provider>
     </AppActionsContext.Provider>
+    </AppReducedMotionContext.Provider>
+    </MotionConfig>
   );
 }
 

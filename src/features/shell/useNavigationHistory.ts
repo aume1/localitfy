@@ -28,6 +28,7 @@ function scrollsSideways(target: EventTarget | null, deltaX: number) {
 export function useNavigationHistory(view: View, changeView: (view: View, source?: "nav" | "unknown") => unknown, contentRef: RefObject<HTMLElement | null>) {
   const changeViewStable = useStableCallback(changeView);
   const [history, setHistory] = useState<HistoryState>(() => ({ entries: [{ view, detail: null, scrollTop: 0 }], index: 0 }));
+  const historyRef = useRef(history);
   const pendingScrollRef = useRef<number | null>(null);
   const entry = history.entries[history.index];
   // During a concurrent view transition history can advance before the old page commits away.
@@ -37,9 +38,14 @@ export function useNavigationHistory(view: View, changeView: (view: View, source
   }, [entry, view]);
 
   const push = useCallback((nextView: View, detail: PageDetail | null) => {
-    const scrollTop = contentRef.current?.scrollTop ?? 0;
-    setHistory((current) => pushHistory(current, nextView, detail, scrollTop));
+    const current = historyRef.current;
+    const leaving = current.entries[current.index];
+    const scrollTop = leaving === committedEntryRef.current ? contentRef.current?.scrollTop ?? 0 : leaving.scrollTop;
+    const next = pushHistory(current, nextView, detail, scrollTop);
+    if (next === current) return;
+    historyRef.current = next;
     pendingScrollRef.current = 0;
+    setHistory(next);
   }, [contentRef]);
 
   const go = useCallback((nextView: View, source: "nav" | "unknown" = "nav") => {
@@ -55,13 +61,17 @@ export function useNavigationHistory(view: View, changeView: (view: View, source
   }, [push, changeViewStable, go]);
 
   const step = useCallback((delta: -1 | 1) => {
-    const target = history.entries[history.index + delta];
-    if (!target) return;
-    const scrollTop = contentRef.current?.scrollTop ?? 0;
-    setHistory((current) => stepHistory(current, delta, scrollTop));
+    const current = historyRef.current;
+    const leaving = current.entries[current.index];
+    const scrollTop = leaving === committedEntryRef.current ? contentRef.current?.scrollTop ?? 0 : leaving.scrollTop;
+    const next = stepHistory(current, delta, scrollTop);
+    if (next === current) return;
+    const target = next.entries[next.index];
+    historyRef.current = next;
     pendingScrollRef.current = target.scrollTop;
+    setHistory(next);
     changeViewStable(target.view, "unknown");
-  }, [history, contentRef, changeViewStable]);
+  }, [contentRef, changeViewStable]);
 
   const back = useCallback(() => step(-1), [step]);
   const forward = useCallback(() => step(1), [step]);
@@ -78,7 +88,7 @@ export function useNavigationHistory(view: View, changeView: (view: View, source
   // A view change that did not come through here (menus, links inside a page) starts a new entry.
   // (go/open/back/forward update the entry before the view, so their own changes always match here.)
   useLayoutEffect(() => {
-    if (view !== entry.view) push(view, null);
+    if (view !== entry.view && historyRef.current.entries[historyRef.current.index] === entry) push(view, null);
   }, [view]);
 
   // Every page shares the .content scroller: new pages open at the top, back/forward restore the old spot.

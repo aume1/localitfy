@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const { normalizePlayEvent } = require("../../electron/db/play-events.cjs");
 const source = fs.readFileSync(new URL("../../src/features/player/listeningHistory.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 } }).outputText;
-const { ListeningHistory } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { ListeningHistory, createListeningEventWriter } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 function setup() {
   let time = 1_000_000;
@@ -92,4 +92,24 @@ test("native input rejects malformed, excessive and inconsistent events", () => 
     { endedAt: valid.updatedAt }, { contextType: "playlist", contextId: null },
     { updatedAt: valid.startedAt - 1 }, { updatedAt: Date.now() + 120_000 }
   ]) assert.equal(normalizePlayEvent({ ...valid, ...patch }), null, JSON.stringify(patch));
+});
+
+test("listening writes retain the newest checkpoint across an unavailable database", async () => {
+  let fail = true;
+  let durable = [];
+  const saved = [];
+  const writer = createListeningEventWriter(async event => { if (fail) throw new Error("offline"); saved.push(event); return true; }, events => { durable = events; });
+  const {tracker, writes} = setup();
+  tracker.play("song", 0);
+  writer.enqueue(writes[0]);
+  assert.equal(await writer.flush(), false);
+  tracker.finish("ended");
+  writer.enqueue(writes.at(-1));
+  assert.equal(await writer.flush(), false);
+  assert.equal(durable[0].outcome, "ended");
+  fail = false;
+  assert.equal(await writer.flush(), true);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].outcome, "ended");
+  assert.equal(durable.length, 0);
 });

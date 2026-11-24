@@ -137,3 +137,13 @@ input[type="range"]::-webkit-slider-thumb{
 .ltButton:active:not(:disabled) { transform: scale(.96); }
 @media (prefers-reduced-motion: reduce) { .ltButton:active:not(:disabled) { transform: none; } }
 .app.reducedMotion .ltButton:active:not(:disabled) { transform: none; }
+
+button svg:not(.ltSolidIcon),
+.circleButton svg:not(.ltSolidIcon) {
+  fill: none !important;
+  stroke: currentColor !important;
+}
+.app svg.ltSolidIcon {
+  fill: currentColor !important;
+  stroke: none !important;
+}

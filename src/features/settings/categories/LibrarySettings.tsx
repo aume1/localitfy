@@ -35,9 +35,9 @@ export default function LibrarySettings(p: LibrarySettingsProps) {
   const preview = p.metadataCleanPreview;
   return <section className="settingsCategoryPage settingsLibraryClean" aria-label="Library settings">
     <header className="settingsCategoryHeader"><h4>{phone ? `Sync with your ${computerName()}` : "Library"}</h4></header>
-    {phone ? <Suspense fallback={null}><AndroidSyncSettings /></Suspense> : <>
+    {phone ? <div id="settings-library-sync"><Suspense fallback={<p role="status">Loading sync…</p>}><AndroidSyncSettings /></Suspense></div> : <>
       <div id="settings-library-folders"><WatchedFoldersSettings settings={p.settings} updateSetting={p.updateSetting} /></div>
-      <PhoneSyncSettings />
+      <div id="settings-library-sync"><PhoneSyncSettings /></div>
       <SettingSection title="Artwork" id="settings-library-artwork" className="settingsArtworkSection">
         <div className="settingsActionRow">
           <button className="settingsActionButton" type="button" disabled={p.pixelArtBusy || !p.songs.length}

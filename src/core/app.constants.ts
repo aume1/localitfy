@@ -1,5 +1,3 @@
-export const INITIAL_LIBRARY_RENDER_LIMIT = 42;
-export const LIBRARY_RENDER_BATCH_SIZE = 48;
 export const CUSTOM_THEME_COMMIT_DELAY_MS = 680;
 export const V013_DEFAULTS_KEY = "localitfy.v013.defaultsApplied";
 export const START_WITH_WINDOWS_DEFAULT_KEY = "localitfy.v029.startWithWindowsDefaultApplied";

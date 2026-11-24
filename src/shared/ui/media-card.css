@@ -50,6 +50,7 @@
   background: var(--lt-surface-raised);
   cursor: pointer;
   opacity: 0;
+  pointer-events: none;
   transform: translateY(4px);
   transition: opacity var(--lt-control-motion) ease, transform var(--lt-control-motion) ease, background-color var(--lt-control-motion) ease;
 }
@@ -57,6 +58,7 @@
 .mediaCard:hover .mediaCardPlay,
 .mediaCard:focus-within .mediaCardPlay {
   opacity: 1;
+  pointer-events: auto;
   transform: translateY(0);
 }
 
@@ -65,7 +67,7 @@
 .mediaCardPlayCentered .mediaCardPlay { inset: 0; margin: auto; }
 
 .mediaCardPlay:hover { background: color-mix(in srgb, var(--lt-accent) 12%, var(--lt-surface-raised)); }
-.mediaCardPlay:focus-visible { opacity: 1; transform: none; outline: 2px solid var(--lt-text); outline-offset: 2px; }
+.mediaCardPlay:focus-visible { opacity: 1; pointer-events: auto; transform: none; outline: 2px solid var(--lt-text); outline-offset: 2px; }
 .mediaCardPlay svg { margin-left: 0; }
 
 
@@ -75,5 +77,5 @@
 
 /* Coarse pointers have no hover; keep collection playback discoverable. */
 @media (hover: none), (pointer: coarse) {
-  .mediaCardPlay { min-width: 44px; min-height: 44px; opacity: 1; transform: none; }
+  .mediaCardPlay { min-width: 44px; min-height: 44px; opacity: 1; pointer-events: auto; transform: none; }
 }

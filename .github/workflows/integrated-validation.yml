@@ -18,6 +18,12 @@ on:
       - '.github/workflows/integrated-validation.yml'
       - 'android/**'
       - 'src/platform/android/**'
+      - 'src/features/library/components/TrackRow.tsx'
+      - 'src/features/library/components/SongRows.tsx'
+      - 'src/features/library/components/track-row.css'
+      - 'src/features/playlists/components/VirtualPlaylistTrackList.tsx'
+      - 'src/features/settings/categories/PlaybackSettings.tsx'
+      - 'src/shared/hooks/useAppReducedMotion.ts'
       - 'electron/sync/**'
       - 'capacitor.config.*'
 permissions:

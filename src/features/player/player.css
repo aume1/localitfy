@@ -156,36 +156,19 @@
 .playerBar .circleButton,
 .playerBar .volumeIconButton,
 .playerBar .repeatButton{
-  width: var(--player-control-size) !important;
-  height: var(--player-control-size) !important;
-  min-width: var(--player-control-size) !important;
-  min-height: var(--player-control-size) !important;
   position: relative !important;
 
-  color: var(--lt-text) !important;
 
   cursor: pointer !important;
   -webkit-app-region: no-drag !important;
   transform-origin: center center !important;
-  transition:
-    transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
-    color 160ms ease,
-    opacity 160ms ease !important;
 }
 
 .playerBar .circleButton:hover,
 .playerBar .volumeIconButton:hover,
 .playerBar .repeatButton:hover{
-  transform: translate3d(0, -1px, 0) scale(1.06) !important;
-  color: var(--lt-text) !important;
 
   opacity: 1 !important;
-}
-
-.playerBar .circleButton:active,
-.playerBar .volumeIconButton:active,
-.playerBar .repeatButton:active{
-  transform: translate3d(0, 0, 0) scale(0.94) !important;
 }
 
 .playerBar .circleButton.main{
@@ -519,18 +502,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 }
 
 
-.app.viewSwitching .playerBar::before,
-.app.viewSwitching .playerBar::after{
-  animation-play-state: paused !important;
-  filter: none !important;
-  opacity: 0.16 !important;
-}
-
-.app.viewSwitching .playerBar{
-
-  filter: none !important;
-}
-
 .app.compactPlayer .playerBar{
   --player-size-used: var(--player-size-live, var(--player-size, 92px));
   --player-art-size: clamp(42px, calc(var(--player-size-used) - 34px), 56px);
@@ -690,8 +661,7 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 
 .playerBar .circleButton,
 .playerBar .volumeIconButton,
-.playerBar .repeatButton,
-.playerBar .playerControlButton {
+.playerBar .repeatButton{
   width: 28px !important;
   height: 28px !important;
   min-width: 28px !important;
@@ -699,16 +669,11 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
   padding: 0 !important;
   display: inline-grid !important;
   place-items: center !important;
-  border: 0 !important;
   outline: 0 !important;
   border-radius: 999px !important;
-  background: transparent !important;
   background-image: none !important;
-  box-shadow: none !important;
   color: var(--lt-muted) !important;
   opacity: 1 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
   transform: translateZ(0) !important;
   transition:
     color 160ms ease,
@@ -729,21 +694,17 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 
 .playerBar .circleButton:hover,
 .playerBar .volumeIconButton:hover,
-.playerBar .repeatButton:hover,
-.playerBar .playerControlButton:hover {
+.playerBar .repeatButton:hover{
   color: var(--lt-text) !important;
-  background: transparent !important;
   background-image: none !important;
   border: 0 !important;
-  box-shadow: none !important;
   filter: none !important;
   transform: translateY(-1px) scale(1.04) translateZ(0) !important;
 }
 
 .playerBar .circleButton:active,
 .playerBar .volumeIconButton:active,
-.playerBar .repeatButton:active,
-.playerBar .playerControlButton:active {
+.playerBar .repeatButton:active{
   transform: translateY(0) scale(0.96) translateZ(0) !important;
 }
 
@@ -773,7 +734,7 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 
 .playerBar .circleButton.main:hover,
 .playerBar .playPauseButton:hover {
-  background: color-mix(in oklab, rgb(var(--accent-rgb)) 88%, white 12%) !important;
+  background: color-mix(in srgb, var(--lt-accent) 88%, var(--lt-text) 12%) !important;
   color: var(--button-text-on-accent) !important;
   box-shadow:
     0 10px 28px rgba(var(--accent-rgb),0.28),
@@ -790,8 +751,7 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 .playerBar .playerControlIcon,
 .playerBar .circleButton svg,
 .playerBar .volumeIconButton svg,
-.playerBar .repeatButton svg,
-.playerBar .playerControlButton svg {
+.playerBar .repeatButton svg{
   display: block !important;
   width: 18px !important;
   height: 18px !important;
@@ -1200,21 +1160,15 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
   margin-bottom: 8px;
 }
 
-.playerBar .playerButton,
 .playerBar .circleButton,
-.playerBar .volumeIconButton,
-.playerBar .playerThumb,
-.playerBar .playerCover {
+.playerBar .volumeIconButton{
   rotate: 0deg !important;
   transform-style: flat !important;
   perspective: none !important;
 }
 
-.playerBar .playerCover:hover,
-.playerBar .playerThumb:hover,
-.playerBar .playerButton:hover,
 .playerBar .circleButton:hover,
-.playerBar .volumeIconButton:hover {
+.playerBar .volumeIconButton:hover{
   rotate: 0deg !important;
 }
 
@@ -1611,7 +1565,7 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 .playerBar .smallArt{
   box-shadow:
     0 10px 22px rgba(0,0,0,0.26),
-    0 0 0 1px rgba(255,255,255,0.11),
+    0 0 0 1px var(--lt-border),
     0 0 22px rgba(var(--cover-rgb, var(--accent-rgb)), 0.08) !important;
 }
 
@@ -1708,8 +1662,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 
 .playerBar .controlRow > .circleButton:not(.main),
 .playerBar .controlRow > .repeatButton,
-.playerBar .controlRow > .playerButton:not(.main),
-.playerBar .controlRow > .playerControlButton:not(.main),
 .playerBar .controlRow > .volumeIconButton{
   background: transparent !important;
   background-color: transparent !important;
@@ -1724,10 +1676,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 .playerBar .controlRow > .circleButton:not(.main)::after,
 .playerBar .controlRow > .repeatButton::before,
 .playerBar .controlRow > .repeatButton::after,
-.playerBar .controlRow > .playerButton:not(.main)::before,
-.playerBar .controlRow > .playerButton:not(.main)::after,
-.playerBar .controlRow > .playerControlButton:not(.main)::before,
-.playerBar .controlRow > .playerControlButton:not(.main)::after,
 .playerBar .controlRow > .volumeIconButton::before,
 .playerBar .controlRow > .volumeIconButton::after{
   content: none !important;
@@ -1736,8 +1684,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 
 .playerBar .controlRow > .circleButton:not(.main):hover,
 .playerBar .controlRow > .repeatButton:hover,
-.playerBar .controlRow > .playerButton:not(.main):hover,
-.playerBar .controlRow > .playerControlButton:not(.main):hover,
 .playerBar .controlRow > .volumeIconButton:hover{
   background: transparent !important;
   background-color: transparent !important;
@@ -1970,7 +1916,6 @@ body.localitfyThemePainting .app .volumeWrap input[type="range"],
 body.localtifyWindowBackgrounded .app .playerBar,
 .app.reducedMotion .playerBar,
 .app[data-motion-level="reduced"] .playerBar,
-.app.viewSwitching .playerBar,
 .app.themeSettling .playerBar{
   --player-perf-blur: 18px;
   --player-perf-opacity: 0.14;
@@ -1985,7 +1930,6 @@ body.localtifyWindowBackgrounded .app .playerBar,
 body.localtifyWindowBackgrounded .app .playerBar::before,
 .app.reducedMotion .playerBar::before,
 .app[data-motion-level="reduced"] .playerBar::before,
-.app.viewSwitching .playerBar::before,
 .app.themeSettling .playerBar::before{
   animation: none !important;
   transition: opacity 120ms ease, filter 120ms ease !important;
@@ -1996,7 +1940,6 @@ body.localtifyWindowBackgrounded .app .playerBar::before,
 body.localtifyWindowBackgrounded .app .playerBar:hover::before,
 .app.reducedMotion .playerBar:hover::before,
 .app[data-motion-level="reduced"] .playerBar:hover::before,
-.app.viewSwitching .playerBar:hover::before,
 .app.themeSettling .playerBar:hover::before{
   opacity: var(--player-perf-hover-opacity) !important;
   filter:
@@ -2016,7 +1959,6 @@ body.localtifyWindowBackgrounded .app .playerBar:hover::before,
   animation: none !important;
 }
 
-.app.viewSwitching .playerBar *,
 .app.themeSettling .playerBar *{
   transition-duration: 80ms !important;
 }

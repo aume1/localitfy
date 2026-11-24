@@ -9,6 +9,13 @@ let unreachableUntil = 0;
 let unreachablePair: { url: string; token: string } | null = null;
 const samePair = (a: { url: string; token: string } | null, b: { url: string; token: string } | null) => !!a && !!b && a.url === b.url && a.token === b.token;
 
+export async function scopedFeatureKey(key: string) {
+  const pairing = phoneLibrary.pairing;
+  if (!pairing) return null;
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pairing.token));
+  return `paired:${Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, "0")).join("")}:${key}`;
+}
+
 type MacAnswer<T> = { ok: boolean; result?: T; error?: string };
 
 /**
@@ -36,8 +43,9 @@ export async function callMac<T>(channel: string, payload: unknown, timeoutMs = 
   unreachableUntil = 0;
   unreachablePair = null;
   let body: { result?: T; error?: string } = {};
-  try { body = JSON.parse(response.body || "{}"); } catch { /* non-JSON error page */ }
-  if (response.status >= 400) return { ok: false, error: body.error || `Your ${computerName()} answered with error ${response.status}` };
+  try { body = JSON.parse(response.body || "{}"); } catch { return {ok: false, error: "Invalid response from paired computer"}; }
+  if (response.status < 200 || response.status >= 300) return { ok: false, error: body.error || `Your ${computerName()} answered with error ${response.status}` };
+  if (!body || typeof body !== "object" || !Object.hasOwn(body, "result")) return {ok: false, error: "Invalid response from paired computer"};
   return { ok: true, result: body.result as T };
 }
 
@@ -49,14 +57,18 @@ export function markMacReachable() {
 
 /** The Mac's answer when it can be reached (kept for offline use), otherwise the last kept answer, otherwise `fallback`. */
 export async function fromMacOrKept<T>(channel: string, payload: unknown, key: string, fallback: T, keep: (result: T) => boolean = () => true, timeoutMs?: number): Promise<T> {
+  const pairing = phoneLibrary.pairing;
+  const scoped = await scopedFeatureKey(key);
+  if (!samePair(pairing, phoneLibrary.pairing)) return fallback;
   const answer = await callMac<T>(channel, payload, timeoutMs);
+  if (!samePair(pairing, phoneLibrary.pairing)) return fallback;
   if (answer.ok) {
     const result = answer.result as T;
-    if (keep(result)) await writeValues({ [key]: result }).catch(() => undefined);
+    if (scoped && keep(result)) await writeValues({ [scoped]: result }).catch(() => undefined);
     return result;
   }
-  const kept = await readValue<T | null>(key, null).catch(() => null);
-  if (kept) return kept;
+  const kept = scoped ? await readValue<T | null>(scoped, null).catch(() => null) : null;
+  if (kept !== null && samePair(pairing, phoneLibrary.pairing)) return kept;
   if (answer.error) throw new Error(answer.error);
   return fallback;
 }

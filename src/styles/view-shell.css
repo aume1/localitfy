@@ -196,6 +196,10 @@ main.app.app > .appShell > .sidebar .navSolidIcon {
   animation: none !important;
   transform: none !important;
 }
+main.app.app > .appShell > .sidebar .navItem:focus-visible {
+  outline: 2px solid var(--lt-accent) !important;
+  outline-offset: -2px !important;
+}
 main.app.app > .appShell > .sidebar .navItem:focus-visible .navIcon {
   outline: 2px solid var(--lt-accent) !important;
   outline-offset: 2px;
@@ -225,6 +229,8 @@ main.app.app > .appShell > .sidebar .navDivider {
   margin: 4px auto !important;
   background: var(--lt-border) !important;
   opacity: 1 !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
   flex: 0 0 auto;
 }
 main.app.app > .appShell > .sidebar .sidebarBottom {

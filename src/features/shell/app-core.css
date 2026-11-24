@@ -352,12 +352,6 @@ button:disabled{
   gap: 14px;
 }
 
-.topList{
-  display: grid;
-
-  margin-top: 12px;
-}
-
 .editorModal{
   width: min(980px, calc(100vw - 40px));
   max-height: calc(100vh - 78px);
@@ -1039,10 +1033,6 @@ button:disabled{
     linear-gradient(180deg, rgba(255,255,255,.035), transparent 34%) !important;
 }
 
-.topList{
-  gap: 7px !important;
-}
-
 .secretLayer{
 
   opacity: 0;
@@ -1562,7 +1552,7 @@ html,
 body,
 #root{
   overflow: hidden !important;
-  background: #000 !important;
+  background: var(--lt-bg) !important;
 }
 
 .app{

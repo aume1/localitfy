@@ -584,7 +584,36 @@ server.listen(5173,async()=>{
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('[data-settings-category=playback] #settings-playback-transitions')").catch(()=>false),"Playback Settings "+mode,5000);
       const playbackHeaderTop = await win.webContents.executeJavaScript("document.querySelector('.settingsPage .pageHeader')?.getBoundingClientRect().top ?? -999");
       assert.ok(playbackHeaderTop >= 0 && playbackHeaderTop < 160, "Settings playback scroll reset: "+playbackHeaderTop);
+      const rangeValues = await win.webContents.executeJavaScript("Array.from(document.querySelectorAll('[data-settings-category=playback] .settingsRangeValue')).filter(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'&&e.textContent.trim()}).length");
+      assert.ok(rangeValues>=2,"Playback sliders show numerical values");
       await screenshot(win,"settings-playback-"+mode);
+      const timerChoice = await win.webContents.executeJavaScript("(()=>{const b=[...document.querySelectorAll('#settings-playback-sleep button')].find(b=>b.textContent.trim()==='15 min');if(!b)return false;b.click();return true})()");
+      assert.ok(timerChoice, "Sleep timer can be armed");
+      await until(()=>win.webContents.executeJavaScript("document.querySelector('#settings-playback-sleep')?.textContent.includes('remaining')").catch(()=>false),"visible sleep countdown");
+      await win.webContents.executeJavaScript("[...document.querySelectorAll('#settings-playback-sleep button')].find(b=>b.textContent.trim()==='Off').click()");
+      await until(()=>win.webContents.executeJavaScript("!document.querySelector('#settings-playback-sleep')?.textContent.includes('remaining')"),"sleep timer cancels");
+      const settingsSearchCases = [
+        {
+          label: "scrobbling",
+          search: "(()=>{const e=document.querySelector('#settings-section-search');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'scrobbling');e.dispatchEvent(new Event('input',{bubbles:true}));})()",
+          found: "[...document.querySelectorAll('.settingsControlResult')].some(b=>b.textContent.includes('Scrobbling accounts'))",
+          click: "[...document.querySelectorAll('.settingsControlResult')].find(b=>b.textContent.includes('Scrobbling accounts')).click()",
+          focused: "!!document.getElementById('settings-playback-scrobbling')?.contains(document.activeElement)"
+        },
+        {
+          label: "phone sync",
+          search: "(()=>{const e=document.querySelector('#settings-section-search');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'phone sync');e.dispatchEvent(new Event('input',{bubbles:true}));})()",
+          found: "[...document.querySelectorAll('.settingsControlResult')].some(b=>b.textContent.includes('Phone sync'))",
+          click: "[...document.querySelectorAll('.settingsControlResult')].find(b=>b.textContent.includes('Phone sync')).click()",
+          focused: "!!document.getElementById('settings-library-sync')?.contains(document.activeElement)"
+        }
+      ];
+      for(const check of settingsSearchCases){
+        await win.webContents.executeJavaScript(check.search);
+        await until(()=>win.webContents.executeJavaScript(check.found),"search "+check.label);
+        await win.webContents.executeJavaScript(check.click);
+        await until(()=>win.webContents.executeJavaScript(check.focused).catch(()=>false),"focused "+check.label);
+      }
       const discordSelected = await win.webContents.executeJavaScript("(()=>{const button=[...document.querySelectorAll('.settingsCategoryButton')].find(button=>button.textContent.trim()==='Discord');if(!button)return false;button.click();return true;})()");
       assert.ok(discordSelected,"Discord settings remain reachable");
       await until(()=>win.webContents.executeJavaScript("!!document.querySelector('[data-settings-category=discord] #settings-discord-privacy')").catch(()=>false),"Discord Settings "+mode,5000);

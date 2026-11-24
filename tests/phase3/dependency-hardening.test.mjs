@@ -30,8 +30,8 @@ test("yt-dlp runtime pins official binaries and verifies SHA-256", () => {
 });
 
 test("Spotify imports without an artist use the matched video's uploader, never the spotify_<id> file prefix", () => {
-  const main = fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8");
-  const helper = main.slice(main.indexOf("async function makeSongFromFileWithExactSpotifyTrack"), main.indexOf("async function importNewAudioFilesFromDirectory"));
+  const imports = read("electron/runtime/library-import.cjs");
+  const helper = imports.slice(imports.indexOf("async function makeSongFromFileWithExactSpotifyTrack"), imports.indexOf("async function importNewAudioFilesFromDirectory"));
   assert.match(helper, /\|\| matchedArtist \|\| \(\/\^spotify_\/i\.test\(baseSong\.artist\) \? "unknown artist" : ""\)/);
   assert.match(read("electron/ipc/downloads.cjs"), /const sourceInfo = \{[^\n]*matchedArtist: item\.matchedArtist \};/);
 });

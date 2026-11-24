@@ -94,3 +94,30 @@ export class ListeningHistory {
     this.write({ ...this.event });
   }
 }
+
+export function createListeningEventWriter(write: (event: PlayEvent) => Promise<boolean>, journal: (events: PlayEvent[]) => void, recovered: PlayEvent[] = []) {
+  const pending = new Map((Array.isArray(recovered) ? recovered : []).filter(event => event && typeof event.id === "string").map(event => [event.id, event]));
+  let running: Promise<boolean> | null = null;
+  const persist = () => journal([...pending.values()]);
+  const flush = (): Promise<boolean> => {
+    if (running) return running;
+    running = (async () => {
+      while (pending.size) {
+        const event = pending.values().next().value as PlayEvent;
+        try { await write(event); }
+        catch { return false; }
+        if (pending.get(event.id) === event) pending.delete(event.id);
+        persist();
+      }
+      return true;
+    })().finally(() => { running = null; });
+    return running;
+  };
+  return {flush, enqueue(event: PlayEvent) {
+    const prior = pending.get(event.id);
+    if (prior && (prior.updatedAt > event.updatedAt || (prior.outcome !== "active" && event.outcome === "active"))) return;
+    pending.set(event.id, event);
+    persist();
+    void flush();
+  }};
+}

@@ -991,7 +991,7 @@ function saveSettings(settings) {
 
   if (!settings || typeof settings !== "object") return getSettings();
 
-  const entries = Object.entries(settings).filter(([, value]) => typeof value !== "undefined");
+  const entries = Object.entries(settings).filter(([key, value]) => typeof value !== "undefined" && (key !== "playlistMigrationCompleted" || value === true));
   if (!entries.length) return getSettings();
 
   const stmt = database.prepare(`
@@ -1040,7 +1040,7 @@ function getPlaylists() {
     .filter(Boolean);
 }
 
-function savePlaylists(playlists) {
+function savePlaylists(playlists, expected, finishMigration = false) {
   const database = ensureDb();
   // A malformed IPC payload must never be interpreted as a request to
   // clear every playlist. Only an explicit empty array may clear the library.
@@ -1072,6 +1072,8 @@ function savePlaylists(playlists) {
   const deleteMembers = database.prepare("DELETE FROM playlist_songs WHERE playlistId = ?");
   const deleteMember = database.prepare("DELETE FROM playlist_songs WHERE playlistId = ? AND songId = ?");
   const tx = database.transaction(items => {
+    if (finishMigration && getSettings().playlistMigrationCompleted === true) return;
+    if (expected !== undefined && !require("node:util").isDeepStrictEqual(expected, getPlaylists())) throw new Error("Playlist conflict: library changed");
     // Preserve last-write-wins playlist metadata and union membership for duplicate
     // IDs, matching the previous full-snapshot upsert semantics.
     const targets = new Map();
@@ -1104,6 +1106,7 @@ function savePlaylists(playlists) {
         if (old?.get(songId) !== position) insertPlaylistSong.run(id,songId,position,addedAt);
       }
     }
+    if (finishMigration) saveSettings({playlistMigrationCompleted: true});
   });
 
   try {

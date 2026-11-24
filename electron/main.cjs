@@ -24,17 +24,36 @@ const { uniquePaths, createUserDataRuntime } = require("./runtime/user-data.cjs"
 const { createWindowTranslucencyRuntime } = require("./runtime/translucency.cjs");
 const { createIconRuntime } = require("./runtime/icons.cjs");
 const { createUpdaterRuntime } = require("./runtime/updater.cjs");
+const { createSettingsFlushRuntime, createWindowCloseRuntime, createAppShutdownRuntime } = require("./runtime/settings-flush.cjs");
+const settingsFlush = createSettingsFlushRuntime();
+const shutdown = createAppShutdownRuntime({
+  app,
+  getWindow: () => mainWindow,
+  settingsFlush,
+  confirm: win => confirmSettingsFlush(win),
+  cleanup: async () => {
+    discoverCacheLifecycle?.flush();
+    remoteArtworkCache?.close();
+    thumbnailRuntime.stop();
+    libraryWatcher?.dispose();
+    scrobbler?.dispose();
+    if (serviceRuntime) await serviceRuntime.stop("app-before-quit");
+    else {
+      try { cleanupNativeWindowsMedia(); } catch {}
+      try { stopLocaltifyMediaServer(); } catch {}
+    }
+  }
+});
 const { createMediaServerRuntime } = require("./runtime/media-server.cjs");
 const { createThumbnailRuntime } = require("./runtime/thumbnail-runtime.cjs");
 const { createGenreMetadataBackfill } = require("./runtime/genre-backfill.cjs");
-const { bestSpotifyImage, parseSpotifyUrl, shapeSpotifyTrack, decodeHtmlEntities, uniqSpotifyIds } = require("./runtime/spotify-normalize.cjs");
-const { normalizeForLooseMatch, matchSpotifyTrackForFile } = require("./runtime/download-imports.cjs");
+const { createSpotifyClient, SPOTIFY_BROWSER_UA } = require("./runtime/spotify-client.cjs");
+const { createLibraryImportRuntime } = require("./runtime/library-import.cjs");
 const { cleanAlbumFolderText, parseAlbumTrackFileName, albumTrackNumberFromFileName } = require("./runtime/album-import-utils.cjs");
 const { safeProviderCover, imageExtension } = require("./runtime/remote-cover.cjs");
 const { createAppMenuRuntime, createAppCommandSender } = require("./runtime/app-menu.cjs");
 const { installRendererSecurityGuards, installSessionPermissionGuards, isTrustedMainFrameIpcEvent } = require("./runtime/security.cjs");
 const { createDatabaseRepositories } = require("./db/repositories.cjs");
-const http = require("node:http");
 const https = require("node:https");
 const path = require("node:path");
 const fs = require("node:fs");
@@ -69,8 +88,8 @@ const savePlaylists = databaseRepositories.playlists.save;
 const { setDiscordActivity, clearDiscordActivity, getDiscordStatus, resetDiscordActivityCache } = require("./rpc.cjs");
 const { isDownloadFileInProgress } = require("./downloader.cjs");
 
-const { readLocalAudioMetadata, guardMetadataRepairPatch } = require("./metadata-service.cjs");
-const { findFolderCover, resolveSongCover, createLeastUsedCoverAllocator } = require("./cover-service.cjs");
+const { readLocalAudioMetadata } = require("./metadata-service.cjs");
+const { findFolderCover, resolveSongCover } = require("./cover-service.cjs");
 
 const ipcRouter = createIpcRouter(ipcMain, {
   isTrustedEvent: (event) => isTrustedMainFrameIpcEvent(event, mainWindow)
@@ -119,7 +138,7 @@ const {
   getMainWindow: () => mainWindow,
   setMainWindow: (win) => { mainWindow = win; },
   createWindow,
-  setAllowQuit: (value) => { allowQuit = Boolean(value); }
+  setAllowQuit: shutdown.setAllowQuit
 });
 
 const PIXEL_ART_CACHE_TTL_MS = 30_000;
@@ -205,7 +224,6 @@ const downloadUpdate = updaterRuntime.downloadUpdate;
 const installUpdate = updaterRuntime.installUpdate;
 
 let tray = null;
-let allowQuit = false;
 let minimizeToTray = false;
 let nativeShortcutsRegistered = false;
 let nativeMediaState = {
@@ -280,7 +298,7 @@ function updateTrayMenu() {
       { label: "Next", enabled: nativeMediaState.hasSong, click: () => sendPlayerCommand({ type: "next" }) },
       { label: nativeMediaState.muted || nativeMediaState.volume <= 0.01 ? "Unmute" : "Mute", enabled: nativeMediaState.hasSong, click: () => sendPlayerCommand({ type: "muteToggle" }) },
       { type: "separator" },
-      { label: "Quit", click: () => { allowQuit = true; app.quit(); } }
+      { label: "Quit", click: () => { shutdown.requestQuit(); } }
     ]));
   } catch (error) {
     console.log("[localitfy tray menu error]", error?.message || error);
@@ -354,16 +372,11 @@ function cleanupNativeWindowsMedia() {
   }
 }
 
-function attachCloseToTray(win) {
-  if (!win || win.__localitfyCloseToTrayAttached) return;
-  win.__localitfyCloseToTrayAttached = true;
-  win.on("close", (event) => {
-    if (!minimizeToTray || allowQuit || win.isDestroyed()) return;
-    event.preventDefault();
-    win.hide();
-    ensureTray();
-  });
-}
+const {confirmSettingsFlush, attachCloseToTray} = createWindowCloseRuntime({
+  settingsFlush, dialog,
+  quitApproved: shutdown.isApproved, quitPending: shutdown.isPending,
+  shouldHideToTray: () => minimizeToTray && !shutdown.isQuitAllowed(), ensureTray
+});
 
 function updateNativeMediaState(payload = {}) {
   const volume = Number(payload.volume);
@@ -472,7 +485,7 @@ app.setName(APP_NAME);
 const LOCALTIFY_CHROMIUM_PERFORMANCE = configureLocaltifyChromiumPerformance();
 const appMenu = createAppMenuRuntime({ Menu, shell, appName: APP_NAME, isDev, sendPlayerCommand,
   sendAppCommand: createAppCommandSender({ ipcRouter, showMainWindow, getWindow: () => mainWindow }),
-  requestQuit: () => { allowQuit = true; app.quit(); } });
+  requestQuit: () => { shutdown.requestQuit(); } });
 appMenu.update();
 
 const thumbnailRuntime = createThumbnailRuntime({
@@ -596,469 +609,7 @@ function getFfmpegPath() {
   return ffmpegStatic;
 }
 
-const SPOTIFY_BROWSER_UA = process.platform === "win32"
-  ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-  : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-
-const SPOTIFY_REDIRECT_PORT = Number(process.env.SPOTIFY_REDIRECT_PORT || 43877);
-const SPOTIFY_REDIRECT_URI = String(process.env.SPOTIFY_REDIRECT_URI || `http://127.0.0.1:${SPOTIFY_REDIRECT_PORT}/spotify/callback`);
-const SPOTIFY_CLIENT_ID = String(
-  process.env.SPOTIFY_CLIENT_ID ||
-  process.env.VITE_SPOTIFY_CLIENT_ID ||
-  process.env.VITE_PUBLIC_SPOTIFY_CLIENT_ID ||
-  "586c22791eb74d73b1c83db88f1d4c52"
-).trim();
-const SPOTIFY_OAUTH_FILE = () => path.join(app.getPath("userData"), "spotify-oauth.json");
-let _spotifyToken = null;
-let _spotifyTokenExpiry = 0;
-
-function base64UrlEncode(value) {
-  return Buffer.from(value).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-function makeSpotifyCodeVerifier() { return base64UrlEncode(crypto.randomBytes(48)); }
-function makeSpotifyCodeChallenge(verifier) { return base64UrlEncode(crypto.createHash("sha256").update(verifier).digest()); }
-function readSpotifyOAuthToken() {
-  try {
-    const filePath = SPOTIFY_OAUTH_FILE();
-    if (!fs.existsSync(filePath)) return null;
-    const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    if (!parsed || typeof parsed !== "object") return null;
-    return { accessToken: typeof parsed.accessToken === "string" ? parsed.accessToken : "", refreshToken: typeof parsed.refreshToken === "string" ? parsed.refreshToken : "", expiresAt: Number(parsed.expiresAt || 0) };
-  } catch { return null; }
-}
-function writeSpotifyOAuthToken(token) {
-  try {
-    const filePath = SPOTIFY_OAUTH_FILE();
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(token, null, 2), "utf-8");
-  } catch (error) { console.log("[localitfy spotify token save error]", error?.message || error); }
-}
-function clearSpotifyOAuthToken() {
-  _spotifyToken = null;
-  _spotifyTokenExpiry = 0;
-  try { fs.unlinkSync(SPOTIFY_OAUTH_FILE()); } catch {}
-}
-function saveSpotifyOAuthResponse(data = {}, previous = {}) {
-  const expiresIn = Number(data.expires_in || 3600);
-  const next = {
-    accessToken: String(data.access_token || previous.accessToken || ""),
-    refreshToken: String(data.refresh_token || previous.refreshToken || ""),
-    expiresAt: Date.now() + Math.max(60, expiresIn - 90) * 1000
-  };
-  if (!next.accessToken) throw new Error("Spotify did not return an access token.");
-  writeSpotifyOAuthToken(next);
-  _spotifyToken = next.accessToken;
-  _spotifyTokenExpiry = next.expiresAt;
-  return next;
-}
-
-function spotifyHttpGet(urlString, extraHeaders = {}, maxRedirects = 5) {
-  return new Promise((resolve, reject) => {
-    let parsed;
-    try { parsed = new URL(urlString); } catch { return reject(new Error(`Invalid Spotify URL: ${urlString}`)); }
-    const options = {
-      hostname: parsed.hostname,
-      port: 443,
-      path: parsed.pathname + parsed.search,
-      method: "GET",
-      timeout: 15000,
-      headers: {
-        "User-Agent": SPOTIFY_BROWSER_UA,
-        "Accept": "application/json, text/html, */*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Origin": "https://open.spotify.com",
-        "Referer": "https://open.spotify.com/",
-        "App-Platform": "WebPlayer",
-        ...extraHeaders
-      }
-    };
-    const req = https.request(options, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && maxRedirects > 0) {
-        res.resume();
-        return resolve(spotifyHttpGet(new URL(res.headers.location, urlString).toString(), extraHeaders, maxRedirects - 1));
-      }
-      let body = "";
-      res.setEncoding("utf8");
-      res.on("data", (chunk) => { body += chunk; });
-      res.on("end", () => resolve({ status: res.statusCode, body }));
-    });
-    req.on("error", reject);
-    req.on("timeout", () => { req.destroy(); reject(new Error("Spotify request timed out")); });
-    req.end();
-  });
-}
-
-function spotifyHttpPostForm(urlString, formData = {}) {
-  return new Promise((resolve, reject) => {
-    let parsed;
-    try { parsed = new URL(urlString); } catch { return reject(new Error(`Invalid Spotify URL: ${urlString}`)); }
-    const body = new URLSearchParams(formData).toString();
-    const req = https.request({
-      hostname: parsed.hostname,
-      port: 443,
-      path: parsed.pathname + parsed.search,
-      method: "POST",
-      timeout: 15000,
-      headers: {
-        "User-Agent": SPOTIFY_BROWSER_UA,
-        "Accept": "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Content-Length": Buffer.byteLength(body)
-      }
-    }, (res) => {
-      let responseBody = "";
-      res.setEncoding("utf8");
-      res.on("data", (chunk) => { responseBody += chunk; });
-      res.on("end", () => resolve({ status: res.statusCode, body: responseBody }));
-    });
-    req.on("error", reject);
-    req.on("timeout", () => { req.destroy(); reject(new Error("Spotify request timed out")); });
-    req.write(body);
-    req.end();
-  });
-}
-
-async function spotifyTokenRequest(formData) {
-  const res = await spotifyHttpPostForm("https://accounts.spotify.com/api/token", formData);
-  let data = {};
-  try { data = JSON.parse(res.body || "{}"); } catch { data = {}; }
-  if (res.status !== 200) {
-    const detail = data?.error_description || data?.error || res.body?.slice?.(0, 160) || "";
-    throw new Error(`Spotify OAuth returned HTTP ${res.status}${detail ? ` — ${detail}` : ""}`);
-  }
-  return data;
-}
-
-async function exchangeSpotifyAuthorizationCode(code, codeVerifier) {
-  const data = await spotifyTokenRequest({ grant_type: "authorization_code", code, redirect_uri: SPOTIFY_REDIRECT_URI, client_id: SPOTIFY_CLIENT_ID, code_verifier: codeVerifier });
-  return saveSpotifyOAuthResponse(data);
-}
-async function refreshSpotifyAccessToken(previous = readSpotifyOAuthToken()) {
-  if (!previous?.refreshToken) throw new Error("Spotify is not connected. Press Connect Spotify first.");
-  const data = await spotifyTokenRequest({ grant_type: "refresh_token", refresh_token: previous.refreshToken, client_id: SPOTIFY_CLIENT_ID });
-  return saveSpotifyOAuthResponse(data, previous);
-}
-async function getSpotifyAccessToken() {
-  if (!SPOTIFY_CLIENT_ID) throw new Error("Spotify OAuth is unavailable, but public fallback can still fetch public Spotify links.");
-  const now = Date.now();
-  const saved = readSpotifyOAuthToken();
-  if (_spotifyToken && now < _spotifyTokenExpiry - 30_000) return _spotifyToken;
-  if (saved?.accessToken && saved.expiresAt && now < saved.expiresAt - 30_000) {
-    _spotifyToken = saved.accessToken;
-    _spotifyTokenExpiry = saved.expiresAt;
-    return saved.accessToken;
-  }
-  if (saved?.refreshToken) return (await refreshSpotifyAccessToken(saved)).accessToken;
-  throw new Error("Spotify is not connected. Press Connect Spotify first.");
-}
-
-function createSpotifyCallbackWaiter(expectedState) {
-  let server = null;
-  let timer = null;
-  let settled = false;
-  let finish = null;
-  const promise = new Promise((resolve, reject) => {
-    finish = (error, value) => {
-      if (settled) return;
-      settled = true;
-      if (timer) clearTimeout(timer);
-      timer = null;
-      try { if (server) server.close(); } catch {}
-      server = null;
-      if (error) reject(error); else resolve(value);
-    };
-    server = http.createServer((req, res) => {
-      try {
-        const requestUrl = new URL(req.url || "/", SPOTIFY_REDIRECT_URI);
-        if (requestUrl.pathname !== "/spotify/callback") {
-          res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-          res.end("not found");
-          return;
-        }
-        const error = requestUrl.searchParams.get("error");
-        if (error) {
-          res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-          res.end("<html><body style='font-family:sans-serif;background:#08070f;color:white'><h2>Spotify login cancelled.</h2><p>You can close this window.</p></body></html>");
-          finish(new Error(`Spotify login cancelled: ${error}`));
-          return;
-        }
-        const state = requestUrl.searchParams.get("state") || "";
-        const code = requestUrl.searchParams.get("code") || "";
-        if (!code) {
-          res.writeHead(400, { "content-type": "text/plain; charset=utf-8" });
-          res.end("missing spotify code");
-          finish(new Error("Spotify did not return a login code."));
-          return;
-        }
-        if (state !== expectedState) {
-          res.writeHead(400, { "content-type": "text/plain; charset=utf-8" });
-          res.end("spotify state mismatch");
-          finish(new Error("Spotify login state mismatch. Try again."));
-          return;
-        }
-        res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end("<html><body style='font-family:sans-serif;background:#08070f;color:white'><h2>Spotify connected to localtify.</h2><p>You can close this window now.</p></body></html>");
-        finish(null, { code });
-      } catch (error) { if (typeof finish === "function") finish(error); }
-    });
-    server.once("error", (error) => { if (typeof finish === "function") finish(new Error(`Spotify callback server failed: ${error?.message || error}`)); });
-    timer = setTimeout(() => { if (typeof finish === "function") finish(new Error("Spotify login timed out.")); }, 5 * 60 * 1000);
-    server.listen(SPOTIFY_REDIRECT_PORT, "127.0.0.1");
-  });
-  return { promise, cancel: (reason = "Spotify login cancelled.") => { if (!settled && typeof finish === "function") finish(new Error(reason)); } };
-}
-
-async function loginSpotifyOAuth() {
-  if (!SPOTIFY_CLIENT_ID) {
-    return { ok: true, ready: true, loggedIn: false, publicOnly: true, fallbackAvailable: true, mode: "public-fallback", needsClientId: false, redirectUri: SPOTIFY_REDIRECT_URI, error: "Spotify OAuth is unavailable, but public playlist/album/track import is ready." };
-  }
-  const codeVerifier = makeSpotifyCodeVerifier();
-  const codeChallenge = makeSpotifyCodeChallenge(codeVerifier);
-  const state = base64UrlEncode(crypto.randomBytes(18));
-  const authUrl = new URL("https://accounts.spotify.com/authorize");
-  authUrl.searchParams.set("client_id", SPOTIFY_CLIENT_ID);
-  authUrl.searchParams.set("response_type", "code");
-  authUrl.searchParams.set("redirect_uri", SPOTIFY_REDIRECT_URI);
-  authUrl.searchParams.set("code_challenge_method", "S256");
-  authUrl.searchParams.set("code_challenge", codeChallenge);
-  authUrl.searchParams.set("state", state);
-  authUrl.searchParams.set("show_dialog", "false");
-  const waiter = createSpotifyCallbackWaiter(state);
-  let loginWindow = null;
-  try {
-    loginWindow = new BrowserWindow({
-      width: 540,
-      height: 720,
-      title: "Connect Spotify — localtify",
-      parent: mainWindow || undefined,
-      modal: false,
-      autoHideMenuBar: true,
-      webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true }
-    });
-    loginWindow.setMenu(null);
-    loginWindow.loadURL(authUrl.toString());
-    loginWindow.on("closed", () => { waiter.cancel("Spotify login cancelled."); });
-    const { code } = await waiter.promise;
-    await exchangeSpotifyAuthorizationCode(code, codeVerifier);
-    try { if (loginWindow && !loginWindow.isDestroyed()) loginWindow.close(); } catch {}
-    return { ok: true, ready: true, loggedIn: true, publicOnly: true, mode: "oauth-pkce", redirectUri: SPOTIFY_REDIRECT_URI, message: "Spotify connected. Public playlists, albums, and tracks can be imported." };
-  } catch (error) {
-    const message = error?.message || "Spotify login failed.";
-    return { ok: false, ready: Boolean(SPOTIFY_CLIENT_ID), loggedIn: false, cancelled: /cancel/i.test(message), publicOnly: true, mode: "oauth-pkce", redirectUri: SPOTIFY_REDIRECT_URI, error: message };
-  } finally {
-    waiter.cancel();
-    try { if (loginWindow && !loginWindow.isDestroyed()) loginWindow.close(); } catch {}
-  }
-}
-
-async function spotifyApiGet(endpoint) {
-  const url = endpoint.startsWith("https://") ? endpoint : `https://api.spotify.com/v1${endpoint}`;
-  const fetchOnce = async () => spotifyHttpGet(url, { Authorization: `Bearer ${await getSpotifyAccessToken()}`, Accept: "application/json" });
-  let res = await fetchOnce();
-  if (res.status === 401) {
-    _spotifyToken = null;
-    _spotifyTokenExpiry = 0;
-    await refreshSpotifyAccessToken();
-    res = await fetchOnce();
-  }
-  if (res.status === 403 || res.status === 404) throw new Error("Spotify could not read this link. Make sure the playlist is public, then copy the link again.");
-  if (res.status === 429) throw new Error("Spotify rate-limited this request. Wait a little and try again.");
-  if (res.status !== 200) throw new Error(`Spotify API returned HTTP ${res.status}.`);
-  try { return JSON.parse(res.body); } catch { throw new Error("Could not parse Spotify API response."); }
-}
-
-async function fetchSpotifyOembed(trackUrl) {
-  const res = await spotifyHttpGet(`https://open.spotify.com/oembed?url=${encodeURIComponent(trackUrl)}`, { Accept: "application/json" });
-  try {
-    mainWindow.setBackgroundColor("#000000");
-    if (process.platform === "win32" && typeof mainWindow.setBackgroundMaterial === "function") mainWindow.setBackgroundMaterial("none");
-  } catch {}
-  try { mainWindow.setBackgroundColor("#000000"); } catch {}
-  if (res.status !== 200) return null;
-  try { return JSON.parse(res.body || "{}"); } catch { return null; }
-}
-
-async function fetchSpotifyPublicTrackFallback(trackId) {
-  const trackUrl = `https://open.spotify.com/track/${trackId}`;
-  try {
-    const apiTrack = await spotifyApiGet(`/tracks/${trackId}`);
-    const shaped = shapeSpotifyTrack(apiTrack);
-    if (shaped?.name) return shaped;
-  } catch {}
-
-  let title = "";
-  let artist = "";
-  let coverUrl = "";
-  try {
-    const oembed = await fetchSpotifyOembed(trackUrl);
-    const rawTitle = decodeHtmlEntities(oembed?.title || "").trim();
-    coverUrl = String(oembed?.thumbnail_url || oembed?.thumbnailUrl || "");
-    if (rawTitle) {
-      const dashIndex = rawTitle.indexOf(" - ");
-      title = dashIndex >= 0 ? rawTitle.slice(0, dashIndex).trim() : rawTitle;
-      artist = dashIndex >= 0 ? rawTitle.slice(dashIndex + 3).trim() : "";
-    }
-  } catch {}
-  try {
-    const htmlRes = await spotifyHttpGet(trackUrl, { Accept: "text/html" });
-    if (htmlRes.status === 200) {
-      const html = htmlRes.body || "";
-      if (!title) {
-        const titleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) || html.match(/<title[^>]*>([^<]+)<\/title>/i);
-        if (titleMatch?.[1]) {
-          const raw = decodeHtmlEntities(titleMatch[1]).replace(/\s*\|\s*Spotify\s*$/i, "").trim();
-          const dashIndex = raw.indexOf(" - ");
-          title = dashIndex >= 0 ? raw.slice(0, dashIndex).trim() : raw;
-          if (!artist && dashIndex >= 0) artist = raw.slice(dashIndex + 3).trim();
-        }
-      }
-      if (!coverUrl) {
-        const imageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
-        coverUrl = decodeHtmlEntities(imageMatch?.[1] || "").trim();
-      }
-      if (!artist) {
-        const descriptionMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-        const desc = decodeHtmlEntities(descriptionMatch?.[1] || "").trim();
-        if (desc) artist = desc.split("·")[0].trim();
-      }
-    }
-  } catch {}
-
-  title = title || `Spotify track ${trackId}`;
-  return { id: trackId, title, name: title, artist, artists: artist, albumName: "", coverUrl, albumCoverUrl: coverUrl, spotifyCoverUrl: coverUrl, duration: 0, durationMs: 0, spotifyUrl: trackUrl };
-}
-
-async function fetchSpotifyPublicPlaylistFallback(playlistId) {
-  const playlistUrl = `https://open.spotify.com/playlist/${playlistId}`;
-  let playlistName = "Spotify Playlist";
-  const ids = [];
-  try {
-    const oembed = await fetchSpotifyOembed(playlistUrl);
-    const rawName = decodeHtmlEntities(oembed?.title || "").trim();
-    if (rawName) playlistName = rawName.replace(/\s*\|\s*Spotify\s*$/i, "").trim() || playlistName;
-  } catch {}
-  const urlsToTry = [playlistUrl, `https://open.spotify.com/embed/playlist/${playlistId}`, `https://open.spotify.com/playlist/${playlistId}?nd=1`];
-  for (const url of urlsToTry) {
-    try {
-      const res = await spotifyHttpGet(url, { Accept: "text/html" });
-      if (res.status !== 200) continue;
-      const html = res.body || "";
-      const ogTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) || html.match(/<title[^>]*>([^<]+)<\/title>/i);
-      if (ogTitle?.[1]) {
-        const raw = decodeHtmlEntities(ogTitle[1]).replace(/\s*\|\s*Spotify\s*$/i, "").trim();
-        if (raw && !/^spotify$/i.test(raw)) playlistName = raw;
-      }
-      for (const match of html.matchAll(/spotify:track:([A-Za-z0-9]+)/g)) ids.push(match[1]);
-      for (const match of html.matchAll(/open\.spotify\.com\/track\/([A-Za-z0-9]+)/g)) ids.push(match[1]);
-      for (const match of html.matchAll(/\/track\/([A-Za-z0-9]{18,24})/g)) ids.push(match[1]);
-      for (const match of html.matchAll(/"uri"\s*:\s*"spotify:track:([A-Za-z0-9]+)"/g)) ids.push(match[1]);
-      if (ids.length) break;
-    } catch (error) { console.log("[localtify spotify fallback page error]", error?.message || error); }
-  }
-  const trackIds = uniqSpotifyIds(ids);
-  if (!trackIds.length) throw new Error("Spotify could not expose tracks for this playlist. Make sure it is public on your profile, not only shareable by link, then try again.");
-  const tracks = [];
-  const limitedIds = trackIds.slice(0, 250);
-  for (let index = 0; index < limitedIds.length; index += 8) {
-    const shaped = await Promise.all(limitedIds.slice(index, index + 8).map((trackId) => fetchSpotifyPublicTrackFallback(trackId).catch(() => null)));
-    for (const track of shaped) if (track?.name) tracks.push(track);
-  }
-  return { name: playlistName, playlistName, type: "playlist", publicOnly: true, fallback: true, tracks };
-}
-
-async function fetchSpotifyPublicAlbumFallback(albumId) {
-  const albumUrl = `https://open.spotify.com/album/${albumId}`;
-  let albumName = "Spotify Album";
-  const ids = [];
-  try {
-    const oembed = await fetchSpotifyOembed(albumUrl);
-    const rawName = decodeHtmlEntities(oembed?.title || "").trim();
-    if (rawName) albumName = rawName.replace(/\s*\|\s*Spotify\s*$/i, "").trim() || albumName;
-  } catch {}
-  try {
-    const res = await spotifyHttpGet(`https://open.spotify.com/embed/album/${albumId}`, { Accept: "text/html" });
-    if (res.status === 200) {
-      const html = res.body || "";
-      for (const match of html.matchAll(/spotify:track:([A-Za-z0-9]+)/g)) ids.push(match[1]);
-      for (const match of html.matchAll(/open\.spotify\.com\/track\/([A-Za-z0-9]+)/g)) ids.push(match[1]);
-      for (const match of html.matchAll(/\/track\/([A-Za-z0-9]{18,24})/g)) ids.push(match[1]);
-    }
-  } catch {}
-  const trackIds = uniqSpotifyIds(ids);
-  if (!trackIds.length) throw new Error("Spotify could not expose tracks for this album. Try connecting again or use the track links directly.");
-  const tracks = [];
-  for (let index = 0; index < trackIds.length; index += 8) {
-    const shaped = await Promise.all(trackIds.slice(index, index + 8).map((trackId) => fetchSpotifyPublicTrackFallback(trackId).catch(() => null)));
-    for (const track of shaped) if (track?.name) tracks.push({ ...track, albumName });
-  }
-  return { name: albumName, playlistName: albumName, type: "album", publicOnly: true, fallback: true, tracks };
-}
-
-async function fetchSpotifyPublicFallback(rawUrl, reason = "") {
-  const parsed = parseSpotifyUrl(rawUrl);
-  if (!parsed) throw new Error("Paste a valid Spotify playlist, album, or track link.");
-  console.log("[localtify spotify] using public fallback", { type: parsed.type, reason });
-  if (parsed.type === "track") {
-    const track = await fetchSpotifyPublicTrackFallback(parsed.id);
-    return { name: track.title, playlistName: track.title, type: "track", publicOnly: true, fallback: true, tracks: [track] };
-  }
-  if (parsed.type === "album") return fetchSpotifyPublicAlbumFallback(parsed.id);
-  if (parsed.type === "playlist") return fetchSpotifyPublicPlaylistFallback(parsed.id);
-  throw new Error(`Unsupported Spotify link type: ${parsed.type}`);
-}
-
-async function fetchSpotifyTracksFromUrl(rawUrl) {
-  const parsed = parseSpotifyUrl(rawUrl);
-  if (!parsed) throw new Error("Paste a valid Spotify playlist, album, or track link.");
-  if (!SPOTIFY_CLIENT_ID) return fetchSpotifyPublicFallback(rawUrl, "spotify client id unavailable");
-  const { type, id } = parsed;
-  try {
-    if (type === "track") {
-      const track = await spotifyApiGet(`/tracks/${id}`);
-      const shaped = shapeSpotifyTrack(track);
-      return { name: shaped?.title || "Spotify Track", playlistName: shaped?.title || "Spotify Track", type: "track", publicOnly: true, tracks: shaped ? [shaped] : [] };
-    }
-    if (type === "album") {
-      const album = await spotifyApiGet(`/albums/${id}`);
-      const tracks = [];
-      let next = `/albums/${id}/tracks?limit=50&offset=0`;
-      while (next) {
-        const page = await spotifyApiGet(next);
-        for (const track of page.items || []) {
-          const shaped = shapeSpotifyTrack(track, album.name || "", bestSpotifyImage(album.images));
-          if (shaped) tracks.push(shaped);
-        }
-        next = page.next || null;
-      }
-      return { name: album.name || "Spotify Album", playlistName: album.name || "Spotify Album", type: "album", publicOnly: true, tracks };
-    }
-    if (type === "playlist") {
-      const info = await spotifyApiGet(`/playlists/${id}?fields=name,public,owner(display_name)`);
-      if (info && info.public === false) throw new Error("This playlist is link-shareable but not public to the Spotify API. Add it to your public profile, or try the fallback fetch again.");
-      const tracks = [];
-      let offset = 0;
-      while (true) {
-        const page = await spotifyApiGet(`/playlists/${id}/tracks?limit=100&offset=${offset}&fields=items(track(id,name,artists,album(name,images(url,width,height)),duration_ms,is_local,external_urls,external_ids(isrc))),next`);
-        const items = page.items || [];
-        for (const item of items) {
-          const track = item?.track;
-          if (!track?.name || track.is_local) continue;
-          const shaped = shapeSpotifyTrack(track);
-          if (shaped) tracks.push(shaped);
-        }
-        if (!page.next || items.length < 100) break;
-        offset += 100;
-      }
-      return { name: info.name || "Spotify Playlist", playlistName: info.name || "Spotify Playlist", type: "playlist", publicOnly: true, tracks };
-    }
-    throw new Error(`Unsupported Spotify link type: ${type}`);
-  } catch (error) {
-    const message = error?.message || String(error || "");
-    const canFallback = /could not read this link|public profile|private|403|404|not expose|spotify api returned http|spotify is not connected|oauth is unavailable|client id/i.test(message);
-    if (!canFallback) throw error;
-    return fetchSpotifyPublicFallback(rawUrl, message);
-  }
-}
+const { getSpotifyStatus, loginSpotifyOAuth, logoutSpotify, fetchSpotifyTracksFromUrl } = createSpotifyClient({app, BrowserWindow, safeStorage, getWindow: () => mainWindow});
 
 function getPixelArtDirectory(options = {}) {
   const force = Boolean(options.force);
@@ -1126,134 +677,9 @@ function getPixelArtFiles(options = {}) {
   }
 }
 
-// All files in one import share cover usage. Avoid a full SQLite library
-// read for every track when assigning fallback artwork.
-const importCoverAllocators = new WeakMap();
-async function makeSongFromFile(filePath, pixelArtFiles = [], usedCovers = new Set(), options = {}) {
-  const parsed = path.parse(filePath);
-  const parts = parsed.name.split(" - ").map((item) => item.trim());
-  let artist = "";
-  let title = parsed.name;
-  if (parts.length >= 2) {
-    artist = parts[0];
-    title = parts.slice(1).join(" - ");
-  }
-  const id = crypto.createHash("sha256").update(filePath).digest("hex");
-  const metadata = await readLocalAudioMetadata(filePath);
-  title = String(metadata?.title || title || parsed.name || "untitled").trim();
-  artist = String(metadata?.artist || artist || "unknown artist").trim();
-  const album = String(metadata?.album || options.album || "").trim();
-  const genre = String(metadata?.genre || options.genre || "").trim();
-  let fallbackCover = "";
-  let importAllocator = null;
-  if (pixelArtFiles.length) {
-    importAllocator = importCoverAllocators.get(usedCovers);
-    if (!importAllocator) {
-      importAllocator = createLeastUsedCoverAllocator(pixelArtFiles, getSongs());
-      importCoverAllocators.set(usedCovers, importAllocator);
-    }
-    fallbackCover = importAllocator.choose();
-  }
-  const coverResult = await resolveSongCover({
-    song: { id, title, artist, album, filePath, coverPath: options.coverPath || "", coverSource: options.coverSource || "" },
-    metadata,
-    filePath,
-    folderCoverPath: options.folderCoverPath || "",
-    preferFolderCover: Boolean(options.preferFolderCover),
-    albumEmbeddedCoverPath: options.albumEmbeddedCoverPath || options.albumCoverPath || "",
-    spotifyCoverPath: options.spotifyCoverPath || "",
-    fallbackCoverPath: fallbackCover
-  });
-  if (coverResult.coverSource === "fallback" && coverResult.coverPath) {
-    usedCovers.add(coverResult.coverPath);
-    importAllocator?.record("", coverResult.coverPath);
-  }
-  const durationMs = Math.max(0, Number(metadata?.durationMs || options.durationMs || 0));
-  const duration = Math.max(0, Number(metadata?.duration || Math.round(durationMs / 1000) || options.duration || 0));
-  return { id, title, artist, album, genre, filePath, coverPath: coverResult.coverPath || "", coverSource: coverResult.coverSource || "none", coverUpdatedAt: coverResult.coverUpdatedAt || new Date().toISOString(), duration, durationMs: durationMs || (duration > 0 ? duration * 1000 : 0), track: Number(metadata?.track || 0) || 0, disc: Number(metadata?.disc || 0) || 0, year: metadata?.year || "", bitrate: 0, addedAt: Date.now() };
-}
+const {makeSongFromFile, listAudioFilesInDirectory, makeSongFromFileWithExactSpotifyTrack, importNewAudioFilesFromDirectory, importNewAudioFiles, repairSpotifyMetadataForFolder, pickStablePixelCoverForSong, getRuntimeCoverPath: libraryCoverPath, shapeSong, listSongsShaped, repairMissingSongMetadata} = createLibraryImportRuntime({getSongs, getSong, insertSongs, patchSong, clearFileInfoCache, getFileInfoCached, getPixelArtFiles, isAudioFile, isImageFile, fileExists, isDownloadFileInProgress, cacheSpotifyCoverImage, safeMediaUrl, getCoverThumbnailUrl});
 
-function listAudioFilesInDirectory(directory, options = {}) {
-  const root = String(directory || "");
-  const maxDepth = Number.isFinite(Number(options.maxDepth)) ? Number(options.maxDepth) : 2;
-  const maxFiles = Number.isFinite(Number(options.maxFiles)) ? Number(options.maxFiles) : 1500;
-  const out = [];
-  if (!root || !path.isAbsolute(root) || !fs.existsSync(root)) return out;
-  const walk = (dir, depth) => {
-    if (out.length >= maxFiles || depth > maxDepth) return;
-    let entries = [];
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
-    for (const entry of entries) {
-      if (out.length >= maxFiles) break;
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        if (entry.name.startsWith(".") || entry.name === "localitfy-bin" || entry.name === "spotify-covers") continue;
-        walk(fullPath, depth + 1);
-        continue;
-      }
-      if (!entry.isFile() || !isAudioFile(fullPath) || isDownloadFileInProgress(fullPath) || /\.(part|tmp|download|crdownload)$/i.test(entry.name)) continue;
-      out.push(fullPath);
-    }
-  };
-  walk(root, 0);
-  out.sort((a, b) => (getFileInfoCached(b).mtimeMs || 0) - (getFileInfoCached(a).mtimeMs || 0));
-  return out;
-}
-
-async function makeSongFromFileWithMetadata(filePath, tracks = [], pixelArtFiles = [], usedCovers = new Set()) {
-  const baseSong = await makeSongFromFile(filePath, pixelArtFiles, usedCovers);
-  const matched = matchSpotifyTrackForFile(filePath, tracks);
-  if (!matched) return baseSong;
-  const title = String(matched?.title || matched?.name || baseSong.title || "").trim();
-  const artist = String(matched?.artist || matched?.artists || baseSong.artist || "").trim();
-  const album = String(matched?.albumName || matched?.album || baseSong.album || "").trim();
-  const coverUrl = String(matched?.coverUrl || matched?.spotifyCoverUrl || matched?.albumCoverUrl || "").trim();
-  const cachedCoverPath = await cacheSpotifyCoverImage(coverUrl, matched?.id || title || filePath);
-  const useSpotifyCover = cachedCoverPath && (!baseSong.coverPath || baseSong.coverSource === "fallback" || baseSong.coverSource === "none");
-  return { ...baseSong, title: title || baseSong.title, artist: artist || baseSong.artist, album: album || baseSong.album || "", coverPath: useSpotifyCover ? cachedCoverPath : baseSong.coverPath, coverSource: useSpotifyCover ? "spotify" : baseSong.coverSource, coverUpdatedAt: useSpotifyCover ? new Date().toISOString() : baseSong.coverUpdatedAt, duration: Number(matched?.duration || Math.round(Number(matched?.durationMs || 0) / 1000) || baseSong.duration || 0), durationMs: Number(matched?.durationMs || baseSong.durationMs || 0) || 0 };
-}
-
-async function makeSongFromFileWithExactSpotifyTrack(filePath, track = {}, pixelArtFiles = [], usedCovers = new Set(), sourceInfo = {}) {
-  const baseSong = await makeSongFromFile(filePath, pixelArtFiles, usedCovers);
-  const title = String(track?.title || track?.name || "").trim();
-  // Public Spotify pages can leave out the artist: then use who posted the matched video, never the "spotify_<id>" file prefix.
-  const matchedArtist = String(sourceInfo?.matchedArtist || "").replace(/\s+-\s+topic$|\s*vevo$/i, "").trim();
-  const artist = String(track?.artist || track?.artists || "").trim() || matchedArtist || (/^spotify_/i.test(baseSong.artist) ? "unknown artist" : "");
-  const album = String(track?.albumName || track?.album || "").trim();
-  const coverUrl = String(track?.coverUrl || track?.spotifyCoverUrl || track?.albumCoverUrl || "").trim();
-  const duration = Number(track?.duration || Math.round(Number(track?.durationMs || 0) / 1000) || baseSong.duration || 0);
-  const spotifyTrackId = String(sourceInfo?.sourceTrackId || track?.sourceTrackId || track?.spotifyTrackId || track?.id || "").trim();
-  const spotifyUrl = String(sourceInfo?.sourceUrl || track?.sourceUrl || track?.spotifyUrl || (spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : "")).trim();
-  const cachedCoverPath = await cacheSpotifyCoverImage(coverUrl, spotifyTrackId || track?.id || title || filePath);
-  const useSpotifyCover = cachedCoverPath && (!baseSong.coverPath || baseSong.coverSource === "fallback" || baseSong.coverSource === "none");
-  return { ...baseSong, title: title || baseSong.title, artist: artist || baseSong.artist, album: album || baseSong.album || "", coverPath: useSpotifyCover ? cachedCoverPath : baseSong.coverPath, coverSource: useSpotifyCover ? "spotify" : baseSong.coverSource, coverUpdatedAt: useSpotifyCover ? new Date().toISOString() : baseSong.coverUpdatedAt, duration, durationMs: Number(track?.durationMs || duration * 1000 || baseSong.durationMs || 0) || 0, sourceType: require("./discover/track-identity.cjs").selectedYouTubeId(spotifyTrackId) ? "youtube" : "spotify", sourceTrackId: spotifyTrackId, sourceUrl: spotifyUrl, sourceProvider: String(sourceInfo?.sourceProvider || sourceInfo?.provider || "youtube"), sourceProviderUrl: String(sourceInfo?.sourceProviderUrl || sourceInfo?.providerUrl || ""), sourceMatchScore: Number(sourceInfo?.sourceMatchScore ?? sourceInfo?.matchScore ?? 0) || 0 };
-}
-
-async function importNewAudioFilesFromDirectory(directory, tracks = [], options = {}) {
-  const includeSongs = options.includeSongs !== false;
-  const shapeResult = () => includeSongs ? listSongsShaped() : undefined;
-  const result = await importNewAudioFiles(listAudioFilesInDirectory(directory, options), tracks);
-  if (result.importedCount) console.log("[localtify library refresh] imported new audio files from folder", { folder: directory, changedCount: result.changedCount });
-  return { ...result, songs: shapeResult() };
-}
-async function importNewAudioFiles(audioFiles, tracks = []) {
-  const existingPaths = new Set(getSongs().map((song) => filePathKey(String(song.filePath || ""))).filter(Boolean));
-  const newFiles = audioFiles.filter((filePath) => {
-    if (isDownloadFileInProgress(filePath)) return false;
-    const key = filePathKey(String(filePath || ""));
-    if (!key || existingPaths.has(key)) return false;
-    existingPaths.add(key);
-    return true;
-  });
-  if (!newFiles.length) return { changedCount: 0, importedCount: 0, files: [] };
-  const pixelArtFiles = getPixelArtFiles();
-  const usedCovers = new Set();
-  const importedSongs = [];
-  for (const filePath of newFiles) importedSongs.push(await makeSongFromFileWithMetadata(filePath, tracks, pixelArtFiles, usedCovers));
-  const changedCount = insertSongs(importedSongs);
-  clearFileInfoCache();
-  return { changedCount, importedCount: importedSongs.length, files: newFiles };
-}
+function getRuntimeCoverPath(...args) { return libraryCoverPath(...args); }
 
 const albumFolderScanCache = new Map();
 const ALBUM_FOLDER_SCAN_TTL_MS = 20 * 60 * 1000;
@@ -1499,148 +925,6 @@ async function handleAlbumFolderImport(event, payload = {}) {
   return { ok: true, changedCount, insertedCount, repairedExistingCount, repairedCoverCount, repairedDurationCount, importedCount: importedSongs.length, trackCount: allTracks.length, mode: scan.mode, rootPath: scan.rootPath || "", songs: afterSongs, albums: importedAlbums, message };
 }
 
-async function repairSpotifyMetadataForFolder(directory, tracks = [], options = {}) {
-  const audioFiles = listAudioFilesInDirectory(directory, options);
-  if (!audioFiles.length || !Array.isArray(tracks) || !tracks.length) return { changedCount: 0, songs: listSongsShaped() };
-  const songs = getSongs();
-  const byPath = new Map(songs.filter((song) => song?.filePath).map((song) => [filePathKey(String(song.filePath)), song]));
-  let changedCount = 0;
-  for (const filePath of audioFiles) {
-    const key = filePathKey(String(filePath || ""));
-    const song = byPath.get(key);
-    if (!song) continue;
-    const matched = matchSpotifyTrackForFile(filePath, tracks);
-    if (!matched) continue;
-    const title = String(matched?.title || matched?.name || "").trim();
-    const artist = String(matched?.artist || matched?.artists || "").trim();
-    const album = String(matched?.albumName || matched?.album || "").trim();
-    const coverUrl = String(matched?.coverUrl || matched?.spotifyCoverUrl || matched?.albumCoverUrl || "").trim();
-    const cachedCoverPath = await cacheSpotifyCoverImage(coverUrl, matched?.id || title || filePath);
-    const patch = {};
-    const currentArtist = String(song.artist || "").trim().toLowerCase();
-    const currentTitle = String(song.title || "").trim().toLowerCase();
-    const currentCover = String(song.coverPath || "").trim();
-    if (title && (!song.title || currentTitle === "unknown title" || currentTitle === normalizeForLooseMatch(path.parse(filePath).name))) patch.title = title;
-    if (artist && (!song.artist || currentArtist === "unknown artist" || currentArtist === "unknown" || currentArtist === "slowed" || currentArtist === "slow" || currentArtist === "reverb" || currentArtist === "nightcore" || currentArtist === "sped up")) patch.artist = artist;
-    if (album && (!song.album || String(song.album).trim().toLowerCase() === "unknown album")) patch.album = album;
-    if (cachedCoverPath) {
-      const normalizedCover = currentCover.replace(/\\/g, "/").toLowerCase();
-      const isPixelFallback = normalizedCover.includes("/pixelart/");
-      const isSpotifyCover = normalizedCover.includes("/spotify-covers/");
-      if (!currentCover || !fileExists(currentCover) || isPixelFallback || !isSpotifyCover) patch.coverPath = cachedCoverPath;
-    }
-    const duration = Number(matched?.duration || Math.round(Number(matched?.durationMs || 0) / 1000) || 0);
-    if (duration > 0 && !Number(song.duration || 0)) patch.duration = duration;
-    if (Object.keys(patch).length) {
-      try { patchSong(song.id, patch); changedCount += 1; } catch (error) { console.log("[localitfy spotify metadata repair error]", error?.message || error); }
-    }
-  }
-  if (changedCount) clearFileInfoCache();
-  console.log("[localtify spotify metadata repair]", { folder: directory, checked: audioFiles.length, repaired: changedCount });
-  return { changedCount, songs: listSongsShaped() };
-}
-
-function pickStablePixelCoverForSong(song, pixelArtFiles = null) {
-  const covers = Array.isArray(pixelArtFiles) ? pixelArtFiles : getPixelArtFiles();
-  if (!covers.length) return "";
-  const seed = [song?.id, song?.title, song?.artist, song?.album, song?.filePath].filter(Boolean).join("::");
-  try {
-    const digest = crypto.createHash("sha1").update(seed || "localtify-cover").digest();
-    return covers[digest.readUInt32BE(0) % covers.length] || "";
-  } catch { return covers[0] || ""; }
-}
-function getRuntimeCoverPath(song, pixelArtFiles = null) {
-  const savedCoverPath = String(song?.coverPath || "").trim();
-  if (savedCoverPath && fileExists(savedCoverPath) && isImageFile(savedCoverPath)) return savedCoverPath;
-  return pickStablePixelCoverForSong(song, pixelArtFiles);
-}
-function shapeSong(song, pixelArtFiles = null, artworkCache = null) {
-  if (!song) return null;
-  const exists = fileExists(song.filePath);
-  const savedCoverPath = String(song.coverPath || "").trim();
-  const savedCoverExists = Boolean(savedCoverPath && isImageFile(savedCoverPath) && fileExists(savedCoverPath));
-  const runtimeCoverPath = savedCoverExists ? savedCoverPath : pickStablePixelCoverForSong(song, pixelArtFiles);
-  const coverExists = savedCoverExists || Boolean(runtimeCoverPath && fileExists(runtimeCoverPath));
-  const runtimeCoverSource = savedCoverExists ? String(song.coverSource || "unknown") : (runtimeCoverPath ? "fallback" : "none");
-  let artwork = coverExists ? artworkCache?.get(runtimeCoverPath) : null;
-  if (!artwork) {
-    artwork = { coverUrl: coverExists ? safeMediaUrl(runtimeCoverPath) : "",
-      coverThumbUrl: coverExists ? getCoverThumbnailUrl(runtimeCoverPath, !artworkCache) : "" };
-    if (artworkCache && coverExists && artworkCache.size < 2048) artworkCache.set(runtimeCoverPath, artwork);
-  }
-  const { coverUrl, coverThumbUrl } = artwork;
-  return { ...song, url: "", coverPath: savedCoverPath || runtimeCoverPath || "", coverSource: runtimeCoverSource, coverUpdatedAt: song.coverUpdatedAt || null, durationMs: Number(song.durationMs || (Number(song.duration || 0) * 1000) || 0), savedCoverPath, savedCoverExists, usesFallbackCover: runtimeCoverSource === "fallback" || !savedCoverExists, missingSavedCover: !savedCoverPath || (Boolean(savedCoverPath) && !savedCoverExists), coverUrl, coverThumbUrl, coverThumbnailUrl: coverThumbUrl, thumbnailUrl: coverThumbUrl, coverFullUrl: coverUrl, exists, fileExists: exists, coverExists, coverThumbnailReady: Boolean(coverThumbUrl) };
-}
-function listSongsShaped() {
-  const pixelArtFiles = getPixelArtFiles();
-  const artworkCache = new Map();
-  return getSongs().map((song) => shapeSong(song, pixelArtFiles, artworkCache));
-}
-async function repairMissingSongMetadata(payload = {}) {
-  const limit = Math.max(1, Math.min(1000, Number(payload?.limit || 180) || 180));
-  const force = Boolean(payload?.force || payload?.forceAll);
-  const coverOnly = Boolean(payload?.coverOnly);
-  const durationOnly = Boolean(payload?.durationOnly);
-  const allSongs = getSongs();
-  const pixelArtFiles = getPixelArtFiles();
-  const targets = [];
-  for (const song of allSongs) {
-    if (!song?.filePath || !isAudioFile(song.filePath)) continue;
-    const durationMissing = Number(song.duration || 0) <= 0 || Number(song.durationMs || 0) <= 0;
-    const coverMissing = !durationOnly && (!song.coverPath || !song.coverSource || ["fallback", "none", "unknown"].includes(song.coverSource) || !fileExists(song.coverPath));
-    if (!(force || (coverOnly ? coverMissing : durationOnly ? durationMissing : durationMissing || coverMissing))) continue;
-    if (!fileExists(song.filePath)) continue;
-    targets.push(song);
-    if (targets.length >= limit) break;
-  }
-
-  let changedCount = 0;
-  let durationFixedCount = 0;
-  let coverFixedCount = 0;
-  const changedIds = [];
-  for (const song of targets) {
-    const before = await fs.promises.stat(song.filePath).catch(() => null);
-    if (!before?.isFile() || getSong(song.id)?.filePath !== song.filePath) continue;
-    const metadata = await readLocalAudioMetadata(song.filePath, { readCover: !durationOnly, readDuration: !coverOnly });
-    const coverResult = durationOnly ? {} : await resolveSongCover({
-      song, metadata, filePath: song.filePath, fallbackCoverPath: pickStablePixelCoverForSong(song, pixelArtFiles)
-    });
-    const patch = {};
-    const title = String(metadata?.title || "").trim();
-    const artist = String(metadata?.artist || "").trim();
-    const album = String(metadata?.album || "").trim();
-    const genre = String(metadata?.genre || "").trim();
-    if (!durationOnly) {
-      if (title && (!song.title || song.title === path.parse(song.filePath).name)) patch.title = title;
-      if (artist && (!song.artist || song.artist === "unknown artist")) patch.artist = artist;
-      if (album && (!song.album || song.album === "local files")) patch.album = album;
-      if (genre && (force || !song.genre)) patch.genre = genre;
-    }
-    const metadataDurationMs = Math.max(0, Number(metadata?.durationMs || 0), Number(metadata?.duration || 0) > 0 ? Number(metadata.duration) * 1000 : 0);
-    if (!coverOnly && metadataDurationMs > 0 && (force || Number(song.duration || 0) <= 0 || Number(song.durationMs || 0) <= 0)) {
-      patch.durationMs = metadataDurationMs;
-      patch.duration = Math.round(metadataDurationMs / 1000);
-    }
-    if (!durationOnly && coverResult.coverPath && (force || !song.coverPath || !fileExists(song.coverPath) || song.coverSource !== "custom" && ["fallback", "none", "unknown", ""].includes(String(song.coverSource || "")))) {
-      patch.coverPath = coverResult.coverPath;
-      patch.coverSource = coverResult.coverSource;
-      patch.coverUpdatedAt = coverResult.coverUpdatedAt;
-    }
-    if (Object.keys(patch).length) {
-      const after = await fs.promises.stat(song.filePath).catch(() => null);
-      if (!after?.isFile() || before.size !== after.size || before.mtimeMs !== after.mtimeMs || before.ctimeMs !== after.ctimeMs) continue;
-      const guarded = guardMetadataRepairPatch(song, getSong(song.id), patch);
-      if (!Object.keys(guarded).length || !patchSong(song.id, guarded)) continue;
-      changedCount += 1;
-      if (Object.prototype.hasOwnProperty.call(guarded, "duration") || Object.prototype.hasOwnProperty.call(guarded, "durationMs")) durationFixedCount += 1;
-      if (Object.prototype.hasOwnProperty.call(guarded, "coverPath")) coverFixedCount += 1;
-      changedIds.push(song.id);
-    }
-  }
-  clearFileInfoCache();
-  return { ok: true, scannedCount: targets.length, changedCount, durationFixedCount, coverFixedCount, changedIds, songs: listSongsShaped() };
-}
-
 function analyzeVolumeGain(filePath) {
   return new Promise((resolve) => {
     if (!fileExists(filePath) || !isAudioFile(filePath)) { resolve({ ok: false, volumeGain: 1, error: "file missing or unsupported" }); return; }
@@ -1865,6 +1149,12 @@ function createWindow() {
   const rendererIndexPath = isDev ? "" : getRendererIndexPath();
   installRendererSecurityGuards(mainWindow, { isDev, rendererFileRoot: rendererIndexPath ? path.dirname(rendererIndexPath) : "" });
   installSessionPermissionGuards(mainWindow.webContents?.session);
+  const settingsContents = mainWindow.webContents;
+  settingsContents.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
+    if (isMainFrame && !isInPlace) settingsFlush.forget(settingsContents);
+  });
+  settingsContents.on("render-process-gone", () => settingsFlush.forget(settingsContents));
+  settingsContents.once("destroyed", () => settingsFlush.forget(settingsContents));
   mainWindow.webContents.on("dom-ready", () => hardenRendererBackground(mainWindow));
   mainWindow.webContents.once("did-finish-load", () => {
     clearRendererLoadWatchdog();
@@ -1947,11 +1237,9 @@ function repairMainWindowBounds(win, options = {}) {
 }
 
 let serviceRuntime = null;
-let shutdownStarted = false;
-let startupWindowTimer = null;
 
 app.whenReady().then(async () => {
-  if (shutdownStarted) return;
+  if (shutdown.isStarted()) return;
   registerLocaltifyRendererProtocol();
   registerLocaltifyMediaProtocol();
   serviceRuntime = createElectronServiceRuntime({
@@ -1962,7 +1250,7 @@ app.whenReady().then(async () => {
     cleanupNativeWindowsMedia
   });
   await serviceRuntime.start();
-  if (shutdownStarted) return;
+  if (shutdown.isStarted()) return;
   const databaseRecovery = restoreDatabaseFromOldUserDataIfNeeded();
   initDatabase(databaseRecovery.dbPath || path.join(app.getPath("userData"), userDataRuntime.sqliteFileName));
   try {
@@ -2105,6 +1393,8 @@ app.whenReady().then(async () => {
     return { ok: true, downloadFolder: target, changedCount: refresh.changedCount + repair.changedCount, importedCount: refresh.importedCount, repairedCount: repair.changedCount, songs: repair.songs || refresh.songs };
   });
 
+  ipcRouter.handle("settings:flush-ready", async event => { settingsFlush.ready(event.sender); return true; });
+  ipcRouter.handle("settings:flush-complete", async (event, id, saved) => settingsFlush.complete(event.sender, id, saved));
   ipcRouter.handle("settings:get", async () => getSettings());
   ipcRouter.handle("settings:save", async (_event, settings) => {
     try {
@@ -2131,7 +1421,11 @@ app.whenReady().then(async () => {
       return { ok: true, restartRequired: false, windowReloadRequired: false, changedNativeMaterial: transparentModeChanged, ...next };
     } catch (error) { console.log("[localitfy translucent window save error]", error?.message || error); return { ok: false, error: error?.message || "could not update translucent window", ...getSavedWindowTranslucencySettings() }; }
   });
-  ipcRouter.handle("localitfy:restart-app", async () => { restartForWindowTranslucency(); return true; });
+  ipcRouter.handle("localitfy:restart-app", async () => {
+    if (!await confirmSettingsFlush(mainWindow)) return false;
+    restartForWindowTranslucency();
+    return true;
+  });
   ipcRouter.handle("localitfy:open-logs", async () => {
     try {
       const logsPath = app.getPath("logs");
@@ -2141,7 +1435,7 @@ app.whenReady().then(async () => {
     } catch (error) { return { ok: false, error: error?.message || "could not open logs folder" }; }
   });
   ipcRouter.handle("playlists:get", async () => getPlaylists());
-  ipcRouter.handle("playlists:save", async (_event, playlists) => savePlaylists(playlists));
+  ipcRouter.handle("playlists:save", async (_event, playlists, expected, finishMigration) => savePlaylists(playlists, expected, finishMigration === true));
   ipcRouter.handle("database:backup-now", async () => { try { return { ok: backupDatabase() }; } catch (e) { return { ok: false, error: e?.message }; } });
   ipcRouter.handle("database:repair-now", async () => {
     try {
@@ -2172,21 +1466,20 @@ app.whenReady().then(async () => {
   };
   ipcRouter.handle("spotify-fetch", async (_event, payload = {}) => runSpotifyFetch(payload));
   ipcRouter.handle("spotify-fetch-tracks", async (_event, url) => runSpotifyFetch({ url }));
-  ipcRouter.handle("spotify-check", async () => {
-    const saved = readSpotifyOAuthToken();
-    const hasClientId = Boolean(SPOTIFY_CLIENT_ID);
-    return { ok: true, ready: true, loggedIn: Boolean(saved?.refreshToken), publicOnly: true, fallbackAvailable: true, mode: hasClientId ? "oauth-pkce" : "public-fallback", needsClientId: false, redirectUri: SPOTIFY_REDIRECT_URI, error: "" };
-  });
+  ipcRouter.handle("spotify-check", async () => getSpotifyStatus());
   ipcRouter.handle("spotify-login", async () => loginSpotifyOAuth());
-  ipcRouter.handle("spotify-import-browser", async () => ({ ok: false, ready: true, loggedIn: Boolean(readSpotifyOAuthToken()?.refreshToken), publicOnly: true, fallbackAvailable: true, mode: SPOTIFY_CLIENT_ID ? "oauth-pkce" : "public-fallback", needsClientId: false, redirectUri: SPOTIFY_REDIRECT_URI, error: "Browser-cookie Spotify import was removed. Use Connect Spotify, or paste a public Spotify link directly." }));
-  ipcRouter.handle("spotify-set-cookie", async () => ({ ok: false, ready: true, loggedIn: Boolean(readSpotifyOAuthToken()?.refreshToken), publicOnly: true, fallbackAvailable: true, mode: SPOTIFY_CLIENT_ID ? "oauth-pkce" : "public-fallback", needsClientId: false, redirectUri: SPOTIFY_REDIRECT_URI, error: "Cookie login was removed. Use Connect Spotify, or paste a public Spotify link directly." }));
-  ipcRouter.handle("spotify-logout", async () => { clearSpotifyOAuthToken(); console.log("[localitfy spotify] oauth token cleared"); return { ok: true, ready: true, loggedIn: false, publicOnly: true, fallbackAvailable: true, mode: SPOTIFY_CLIENT_ID ? "oauth-pkce" : "public-fallback", needsClientId: false }; });
+  ipcRouter.handle("spotify-logout", async () => logoutSpotify());
   ipcRouter.handle("spotdl-check", async () => ({ ok: true, installed: true, engine: "localtify-ytdlp-bridge", message: "Spotify downloads use localtify's bundled yt-dlp bridge after metadata is fetched." }));
 
   ipcRouter.handle("localitfy:check-for-updates", async (_event, payload) => checkForUpdates(payload));
   ipcRouter.handle("localitfy:get-update-state", async () => getUpdateState());
   ipcRouter.handle("localitfy:download-update", async () => downloadUpdate());
-  ipcRouter.handle("localitfy:install-update", async () => installUpdate());
+  ipcRouter.handle("localitfy:install-update", async () => {
+    if (!await confirmSettingsFlush(mainWindow)) return false;
+    const installed = await installUpdate();
+    if (installed && !updaterRuntime.linuxUpdaterIsManualOnly()) shutdown.approveQuit();
+    return installed;
+  });
   ipcRouter.handle("localitfy:open-external", async (_event, url) => {
     const targetUrl = String(url || "").trim();
     if (!/^https?:\/\//i.test(targetUrl)) return { ok: false, reason: "invalid-url" };
@@ -2203,31 +1496,12 @@ app.whenReady().then(async () => {
   ipcRouter.handle("window:close", async (event) => { BrowserWindow.fromWebContents(event.sender)?.close(); return true; });
 
   const startupCreateDelayMs = process.platform === "win32" && startupLaunchStatus?.wasOpenedAtLogin ? 1600 : 0;
-  startupWindowTimer = setTimeout(() => {
-    startupWindowTimer = null;
-    if (!shutdownStarted) { createWindow(); setupNativeWindowsMedia(); }
-  }, startupCreateDelayMs);
+  shutdown.scheduleStartup(() => { createWindow(); setupNativeWindowsMedia(); }, startupCreateDelayMs);
   // Renderer owns the update-check schedule so the user's disabled setting is respected.
-  app.on("activate", () => { if (!shutdownStarted && BrowserWindow.getAllWindows().length === 0) createWindow(); });
+  app.on("activate", () => { if (!shutdown.isStarted() && BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 
-app.on("before-quit", async () => {
-  if (shutdownStarted) return;
-  shutdownStarted = true;
-  allowQuit = true;
-  clearTimeout(startupWindowTimer);
-  startupWindowTimer = null;
-  discoverCacheLifecycle?.flush();
-  remoteArtworkCache?.close();
-  thumbnailRuntime.stop();
-  libraryWatcher?.dispose();
-  scrobbler?.dispose();
-  if (serviceRuntime) await serviceRuntime.stop("app-before-quit");
-  else {
-    try { cleanupNativeWindowsMedia(); } catch {}
-    try { stopLocaltifyMediaServer(); } catch {}
-  }
-});
+app.on("before-quit", shutdown.beforeQuit);
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

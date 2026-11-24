@@ -161,3 +161,26 @@ test("queue avoids a misleading next-up track during repeat-one and keeps copy c
   assert.match(queue, /aria-label="now playing"/);
   assert.match(queue, /aria-label="next in queue"/);
 });
+
+test("sleep deadline expires once after suspension, reschedules early callbacks, and cancels cleanly", () => {
+  const { createSleepTimer } = loadCommonJs("src/features/player/sleepTimer.ts");
+  let now = 0, nextId = 0, expired = 0;
+  const pending = new Map();
+  const clock = { now: () => now, schedule: (fn, delay) => { pending.set(++nextId, { fn, delay }); return nextId; }, clear: id => pending.delete(id) };
+  const timer = createSleepTimer(1000, () => expired++, clock);
+  assert.equal([...pending.values()][0].delay, 1000);
+  now = 250;
+  [...pending.values()][0].fn();
+  assert.equal([...pending.values()][0].delay, 750);
+  now = 1400;
+  timer.check();
+  timer.check();
+  assert.equal(expired, 1);
+  assert.equal(pending.size, 0);
+  const cancelled = createSleepTimer(2000, () => expired++, clock);
+  cancelled.cancel();
+  now = 3000;
+  cancelled.check();
+  assert.equal(expired, 1);
+  assert.equal(pending.size, 0);
+});

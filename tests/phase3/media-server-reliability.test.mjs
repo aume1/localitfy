@@ -205,7 +205,8 @@ test("all audio creation paths configure anonymous CORS before setting src", () 
   const engine = fs.readFileSync(path.join(root, "src", "features", "player", "engine", "htmlAudioEngine.ts"), "utf8");
   const preloader = app.slice(app.indexOf("// One cancellable warmup per playback/queue change"), app.indexOf("function getAutoCrossfadeSeconds"));
   assert.match(preloader, /nextAudioRef\.current = new Audio\(\);\s*nextAudioRef\.current\.crossOrigin = "anonymous";\s*nextAudioRef\.current\.preload/);
-  assert.match(app, /nextAudio\.crossOrigin = "anonymous";/);
+  const crossfade = fs.readFileSync(path.join(root, "src/features/player/crossfadePlayback.ts"), "utf8");
+  assert.match(crossfade, /nextAudio\.crossOrigin = "anonymous";[\s\S]*?nextAudio\.src = playbackUrl\.url/);
   assert.match(engine, /this\.element\.crossOrigin = "anonymous";/);
 });
 

@@ -15,29 +15,8 @@
   color: var(--settings-text);
 }
 .settingsPage *, .settingsPage *::before, .settingsPage *::after { box-sizing: border-box; }
-.settingsPage .settingsLayout {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: clamp(230px, 22vw, 282px) minmax(0, 1fr);
-  align-items: start;
-  gap: clamp(24px, 3vw, 44px);
-}
-.settingsPage .settingsCategoryRail {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: 12px;
-  position: sticky;
-  top: 18px;
-  max-height: calc(100vh - 190px);
-  overflow-y: auto;
-  padding: 15px;
-  border: 1px solid var(--settings-edge);
-  border-radius: 16px;
-  background: var(--settings-surface);
-  scrollbar-width: thin;
-}
-.settingsPage .settingsCategoryRail nav { min-width: 0; display: grid; gap: 3px; }
+.settingsPage .settingsLayout { min-width: 0; }
+.settingsPage .settingsCategoryRail { display: grid; align-content: start; }
 .settingsPage .settingsSearchBoxV027 { display: grid; gap: 8px; min-width: 0; color: var(--settings-muted); font-size: 12px; font-weight: 650; }
 .settingsPage .settingsSearchBoxV027 input {
   width: 100%; min-width: 0; min-height: var(--lt-control-height); padding: 9px 12px;
@@ -46,18 +25,7 @@
 }
 .settingsPage input::placeholder, .settingsPage textarea::placeholder { color: var(--settings-muted); }
 .settingsPage .settingsSearchHintV027 { margin: 0 1px 2px; color: var(--settings-muted); font-size: 11px; line-height: 1.5; }
-.settingsPage .settingsCategoryButton {
-  min-width: 0; width: 100%; min-height: 48px; padding: 9px 10px;
-  display: grid; grid-template-columns: 27px minmax(0, 1fr); align-items: center;
-  gap: 10px; border: 1px solid transparent; border-radius: var(--lt-radius-item);
-  background: transparent; color: var(--settings-muted); text-align: left; font: inherit; cursor: pointer;
-}
-.settingsPage .settingsCategoryButton:hover { color: var(--settings-text); background: var(--settings-elevated); }
-.settingsPage .settingsCategoryButton[aria-current="page"] {
-  color: var(--settings-text); border-color: rgba(var(--lt-accent-rgb), .24);
-  background: var(--lt-fill-selected);
-}
-.settingsPage .settingsCategoryIcon { display: grid; place-items: center; color: var(--settings-accent); }
+.settingsPage .settingsCategoryButton { min-width: 0; font: inherit; cursor: pointer; }
 .settingsPage .settingsCategoryCopy { min-width: 0; display: grid; }
 .settingsPage .settingsCategoryCopy strong { color: inherit; font-size: 13px; font-weight: 720; line-height: 1.2; }
 .settingsPage .settingsNoSearchResultsV027 { padding: 10px; color: var(--settings-muted); font-size: 12px; }
@@ -71,12 +39,7 @@
 }
 .settingsPage .settingsCategoryHeader h4 { margin: 5px 0 0; color: var(--settings-text); font-size: clamp(20px, 2vw, 27px); font-weight: 700; letter-spacing: -.035em; }
 .settingsPage .settingsCategoryHeader > span { color: var(--settings-muted); font-size: 12px; }
-.settingsPage .settingsPanelCard {
-  min-width: 0; display: grid; align-content: start; gap: 16px;
-  padding: clamp(17px, 2vw, 24px);
-  border: 1px solid var(--settings-edge); border-radius: var(--lt-radius-panel);
-  background: var(--settings-surface);
-}
+.settingsPage .settingsPanelCard { align-content: start; }
 .settingsPage .settingsPanelHeader {
   min-width: 0; display: flex; align-items: flex-start; justify-content: space-between;
   gap: 14px; flex-wrap: wrap;
@@ -150,12 +113,6 @@
 .settingsPage .metadataCleanerPreviewItemV425 :is(small,em) { color: var(--settings-muted); font-size: 11px; }
 .settingsPage .folderPickerRow { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .settingsPage .folderPickerRow code { min-width: 0; flex: 1 1 240px; overflow-wrap: anywhere; color: var(--settings-text); font-size: 12px; }
-@media (max-width: 1080px) {
-  .settingsPage .settingsLayout { grid-template-columns: 1fr; gap: 18px; }
-  .settingsPage .settingsCategoryRail { position: static; max-height: none; }
-  .settingsPage .settingsCategoryRail nav { display: flex; gap: 6px; overflow-x: auto; padding: 3px 0; }
-  .settingsPage .settingsCategoryButton { min-width: 155px; flex: 0 0 155px; }
-}
 @media (max-width: 740px) {
   .settingsPage { padding: 18px 0 90px; }
   .settingsPage .settingsTwoColumn, .settingsPage .settingsGrid.twoCols { grid-template-columns: 1fr; }

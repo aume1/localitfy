@@ -74,6 +74,15 @@ try {
     }
     if ("rules" in saved.find((item) => item.id === "smart") || saved.find((item) => item.id === "smart")?.songIds.join() !== "legacy-song") throw new Error("retired playlist rules changed saved membership");
     if ("rules" in saved.find((item) => item.id === "plain")) throw new Error("malformed playlist rules were persisted");
+    const migrationPlaylist = { id: "migration-only", name: "Legacy migration", songIds: ["legacy-song"], createdAt: now };
+    const migrated = db.savePlaylists([...saved, migrationPlaylist], saved, true);
+    if (!db.getSettings().playlistMigrationCompleted || !migrated.some(item => item.id === migrationPlaylist.id)) throw new Error("Playlist migration did not commit atomically");
+    db.savePlaylists(saved, migrated);
+    db.savePlaylists([...saved, migrationPlaylist], saved, true);
+    if (db.getPlaylists().some(item => item.id === migrationPlaylist.id)) throw new Error("Completed migration resurrected a deleted playlist");
+    let conflict = false;
+    try { db.savePlaylists([], migrated); } catch (error) { conflict = /conflict/i.test(error.message); }
+    if (!conflict || JSON.stringify(db.getPlaylists()) !== JSON.stringify(saved)) throw new Error("Stale playlist write modified database");
     const vector = new Float32Array(512); vector[0] = 1;
     const analysis = { songId: "legacy-song", filePath: "C:/Music/legacy.mp3", fileSize: 1234, fileMtime: 5678, vector, rms: 0.2 };
     if (!db.saveSongAnalysis(analysis)) throw new Error("analysis not persisted");

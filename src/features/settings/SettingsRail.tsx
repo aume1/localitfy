@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { IconButton } from "../../shared/ui/IconButton";
 import { SolidIcon } from "../../shared/ui/SolidIcon";
 import { Search, X, ChevronRight } from "lucide-react";
@@ -9,6 +9,7 @@ import type { SettingsCategory } from "./settings.types";
 export type SettingsRailProps = {
   tabs: ReadonlyArray<(typeof settingsCategoryTabs)[number]>;
   activeCategory: SettingsCategory;
+  analysisSupported?: boolean;
   search: string;
   resultLabel: string;
   onSearchChange: (value: string) => void;
@@ -27,27 +28,37 @@ const SETTINGS_NAV_GROUPS: ReadonlyArray<{
 ];
 
 export default function SettingsRail({
-  tabs, activeCategory, search, resultLabel, onSearchChange, onCategoryChange
+  tabs, activeCategory, analysisSupported = false, search, resultLabel, onSearchChange, onCategoryChange
 }: SettingsRailProps) {
   const selectedRef = useRef<HTMLButtonElement>(null);
   const railRef = useRef<HTMLElement>(null);
-  const matches = useMemo(() => matchSettingsControls(search, settingsCategoryTabs.map(tab => tab.id)), [search]);
+  const matches = useMemo(() => matchSettingsControls(search, settingsCategoryTabs.map(tab => tab.id), analysisSupported), [search, analysisSupported]);
+  const revealTimer = useRef<number | undefined>(undefined);
+  const revealCategory = useRef<SettingsCategory | null>(null);
+  function cancelReveal() { window.clearTimeout(revealTimer.current); revealCategory.current = null; }
+  useEffect(() => () => window.clearTimeout(revealTimer.current), []);
+  useLayoutEffect(() => { if (revealCategory.current && revealCategory.current !== activeCategory) cancelReveal(); }, [activeCategory]);
   function openControl(category: SettingsCategory, target: string) {
+    cancelReveal();
+    revealCategory.current = category;
     onSearchChange("");
     onCategoryChange(category);
     let attempts = 0;
     const reveal = () => {
       const element = document.getElementById(target);
-      if (!element && attempts++ < 18) { window.setTimeout(reveal, 75); return; }
+      if (revealCategory.current !== category) return;
+      if (!element && attempts++ < 40) { revealTimer.current = window.setTimeout(reveal, 75); return; }
+      revealCategory.current = null;
       if (!element) return;
-      if (element instanceof HTMLDetailsElement) element.open = true;
-      const disclosure = element.closest("details");
-      if (disclosure) disclosure.open = true;
+      const nestedDisclosure = element instanceof HTMLDetailsElement ? element : element.firstElementChild instanceof HTMLDetailsElement ? element.firstElementChild : null;
+      if (nestedDisclosure) nestedDisclosure.open = true;
+      for (let disclosure = element.closest("details"); disclosure; disclosure = disclosure.parentElement?.closest("details") ?? null) disclosure.open = true;
       element.scrollIntoView({ block: "start", behavior: "auto" });
-      const control = element.querySelector<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), summary");
-      control?.focus({ preventScroll: true });
+      const control = nestedDisclosure ? nestedDisclosure.querySelector<HTMLElement>("summary") : element.querySelector<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), summary");
+      if (control) control.focus({ preventScroll: true });
+      else { element.tabIndex = -1; element.focus({ preventScroll: true }); }
     };
-    window.setTimeout(reveal, 70);
+    revealTimer.current = window.setTimeout(reveal, 70);
   }
   useLayoutEffect(() => {
     const selected = selectedRef.current;
@@ -70,7 +81,7 @@ export default function SettingsRail({
         <div className="settingsSearchField">
           <Search size={15} strokeWidth={2} aria-hidden="true" />
           <input id="settings-section-search" type="search" value={search}
-            onChange={(event) => onSearchChange(event.currentTarget.value)}
+            onChange={(event) => { cancelReveal(); onSearchChange(event.currentTarget.value); }}
             onKeyDown={(event) => { if (event.key === "Escape" && search) { event.preventDefault(); event.stopPropagation(); onSearchChange(""); } }}
             placeholder="Find a setting..." />
           {search ? <IconButton type="button" className="settingsSearchClear" onClick={() => { onSearchChange(""); document.getElementById("settings-section-search")?.focus(); }} aria-label="Clear settings search">
@@ -96,7 +107,7 @@ export default function SettingsRail({
             {items.map((tab) => {
               const selected = activeCategory === tab.id;
               return <button key={tab.id} ref={selected ? selectedRef : undefined} className={`settingsCategoryButton ${selected ? "active" : ""}`}
-                type="button" onClick={() => onCategoryChange(tab.id)} title={tab.description}
+                type="button" onClick={() => { cancelReveal(); onCategoryChange(tab.id); }} title={tab.description}
                 aria-current={selected ? "page" : undefined}>
                 <span className="settingsCategoryIcon" aria-hidden="true">
                   <SolidIcon className="settingsSolidIcon" name={tab.icon} size={20} />

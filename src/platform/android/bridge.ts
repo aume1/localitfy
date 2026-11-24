@@ -6,7 +6,7 @@ import type { PlayEvent } from "../../features/player/listeningHistory";
 import type { ScrobbleStatus } from "../../features/scrobbling/scrobble.types";
 import { computerName } from "../../app/platform";
 import { phoneLibrary } from "./library";
-import { fromMac, fromMacOrKept, cachedArtworkFromMac } from "./macFeatures";
+import { fromMac, fromMacOrKept, cachedArtworkFromMac, scopedFeatureKey } from "./macFeatures";
 import { LocaltifyNative } from "./native";
 import { readValue, writeValues } from "./store";
 import { setLibraryChangedHandler } from "./sync";
@@ -25,8 +25,9 @@ const RETURNS_LIST = new Set(["listPixelArt", "getPendingMusicBrainzTags", "sear
 
 /** A lyrics choice made from the phone replaces the copy kept for offline use. */
 async function keepLyrics(id: string, answer: Promise<LyricsResult>) {
+  const key = await scopedFeatureKey(`mac:lyrics:${id}`);
   const result = await answer;
-  await writeValues({ [`mac:lyrics:${id}`]: result }).catch(() => undefined);
+  if (key) await writeValues({ [key]: result }).catch(() => undefined);
   return result;
 }
 
@@ -96,20 +97,30 @@ export function createAndroidBridge(): Bridge {
     },
     getSettings: async () => phoneLibrary.effectiveSettings(),
     saveSettings: async (settings: Partial<Settings>) => {
-      phoneLibrary.settings = { ...phoneLibrary.settings, ...settings };
+      phoneLibrary.settings = { ...phoneLibrary.settings, ...settings, ...(phoneLibrary.settings.playlistMigrationCompleted ? {playlistMigrationCompleted: true} : {}) };
       await phoneLibrary.save(["settings"]);
       return phoneLibrary.effectiveSettings();
     },
-    getPlaylists: async () => phoneLibrary.playlists,
-    savePlaylists: async (playlists) => phoneLibrary.savePlaylists(playlists as SyncPlaylist[]),
+    getPlaylists: async () => { await phoneLibrary.load(); await phoneLibrary.flushWrites(true); return phoneLibrary.playlists; },
+    savePlaylists: async (playlists, expected, finishMigration) => {
+      await phoneLibrary.load();
+      if (finishMigration && phoneLibrary.settings.playlistMigrationCompleted === true) { await phoneLibrary.flushWrites(true); return phoneLibrary.playlists; }
+      const canonical = (items: SyncPlaylist[]) => items.map(({id, name, songIds, createdAt, coverArtwork}) => [id, name, songIds, createdAt, coverArtwork || ""]);
+      if (expected !== undefined && JSON.stringify(canonical(expected)) !== JSON.stringify(canonical(phoneLibrary.playlists))) throw new Error("Playlist conflict: library changed");
+      const next = phoneLibrary.savePlaylists(playlists as SyncPlaylist[], finishMigration === true);
+      await phoneLibrary.flushWrites();
+      return next;
+    },
     patchSong: async (id: string, patch: Partial<Song>) => {
+      await phoneLibrary.load();
       const updated = phoneLibrary.patchSong(id, patch);
+      if (updated) await phoneLibrary.flushWrites(true);
       if (updated && typeof patch.liked === "boolean") void sendLike(id, patch.liked);
       return updated;
     },
     liveSend: sendLive,
     onLiveEvent: onLiveEvent as Bridge["onLiveEvent"],
-    recordPlayEvent: async (event: PlayEvent) => phoneLibrary.recordPlayEvent(event),
+    recordPlayEvent: async (event: PlayEvent) => { await phoneLibrary.load(); phoneLibrary.recordPlayEvent(event); await phoneLibrary.flushWrites(); return true; },
     getListeningSummary: (payload) => fromMacOrKept<Awaited<ReturnType<Bridge["getListeningSummary"]>>>("listening:summary", payload, `mac:listening-summary:${payload.days}`, null, result => isListeningSummary(result, payload.days)),
     getListeningCalendarSummary: (payload) => fromMacOrKept<Awaited<ReturnType<Bridge["getListeningCalendarSummary"]>>>("listening:calendar-summary", payload, `mac:listening-calendar:${payload.range}:${payload.offset}`, null, result => isListeningCalendarSummary(result, payload)),
     onWatchedFoldersChange: subscribe("songs") as Bridge["onWatchedFoldersChange"],
@@ -126,10 +137,10 @@ export function createAndroidBridge(): Bridge {
     selectLyricsMatch: (payload) => keepLyrics(payload.id, fromMac("lyrics:select-match", payload, 15000)),
     clearLyricsMatch: (payload) => keepLyrics(payload.id, fromMac("lyrics:clear-selection", payload, 15000)),
     setLyricsOffset: async (payload) => {
+      const key = await scopedFeatureKey(`mac:lyrics:${payload.id}`);
       const saved = await fromMac<{ offsetMs: number }>("lyrics:set-offset", payload);
-      const key = `mac:lyrics:${payload.id}`;
-      const kept = await readValue<LyricsResult | null>(key, null).catch(() => null);
-      if (kept) await writeValues({ [key]: { ...kept, offsetMs: saved.offsetMs } }).catch(() => undefined);
+      const kept = key ? await readValue<LyricsResult | null>(key, null).catch(() => null) : null;
+      if (key && kept) await writeValues({ [key]: { ...kept, offsetMs: saved.offsetMs } }).catch(() => undefined);
       return saved;
     },
     // Desktop cache tokens are not transferable; the phone owns its artwork files.

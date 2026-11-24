@@ -11,7 +11,14 @@ function fixture(count){
  const calls=[],options=[];
  const songs=Array.from({length:count},(_,i)=>({id:`track-${i}`,title:`Track ${i}`,artist:'Artist',album:'Album',duration:120,liked:i===0,fileExists:i!==1}));
  const output=ts.transpileModule(fs.readFileSync('src/features/pages/TrackList.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
+ const rowExports={};
+ const rowOutput=ts.transpileModule(fs.readFileSync('src/features/library/components/TrackRow.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
+ const solid={SolidIcon:()=>null};
+ const rowDeps={'../../../shared/ui/LikeHeartAnimation':{LikeHeartAnimationV443:()=>null},'../../../shared/ui/LocaltifyViewUi':{PlayingBarsIcon:()=>null},'../../../shared/ui/SolidIcon':solid,'./track-row.css':{}};
+ runInNewContext(rowOutput,{exports:rowExports,require:n=>rowDeps[n]??require(n)});
  const dependencies={
+  '../library/components/TrackRow':rowExports,
+  '../../shared/ui/SolidIcon':solid,
   react:{...require('react'),useCallback:callback=>callback},
   '../../shared/hooks/usePageVirtualizer':{usePageVirtualizer:o=>{options.push(o);return {listRef:()=>{},scrollMargin:24,virtualizer:{getTotalSize:()=>count*64,getVirtualItems:()=>[0,Math.floor(count/2),count-1].map(index=>({key:songs[index].id,index,start:24+index*64})),measureElement:()=>{}}}}},
   '../covers/Cover':{Cover:()=>null},
@@ -25,19 +32,21 @@ function fixture(count){
  };
  const exports={};runInNewContext(output,{exports,require:n=>dependencies[n]??require(n)});
  const tree=exports.default({songs,currentId:'track-0',isPlaying:true,playFrom:id=>calls.push(['play',id]),toggleLike:id=>calls.push(['like',id]),openPlaylistPicker:song=>calls.push(['playlist',song.id])});
- const flatten=node=>!node||typeof node!=='object'?[]:[node,...[node.props?.children,node.props?.subtitle].flat(Infinity).flatMap(flatten)];
+ const flatten=node=>!node||typeof node!=='object'?[]:Object.values(rowExports).includes(node.type)?flatten(node.type(node.props)):[node,...[node.props?.children,node.props?.subtitle].flat(Infinity).flatMap(flatten)];
  return {songs,calls,options,nodes:flatten(tree)};
 }
 test('short collections keep all rows, missing files cannot play, and actions keep their targets',()=>{
  const {nodes,calls,options}=fixture(4);
  assert.equal(options[0].count,0);
  const rows=nodes.filter(n=>n.props?.role==='listitem');assert.equal(rows.length,4);
+ assert.match(rows[0].props.className,/ltTrackRow.*active.*playing/);
+ assert.equal(rows[1].props['data-track-missing'],'true');
  rows[1].props.onClick();assert.equal(calls.length,0);
  rows[2].props.onClick();assert.deepEqual(calls.pop(),['play','track-2']);
  rows[2].props.onContextMenu({});assert.deepEqual(calls.pop(),['menu','track-2']);
  const event={stopPropagation(){}};
- nodes.find(n=>n.props?.['aria-label']==='unlike song').props.onClick(event);assert.deepEqual(calls.pop(),['like','track-0']);
- nodes.find(n=>n.props?.['aria-label']==='add to playlist').props.onClick(event);assert.deepEqual(calls.pop(),['playlist','track-0']);
+ nodes.find(n=>n.props?.['aria-label']==='Unlike Track 0').props.onClick(event);assert.deepEqual(calls.pop(),['like','track-0']);
+ nodes.find(n=>n.props?.['aria-label']==='Add Track 0 to playlist').props.onClick(event);assert.deepEqual(calls.pop(),['playlist','track-0']);
  assert.equal(nodes.some(n=>n.props?.className==='trackRowAlbum'),false);
  const artist=nodes.find(n=>n.props?.className==='trackLink'&&n.props.children==='Artist');artist.props.onClick(event);assert.deepEqual(calls.pop(),['artist','Artist']);
 });

@@ -9,12 +9,14 @@ export default function TitleBar({
   mini = false,
   showWindowButtons = true,
   history,
+  onClose,
   children
 }: {
   mini?: boolean;
   showWindowButtons?: boolean;
   /** Back/forward buttons, like a browser. */
   history?: Pick<NavigationHistory, "canGoBack" | "canGoForward" | "back" | "forward">;
+  onClose?: () => unknown;
   children?: ReactNode;
 }) {
   const mac = /mac/i.test(navigator.platform);
@@ -52,7 +54,7 @@ export default function TitleBar({
             </svg>
           </button>
         ) : null}
-        <button type="button" className="closeWin" onClick={() => window.localitfy.closeWindow()} aria-label="Close window"><WindowCloseIcon /></button>
+        <button type="button" className="closeWin" onClick={() => onClose ? onClose() : window.localitfy.closeWindow()} aria-label="Close window"><WindowCloseIcon /></button>
       </div> : null}
     </header>
   );

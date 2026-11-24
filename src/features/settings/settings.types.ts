@@ -24,6 +24,7 @@ export type LegacyThemeSettings = {
 };
 
 export type Settings = {
+  playlistMigrationCompleted?: boolean;
   experimentalMusicAnalysis: boolean;
   analysisOnBattery: boolean;
   listeningHistoryEnabled: boolean;

@@ -14,7 +14,7 @@ type Options = {
   settingsRef: {current:Settings};
   discordSettingsRef: {current:Settings};
   setSettings: (value:Settings)=>void;
-  saveSettingsSafely: (value:Settings)=>Promise<void>;
+  saveSettingsSafely: (value:Settings)=>Promise<unknown>;
 };
 
 /** One pointer session owns both resize controls, their RAF, handlers and transient CSS. */
@@ -39,7 +39,7 @@ export function useShellResize({appRootRef,settingsRef,discordSettingsRef,setSet
       done=true;abandon.current=null;
       window.removeEventListener("pointermove",move);
       window.removeEventListener("pointerup",release);
-      window.removeEventListener("pointercancel",release);
+      window.removeEventListener("pointercancel",cancel);
       window.removeEventListener("keydown",keyDown);
       document.body.classList.remove(config.className,"localitfyNoSelect");
       if(frame!==null){window.cancelAnimationFrame(frame);frame=null;}
@@ -61,13 +61,14 @@ export function useShellResize({appRootRef,settingsRef,discordSettingsRef,setSet
       if(frame===null)frame=window.requestAnimationFrame(paint);
     }
     function release(sample:globalThis.PointerEvent) {if(sample.pointerId===pointer)finish(true);}
-    function keyDown(sample:KeyboardEvent) {if(sample.key==="Escape"){size=initial;finish(true);}}
+    function cancel(sample:globalThis.PointerEvent) {if(sample.pointerId===pointer)finish(false);}
+    function keyDown(sample:KeyboardEvent) {if(sample.key==="Escape")finish(false);}
     document.body.classList.add(config.className,"localitfyNoSelect");
     paint();
     try{handle.setPointerCapture(pointer);}catch{}
     window.addEventListener("pointermove",move,{passive:true});
     window.addEventListener("pointerup",release);
-    window.addEventListener("pointercancel",release);
+    window.addEventListener("pointercancel",cancel);
     window.addEventListener("keydown",keyDown);
     abandon.current=()=>finish(false);
   }

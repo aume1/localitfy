@@ -300,3 +300,75 @@ test("pairing excludes automatic sync and concurrent unpairing until persisted",
     assert.equal(f.persisted.get("pairing").token, f.phone.pairing.token);
   } finally { await f.close(); }
 });
+
+test("pausing a pairing retains its exact outstanding receipt through a phone restart", async () => {
+  const f = await syncFixture();
+  try {
+    f.phone.patchSong("a", {playCount:5});
+    f.hooks.afterChanges = once(() => {throw new Error("response lost");});
+    await f.sync.syncNow();
+    assert.ok(f.phone.pendingSync);
+    const batch = plain(f.phone.pendingSync);
+    await f.sync.forgetMac(true);
+    assert.equal(f.phone.pairing,null);
+    assert.equal(f.phone.pendingSync,null);
+    assert.deepEqual(plain(f.phone.detachedPairing.batch),batch);
+    await f.restartPhone();
+    assert.deepEqual(plain(f.phone.detachedPairing.batch),batch);
+    f.hooks.afterChanges = undefined;
+    await f.sync.restorePausedPairing();
+    assert.deepEqual(plain(f.phone.pendingSync),batch);
+    await f.sync.syncNow();
+    assert.equal(f.sync.getSyncProgress().phase,"done");
+    assert.equal(f.repositories.songs.get("a").playCount,5);
+    assert.deepEqual(f.requests.map(({body})=>body.sequence),[1,1]);
+  } finally {await f.close();}
+});
+
+test("desktop edits after the snapshot trigger a safe playlist rebase without replaying counts", async () => {
+  const f = await syncFixture();
+  try {
+    const p = {id:"race",name:"race",songIds:["a"],createdAt:1};
+    f.repositories.playlists.save([p]);
+    await f.sync.syncNow();
+    f.phone.savePlaylists([{...p,name:"phone rename"}]);
+    f.phone.patchSong("a",{playCount:5});
+    f.hooks.beforeRequest = async request => {
+      if (request.url.endsWith("/v1/changes")) {
+        f.hooks.beforeRequest = undefined;
+        f.repositories.playlists.save([{...p,songIds:["a","b"]}]);
+      }
+    };
+    await f.sync.syncNow();
+    assert.equal(f.sync.getSyncProgress().phase,"done");
+    assert.equal(f.repositories.songs.get("a").playCount,5);
+    assert.equal(f.repositories.playlists.get()[0].name,"phone rename");
+    assert.deepEqual(f.repositories.playlists.get()[0].songIds,["a","b"]);
+  } finally {await f.close();}
+});
+
+test("abandoning an unavailable computer archives uncertain changes without replaying them", async () => {
+  const f = await syncFixture();
+  try {
+    f.phone.patchSong("a", {playCount:5});
+    f.phone.recordPlayEvent(play("ended"));
+    f.hooks.afterChanges = once(() => {throw new Error("response lost");});
+    await f.sync.syncNow();
+    const token = f.phone.pairing.token;
+    await f.sync.forgetMac(true);
+    await f.sync.archivePausedPairing();
+    await f.restartPhone();
+    assert.equal(f.phone.detachedPairing,null);
+    assert.equal(f.phone.pendingSync,null);
+    assert.equal(f.phone.pendingEvents.length,0);
+    assert.equal(f.phone.base.songs.a.playCount,5);
+    assert.equal(f.phone.recoveryArchives[0].batch.sequence,1);
+    assert.equal(f.phone.recoveryArchives[0].pendingEvents.length,1);
+    assert.ok(!JSON.stringify(f.phone.recoveryArchives).includes(token));
+    assert.equal(f.phone.songs()[0].playCount,5);
+    await f.sync.pairWithMac(f.url,f.server.newPairingCode().code);
+    await f.sync.syncNow();
+    assert.equal(f.repositories.songs.get("a").playCount,5);
+    assert.equal(f.requests.length,1);
+  } finally {await f.close();}
+});

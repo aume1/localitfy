@@ -9,7 +9,9 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 
 test("App and Discord use canonical feature owners", () => {
   const app = read("src/App.tsx");
-  assert.match(app, /features\/player\/engine\/htmlAudioEngine/);
+  assert.match(app, /usePlayerRuntime\(/);
+  assert.doesNotMatch(app, /features\/player\/engine\/htmlAudioEngine/);
+  assert.match(read("src/features/player/usePlayerRuntime.ts"), /from "\.\/engine\/htmlAudioEngine"/);
   assert.match(app, /features\/settings\/SettingsCategoryContent/);
   assert.doesNotMatch(app, /["']\.\/player\//);
   assert.doesNotMatch(app, /localtifyTypes/);

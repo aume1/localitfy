@@ -139,3 +139,35 @@ test("concurrent navigation retains the current page detail until its view chang
   assert.match(hook, /if \(entry\.view === view\) committedEntryRef\.current = entry;/);
   assert.match(hook, /committedEntryRef\.current\.view === view \? committedEntryRef\.current\.detail : null/);
 });
+
+test("rapid back and forward calls use the same history snapshot before React renders again", () => {
+  const historyExports = loadHistory();
+  const { outputText } = ts.transpileModule(read("src/features/shell/useNavigationHistory.ts"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
+  });
+  const hookExports = {};
+  const views = [];
+  const react = {
+    useState: init => [init(), () => {}],
+    useRef: current => ({ current }),
+    useCallback: callback => callback,
+    useEffect: () => {},
+    useLayoutEffect: () => {},
+    useMemo: callback => callback()
+  };
+  runInNewContext(outputText, { exports: hookExports, require: name => {
+    if (name === "react") return react;
+    if (name === "./navigationHistory") return historyExports;
+    if (name.includes("useStableCallback")) return { useStableCallback: callback => callback };
+    throw new Error(name);
+  }});
+  const nav = hookExports.useNavigationHistory("home", view => views.push(view), { current: { scrollTop: 120 } });
+  nav.go("albums");
+  nav.go("artists");
+  nav.back();
+  nav.back();
+  nav.forward();
+  nav.forward();
+  nav.forward();
+  assert.deepEqual(views, ["albums", "artists", "albums", "home", "albums", "artists"]);
+});

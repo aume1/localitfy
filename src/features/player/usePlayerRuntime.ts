@@ -1,52 +1,62 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import { useStableCallback } from "../../shared/hooks/useStableCallback";
-import { ListeningHistory } from "./listeningHistory";
+import { ListeningHistory, createListeningEventWriter, type PlayEvent, type ListeningOutcome } from "./listeningHistory";
 import { AudioEffectRuntime } from "./audio/audioEffectRuntime";
 import { PlaybackTransitionCoordinator } from "./engine/playbackTransitionCoordinator";
 import { PlaybackUrlCache } from "./playbackUrlCache";
 import { HtmlAudioEngine } from "./engine/htmlAudioEngine";
-import type { PlayerController } from "./engine/playerController";
+import { createPlayerController, type PlayerController } from "./engine/playerController";
 import type { PlaybackUrlResult, Song } from "../library/song.types";
 import type { QueueHistoryItem, RepeatMode } from "./player.types";
 import { QUEUE_HISTORY_STORAGE_KEY, QUEUE_STORAGE_KEY, REPEAT_PLAYLIST_STORAGE_KEY, SHUFFLE_STORAGE_KEY, REPEAT_MODE_STORAGE_KEY } from "../library/library.constants";
+import { clamp } from "../../shared/utils/format";
 import { readLocalJson, writeLocalJson } from "../../shared/storage/localStorage";
 
 export type UsePlayerRuntimeOptions = {
   defaultVolume: number;
+  setAudioElementVolume: (audio: HTMLAudioElement | null | undefined, volume: number) => void;
 };
 
-export function usePlayerRuntime({ defaultVolume }: UsePlayerRuntimeOptions) {
+export function usePlayerRuntime({ defaultVolume, setAudioElementVolume }: UsePlayerRuntimeOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playbackTransition] = useState(() => new PlaybackTransitionCoordinator());
   const playbackTransitionRef = useRef(playbackTransition);
+  const [listeningWriter] = useState(() => createListeningEventWriter(
+    event => window.localitfy.recordPlayEvent(event),
+    pending => writeLocalJson("localitfy.pending-listening-events-v1", pending),
+    readLocalJson<PlayEvent[]>("localitfy.pending-listening-events-v1", [])
+  ));
   const listeningHistoryRef = useRef<ListeningHistory | null>(null);
   if (!listeningHistoryRef.current) {
     listeningHistoryRef.current = new ListeningHistory((event) => {
-      void window.localitfy.recordPlayEvent(event).catch(() => undefined);
+      listeningWriter.enqueue(event);
     });
   }
 
   useEffect(() => {
     const finish = () => listeningHistoryRef.current?.finish("interrupted");
+    const retry = () => { void listeningWriter.flush(); };
+    retry();
+    window.addEventListener("focus", retry);
     window.addEventListener("pagehide", finish);
     return () => {
+      window.removeEventListener("focus", retry);
       window.removeEventListener("pagehide", finish);
       finish();
     };
-  }, []);
+  }, [listeningWriter]);
+  const flushListeningEvents = useCallback(() => listeningWriter.flush(), [listeningWriter]);
 
   const playerEngineRef = useRef<HtmlAudioEngine | null>(null);
   const playerControllerRef = useRef<PlayerController | null>(null);
   const crossfadeIntervalRef = useRef<number | null>(null);
   const crossfadeAutoStartedRef = useRef(false);
-  const crossfadeAutoTargetRef = useRef("");
   const crossfadeMainPauseGuardRef = useRef(false);
   const crossfadeLastStartAtRef = useRef(0);
   const crossfadeHandoffClearTimerRef = useRef<number | null>(null);
   const crossfadeRecoveryTimerRef = useRef<number | null>(null);
   const crossfadeHandoffRef = useRef<{ songId: string; url: string; time: number; volume: number } | null>(null);
-  const fadeIntervalRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const progressLoopTimeoutRef = useRef<number | null>(null);
   const pendingPlayRef = useRef(false);
@@ -54,7 +64,6 @@ export function usePlayerRuntime({ defaultVolume }: UsePlayerRuntimeOptions) {
   const playCountSongIdRef = useRef("");
   const playCountListenedRef = useRef(0);
   const playCountLastTimeRef = useRef(0);
-  const sleepTimerRef = useRef<number | null>(null);
   const positionSaveRef = useRef(0);
   const nextAudioRef = useRef<HTMLAudioElement | null>(null);
   const [playbackUrlCache] = useState(() => new PlaybackUrlCache());
@@ -174,18 +183,189 @@ export function usePlayerRuntime({ defaultVolume }: UsePlayerRuntimeOptions) {
     };
   }, []);
 
+  function resetPlayCountTracker(outcome: Exclude<ListeningOutcome, "active"> = "interrupted") {
+    listeningHistoryRef.current?.finish(outcome);
+    countPlayRef.current = false;
+    playCountSongIdRef.current = "";
+    playCountListenedRef.current = 0;
+    playCountLastTimeRef.current = 0;
+  }
+
+  function armPlayCount(songId: string, startTime = 0) {
+    countPlayRef.current = true;
+    playCountSongIdRef.current = songId;
+    playCountListenedRef.current = 0;
+    playCountLastTimeRef.current = Math.max(0, Number.isFinite(startTime) ? startTime : 0);
+  }
+
+  function tickPlayCountTracker(nextTime: number) {
+    if (audioRef.current) listeningHistoryRef.current?.sample(audioRef.current);
+    const song = songRef.current;
+    if (!song || !countPlayRef.current || playCountSongIdRef.current !== song.id) return;
+
+    const safeNextTime = Math.max(0, Number.isFinite(nextTime) ? nextTime : 0);
+    const delta = safeNextTime - playCountLastTimeRef.current;
+
+    // Count real listening progress only. Big jumps are usually seeking, not listening.
+    if (delta > 0 && delta < 3) {
+      playCountListenedRef.current += delta;
+    }
+
+    playCountLastTimeRef.current = safeNextTime;
+  }
+
+  function finishCountedPlay(song: Song | null, outcome: "ended" | "transition" = "ended") {
+    if (audioRef.current) listeningHistoryRef.current?.sample(audioRef.current);
+    listeningHistoryRef.current?.finish(outcome);
+    if (!song || !countPlayRef.current || playCountSongIdRef.current !== song.id) return false;
+
+    const duration = Math.max(0, Number(durationRef.current || song.duration || 0));
+    const listened = playCountListenedRef.current;
+    const required = duration > 0 ? Math.max(8, duration * 0.82) : 8;
+
+    resetPlayCountTracker();
+
+    if (listened + 1 < required) return false;
+
+    return true;
+  }
+
+  function hasActivePlayCount() { return countPlayRef.current; }
+
+  function stopProgressLoop() {
+    if (animationFrameRef.current !== null) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (progressLoopTimeoutRef.current !== null) {
+      window.clearTimeout(progressLoopTimeoutRef.current);
+      progressLoopTimeoutRef.current = null;
+    }
+  }
+
+  function stopFade() {
+    if (fadeFrameRef.current !== null) {
+      window.cancelAnimationFrame(fadeFrameRef.current);
+      fadeFrameRef.current = null;
+    }
+  }
+
+  function fadeAudio(target: number, duration: number, onDone?: () => void) {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    stopFade();
+
+    const safeTarget = clamp(Number(target) || 0, 0, 1);
+    const safeDuration = Math.max(0, Number(duration) || 0);
+    const startVolume = clamp(Number(audio.volume) || 0, 0, 1);
+    const delta = safeTarget - startVolume;
+
+    // No animation frames while hidden
+    if (safeDuration <= 0 || Math.abs(delta) < 0.002 || document.hidden) {
+      setAudioElementVolume(audio, safeTarget);
+      effectiveVolumeRef.current = safeTarget;
+      if (onDone) onDone();
+      return;
+    }
+
+    const startTime = performance.now();
+
+    const step = () => {
+      const progressValue = clamp((performance.now() - startTime) / safeDuration, 0, 1);
+      const eased = 1 - Math.pow(1 - progressValue, 2.2);
+      const nextVolume = clamp(startVolume + delta * eased, 0, 1);
+
+      setAudioElementVolume(audio, nextVolume);
+      effectiveVolumeRef.current = nextVolume;
+
+      if (progressValue >= 1) {
+        fadeFrameRef.current = null;
+        if (onDone) onDone();
+        return;
+      }
+
+      fadeFrameRef.current = window.requestAnimationFrame(step);
+    };
+
+    fadeFrameRef.current = window.requestAnimationFrame(step);
+  }
+
+  function clearCrossfadeHandoffSoon(songId: string, delayMs = 1400) {
+    if (crossfadeHandoffClearTimerRef.current !== null) {
+      window.clearTimeout(crossfadeHandoffClearTimerRef.current);
+      crossfadeHandoffClearTimerRef.current = null;
+    }
+
+    crossfadeHandoffClearTimerRef.current = window.setTimeout(() => {
+      if (crossfadeHandoffRef.current?.songId === songId) {
+        crossfadeHandoffRef.current = null;
+      }
+
+      crossfadeHandoffClearTimerRef.current = null;
+    }, delayMs);
+  }
+
+  function stopCrossfadeAuto() {
+    playbackTransitionRef.current.crossfadeCancelled();
+    if (crossfadeIntervalRef.current !== null) {
+      window.clearInterval(crossfadeIntervalRef.current);
+      crossfadeIntervalRef.current = null;
+    }
+
+    if (crossfadeHandoffClearTimerRef.current !== null) {
+      window.clearTimeout(crossfadeHandoffClearTimerRef.current);
+      crossfadeHandoffClearTimerRef.current = null;
+    }
+
+    if (crossfadeRecoveryTimerRef.current !== null) {
+      window.clearTimeout(crossfadeRecoveryTimerRef.current);
+      crossfadeRecoveryTimerRef.current = null;
+    }
+    crossfadeAutoStartedRef.current = false;
+    crossfadeMainPauseGuardRef.current = false;
+    crossfadeHandoffRef.current = null;
+    setCrossfadePreviewSongId("");
+
+    const nextAudio = nextAudioRef.current;
+    if (nextAudio) {
+      try {
+        nextAudio.pause();
+        nextAudio.currentTime = 0;
+        setAudioElementVolume(nextAudio, 0);
+      } catch {
+      }
+    }
+  }
+
+  function ensurePlayerController() {
+    const audio = audioRef.current;
+    if (!audio) return null;
+
+    if (!playerEngineRef.current || playerEngineRef.current.element !== audio) {
+      playerControllerRef.current?.destroy();
+
+      const engine = new HtmlAudioEngine(audio);
+      playerEngineRef.current = engine;
+      playerControllerRef.current = createPlayerController(engine);
+    }
+
+    return playerControllerRef.current;
+  }
+
   return {
-    listeningHistoryRef, audioRef, playerEngineRef, playerControllerRef, playbackTransitionRef,
-    crossfadeIntervalRef, crossfadeAutoStartedRef, crossfadeAutoTargetRef, crossfadeMainPauseGuardRef,
-    crossfadeLastStartAtRef, crossfadeHandoffClearTimerRef, crossfadeRecoveryTimerRef, crossfadeHandoffRef,
-    fadeIntervalRef, animationFrameRef, progressLoopTimeoutRef,
-    pendingPlayRef, countPlayRef, playCountSongIdRef, playCountListenedRef,
-    playCountLastTimeRef, sleepTimerRef, positionSaveRef, nextAudioRef, playbackUrlCacheRef,
+    ensurePlayerController, flushListeningEvents, listeningHistoryRef, audioRef, playbackTransitionRef,
+    crossfadeIntervalRef, crossfadeAutoStartedRef, crossfadeMainPauseGuardRef,
+    crossfadeLastStartAtRef, crossfadeRecoveryTimerRef, crossfadeHandoffRef,
+    animationFrameRef, progressLoopTimeoutRef,
+    pendingPlayRef, resetPlayCountTracker, armPlayCount, tickPlayCountTracker, finishCountedPlay, hasActivePlayCount, stopProgressLoop, positionSaveRef, nextAudioRef, playbackUrlCacheRef,
     playbackUrlPendingRef, lastQueueHistoryRef, songRef, timeRef, durationRef, playingRef,
     volumeRef, effectiveVolumeRef, lastNonZeroVolumeRef, beatFrameRef, beatFrameTimerRef,
     audioEffectRuntimeRef, beatSmoothRef, beatReactiveTargetCacheRef, beatLastPaintSignatureRef,
     progressDomSignatureRef, isVolumeDragging, setIsVolumeDragging, volumeDraft, setVolumeDraft,
-    volumeDraftRef, volumeDraftFrameRef, liveVolumeFrameRef, liveVolumePendingPercentRef, fadeFrameRef,
+    volumeDraftRef, volumeDraftFrameRef, liveVolumeFrameRef, liveVolumePendingPercentRef,
+    stopFade, fadeAudio, stopCrossfadeAuto, clearCrossfadeHandoffSoon,
     currentId, setCurrentId, isPlaying, setIsPlaying, isShuffle, setIsShuffle,
     repeatMode, setRepeatMode, currentTime, setCurrentTime, currentDuration, setCurrentDuration,
     isSeeking, setIsSeeking, seekDraftPercent, setSeekDraftPercent, seekDraftPercentRef,

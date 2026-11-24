@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useAppReducedMotion } from "../hooks/useAppReducedMotion";
 import { Check, ChevronDown } from "lucide-react";
 import "./ArcDropdownMenu.css";
 import "./surface.css";
@@ -36,9 +37,7 @@ export function ArcDropdownMenu<T extends string>({
   ariaLabel, value, items, onValueChange, className = "", disabled = false
 }: ArcDropdownMenuProps<T>) {
   const menuId = useId();
-  const systemReducedMotion = useReducedMotion();
-  const [appReducedMotion, setAppReducedMotion] = useState(false);
-  const reducedMotion = systemReducedMotion || appReducedMotion;
+  const reducedMotion = useAppReducedMotion();
   const [itemHeight, setItemHeight] = useState(36);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -67,17 +66,6 @@ export function ArcDropdownMenu<T extends string>({
       : Math.max(EDGE_GAP, Math.min(below, window.innerHeight - height - EDGE_GAP));
     setPosition({ left, top, width });
   }, [items.length]);
-
-  // The menu is portaled outside .app, so CSS alone cannot apply its motion preference.
-  useEffect(() => {
-    const root = triggerRef.current?.closest<HTMLElement>(".app");
-    if (!root) return;
-    const sync = () => setAppReducedMotion(root.classList.contains("reducedMotion") || root.dataset.motionLevel === "reduced");
-    sync();
-    const observer = new MutationObserver(sync);
-    observer.observe(root, { attributes: true, attributeFilter: ["class", "data-motion-level"] });
-    return () => observer.disconnect();
-  }, []);
 
   // Focus only when opening: pointer highlight changes should not steal keyboard focus.
   useLayoutEffect(() => {

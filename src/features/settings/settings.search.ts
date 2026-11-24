@@ -1,6 +1,6 @@
 import type { SettingsCategory } from "./settings.types";
 import { settingsCategoryTabs } from "./settings.constants";
-import { getLocaltifyPlatformInfo, isAndroidApp } from "../../app/platform";
+import { isAndroidApp } from "../../app/platform";
 
 export function normalizeSettingsSearch(value: string) {
   return value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase().replace(/\s+/g, " ");
@@ -21,7 +21,7 @@ export type SettingsControlLink = {
   target: string;
   keywords: string;
   desktopOnly?: boolean;
-  macOnly?: boolean;
+  analysisOnly?: boolean;
 };
 
 export const SETTINGS_CONTROL_LINKS: readonly SettingsControlLink[] = [
@@ -36,8 +36,10 @@ export const SETTINGS_CONTROL_LINKS: readonly SettingsControlLink[] = [
   { id: "playback", label: "Speed and volume", description: "Playback", category: "playback", target: "settings-playback-listening", keywords: "normalization resume autoplay remember volume speed" },
   { id: "effects", label: "Audio effects", description: "Playback", category: "playback", target: "settings-playback-effects", keywords: "nightcore daycore slowed reverb pitch strength" },
   { id: "sleep", label: "Queue and sleep timer", description: "Playback", category: "playback", target: "settings-playback-sleep", keywords: "song radio autoplay sleep timer stop queue" },
+  { id: "scrobbling", label: "Scrobbling accounts", description: "Playback", category: "playback", target: "settings-playback-scrobbling", keywords: "lastfm last.fm listenbrainz plays sync listening account" },
   { id: "lyrics", label: "Lyrics and online lookup", description: "Lyrics & tags", category: "lyrics", target: "settings-lyrics-display", keywords: "lrclib karaoke synced cache song lyrics" },
   { id: "tagging", label: "MusicBrainz tag editor", description: "Lyrics & tags", category: "lyrics", target: "settings-lyrics-tagging", keywords: "id3 metadata album cover write file" },
+  { id: "phone-sync", label: "Phone sync", description: "Library", category: "library", target: "settings-library-sync", keywords: "pair computer phone wifi device sync" },
   { id: "folders", label: "Watched music folders", description: "Library", category: "library", target: "settings-library-folders", keywords: "import auto scan sync files", desktopOnly: true },
   { id: "cleanup", label: "Clean and repair metadata", description: "Library", category: "library", target: "settings-library-cleanup", keywords: "broken songs missing relink rename rebuild index", desktopOnly: true },
   { id: "artwork", label: "Reroll library artwork", description: "Library", category: "library", target: "settings-library-artwork", keywords: "cover images art random covers library", desktopOnly: true },
@@ -49,19 +51,19 @@ export const SETTINGS_CONTROL_LINKS: readonly SettingsControlLink[] = [
   { id: "discord", label: "Discord presence and privacy", description: "Discord", category: "discord", target: "settings-discord-privacy", keywords: "rpc status activity buttons hide" },
   { id: "discord-style", label: "Discord status text", description: "Discord", category: "discord", target: "settings-discord-status", keywords: "rich presence status style second line text" },
   { id: "discord-artwork", label: "Discord artwork", description: "Discord", category: "discord", target: "settings-discord-artwork", keywords: "rpc rich presence cover images pixel art" },
-  { id: "analysis", label: "Audio similarity model", description: "Audio analysis", category: "experimental", target: "settings-analysis-model", keywords: "local ai inference embeddings battery", macOnly: true },
-  { id: "history", label: "Listening history", description: "Audio analysis", category: "experimental", target: "settings-analysis-history", keywords: "privacy delete listen scrobble record" },
+  { id: "analysis", label: "Audio similarity model", description: "Audio analysis", category: "experimental", target: "settings-analysis-model", keywords: "local ai inference embeddings battery", analysisOnly: true },
+  { id: "history", label: "Listening history", description: "Listening history", category: "experimental", target: "settings-analysis-history", keywords: "privacy delete listen scrobble record" },
   { id: "updates", label: "Automatic updates", description: "Updates", category: "updates", target: "settings-updates", keywords: "check restart install version" },
   { id: "reset", label: "Reset settings", description: "Advanced", category: "advanced", target: "settings-advanced-reset", keywords: "defaults factory restore appearance player discord" },
   { id: "diagnostics", label: "Copy diagnostics", description: "Advanced", category: "advanced", target: "settings-advanced-diagnostics", keywords: "technical system app info debugging log platform" }
 ];
 
-export function matchSettingsControls(query: string, allowed: readonly SettingsCategory[]) {
+export function matchSettingsControls(query: string, allowed: readonly SettingsCategory[], analysisSupported = false) {
   const words = normalizeSettingsSearch(query).split(" ").filter(Boolean);
   if (!words.length) return [];
   const available = new Set(allowed);
   return SETTINGS_CONTROL_LINKS.filter(link =>
-    available.has(link.category) && (!link.desktopOnly || !isAndroidApp()) && (!link.macOnly || getLocaltifyPlatformInfo().id === "mac") &&
+    available.has(link.category) && (!link.desktopOnly || !isAndroidApp()) && (!link.analysisOnly || analysisSupported) &&
     words.every(word => normalizeSettingsSearch(`${link.label} ${link.description} ${link.keywords}`).includes(word))
   );
 }

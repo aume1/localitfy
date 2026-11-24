@@ -46,7 +46,8 @@ test("library view exposes the sort and blocks reordering while sorted", () => {
   for (const handler of ["handleLibraryDragOver", "handleLibraryDrop", "handleLibraryAreaDragOver", "handleLibraryAreaDrop"]) {
     assert.match(app, new RegExp(`function ${handler}\\([^)]*\\) \\{\\s+if \\(libraryOrderLocked\\) return;`));
   }
-  assert.match(app, /if \(event\.button !== 0 \|\| !songId \|\| libraryOrderLocked\) return;/);
+  assert.match(app, /if \(event\.button !== 0 \|\| !songId \|\| libraryOrderLocked \|\| pointerLibraryDragRef\.current\) return;/);
+  assert.match(app, /onMoveSong: libraryOrderLocked \? undefined : moveLibraryRow/);
 });
 
 test("top played songs match full stable sorting without changing the library", () => {

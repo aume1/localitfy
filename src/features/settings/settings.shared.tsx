@@ -10,7 +10,7 @@ function SettingRow({ label, help, range = false, children }: { label: string; h
   return <label className={range ? "rangeRow" : "toggleRow"} title={range ? `${label}: ${help || ""}` : help || label}>
     <span className={range ? "rangeRowCopy" : "toggleRowCopy"}>
       <span className="settingsLabelLine"><strong>{label}</strong></span>
-      {help ? <small className="settingsRowHelpVisuallyHidden">{help}</small> : null}
+      {help ? <small className={range ? "settingsRangeValue" : "settingsRowHelpVisuallyHidden"}>{help}</small> : null}
     </span>
     {children}
   </label>;

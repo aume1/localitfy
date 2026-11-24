@@ -185,8 +185,9 @@ export async function syncFixture({ liveOptions } = {}) {
     const library = compile("src/platform/android/library.ts", { "./native": { LocaltifyNative: native }, "./store": store });
     phone = library.phoneLibrary;
     await phone.load();
-    const merge = compile("src/platform/android/syncMerge.ts");
-    const exchange = compile("src/platform/android/syncExchange.ts", { "./syncMerge": merge });
+    const playlistMerge = compile("src/features/playlists/playlistMerge.ts");
+    const merge = compile("src/platform/android/syncMerge.ts", { "../../features/playlists/playlistMerge": playlistMerge });
+    const exchange = compile("src/platform/android/syncExchange.ts", { "./syncMerge": merge, "../../features/playlists/playlistMerge": playlistMerge });
     sync = compile("src/platform/android/sync.ts", {
       "./native": { LocaltifyNative: native }, "./library": library, "./syncMerge": merge, "./syncExchange": exchange,
       "./macFeatures": { markMacReachable: () => {}, fromMacOrKept: async () => null },

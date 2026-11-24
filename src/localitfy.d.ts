@@ -572,9 +572,10 @@ declare global {
 
       getSettings: () => Promise<Partial<Settings>>;
       saveSettings: (settings: Partial<Settings>) => Promise<Partial<Settings>>;
+      onSettingsFlushRequest?: (callback: () => Promise<boolean>) => () => void;
 
       getPlaylists?: () => Promise<LocalitfyPlaylistRecord[]>;
-      savePlaylists?: (playlists: LocalitfyPlaylistRecord[]) => Promise<LocalitfyPlaylistRecord[]>;
+      savePlaylists?: (playlists: LocalitfyPlaylistRecord[], expected?: LocalitfyPlaylistRecord[], finishMigration?: boolean) => Promise<LocalitfyPlaylistRecord[]>;
 
       setDiscordActivity: (payload: LocalitfyDiscordActivityPayload) => Promise<LocalitfyDiscordResult>;
       updateDiscordActivity: (payload: LocalitfyDiscordActivityPayload) => Promise<LocalitfyDiscordResult>;
@@ -626,8 +627,6 @@ declare global {
 
       spotifyCheck?: () => Promise<LocalitfySpotifyStatus>;
       spotifyLogin?: () => Promise<LocalitfySpotifyStatus>;
-      spotifyImportBrowser: () => Promise<LocalitfySpotifyStatus>;
-      spotifySetCookie: (payload: string | { spDc?: string }) => Promise<LocalitfySpotifyStatus>;
       spotifyLogout?: () => Promise<LocalitfySpotifyStatus>;
       spotifyFetch?: (payload: { url: string }) => Promise<LocalitfySpotifyFetchResult>;
       spotifyFetchTracks?: (url: string) => Promise<LocalitfySpotifyFetchResult>;

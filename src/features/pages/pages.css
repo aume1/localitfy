@@ -150,8 +150,8 @@
   cursor: pointer;
 }
 .trackList.withCover .trackRow { --track-columns: var(--lt-control-height) 40px minmax(0, 1fr) var(--lt-control-height) 48px var(--lt-control-height); }
-.trackRow:hover { background: var(--lt-fill-hover); }
-.trackRow.active { background: var(--lt-fill-selected); }
+.trackRow:hover { background: var(--track-hover); }
+.trackRow.active { background: var(--track-active); }
 .trackRow.missing { cursor: default; opacity: .5; }
 
 .trackRowIndex {
@@ -180,13 +180,9 @@
 .trackRowCover,
 .trackRowCover img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; }
 
-.trackRowTitle { min-width: 0; display: grid; gap: 3px; }
-.trackRowTitle strong,
-.trackRowTitle small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trackRowTitle strong { color: var(--lt-text); font-size: var(--lt-text-label); font-weight: 550; }
 .trackRow.active .trackRowTitle strong { color: var(--lt-accent); }
 .trackRowTitle small { color: var(--lt-muted); font-size: 12px; }
-.trackRowDuration { color: var(--lt-muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
 .app .collectionPage .trackRow > .iconAction { border-color: transparent !important; background: transparent !important; box-shadow: none !important; }
 .trackRowAdd { opacity: 0; }
 .trackRow:hover .trackRowAdd,
@@ -209,6 +205,7 @@
   .trackList.withCover .trackRowIndex { grid-column: 1; grid-row: 1; z-index: 1; }
   .trackList.withCover .trackRowCover { grid-column: 1; grid-row: 1; }
   .trackList.withCover .trackRowNumber { visibility: hidden; }
+  .trackList.withCover .trackRowPlayIcon { color: var(--lt-on-image); filter: drop-shadow(0 1px 3px var(--lt-overlay-scrim)); }
 }
 
 @media (hover: none), (pointer: coarse) {

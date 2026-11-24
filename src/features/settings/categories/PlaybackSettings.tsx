@@ -1,19 +1,33 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { AudioEffectMode, Settings } from "../settings.types";
 import type { UpdateSetting } from "../settings.shared";
 import { RangeRow, ToggleRow, SettingSection, SettingsChoiceGroup } from "../settings.shared";
 import { ArcDropdownMenu } from "../../../shared/ui/ArcDropdownMenu";
 import ScrobbleSettings from "../../scrobbling/ScrobbleSettings";
-import { isAndroidApp, getLocaltifyPlatformInfo } from "../../../app/platform";
+import { isAndroidApp } from "../../../app/platform";
 
 const PhoneScrobbleStatus = lazy(() => import("../../../platform/android/PhoneScrobbleStatus"));
 
-export default function PlaybackSettings({ settings, updateSetting }: {
+export default function PlaybackSettings({ settings, updateSetting, sleepDeadline = 0 }: {
   settings: Settings;
   updateSetting: UpdateSetting;
+  sleepDeadline?: number;
 }) {
   const phone = isAndroidApp();
-  const supportsAnalysis = getLocaltifyPlatformInfo().id === "mac";
+  const [supportsAnalysis, setSupportsAnalysis] = useState(false);
+  const [remaining, setRemaining] = useState(0);
+  useEffect(() => {
+    let active = true;
+    if (!phone) void window.localitfy.getAnalysisStatus().then(status => { if (active) setSupportsAnalysis(status.supported && status.enabled); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [phone, settings.experimentalMusicAnalysis]);
+  useEffect(() => {
+    const tick = () => setRemaining(Math.max(0, Math.ceil((sleepDeadline - Date.now()) / 1000)));
+    tick();
+    if (!sleepDeadline) return;
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [sleepDeadline]);
   return <section className="settingsCategoryPage settingsDeclutterPageV491 settingsPlaybackCleanV491" aria-label="Playback settings">
     <div className="settingsCategoryHeader settingsCategoryHeaderCleanV491"><h4>Playback</h4></div>
     <div className="settingsTwoColumn settingsTwoColumnCleanV491 settingsPlaybackColumns">
@@ -34,6 +48,7 @@ export default function PlaybackSettings({ settings, updateSetting }: {
         <SettingsChoiceGroup label="Sleep timer" compact value={String(settings.sleepTimerMinutes)}
           options={[{value:"0",label:"Off"},{value:"15",label:"15 min"},{value:"30",label:"30 min"},{value:"60",label:"1 hour"},{value:"120",label:"2 hours"}]}
           onChange={value => void updateSetting("sleepTimerMinutes", Number(value))} />
+        {sleepDeadline > 0 ? <small className="settingsHintText">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")} remaining</small> : null}
       </SettingSection>
       </div>
       <div className="settingsPlaybackColumn">
@@ -72,8 +87,8 @@ export default function PlaybackSettings({ settings, updateSetting }: {
       </SettingSection>
       </div>
     </div>
-    {phone ? <Suspense fallback={null}><PhoneScrobbleStatus /></Suspense>
+    <div id="settings-playback-scrobbling">{phone ? <Suspense fallback={<p role="status">Loading scrobbling…</p>}><PhoneScrobbleStatus /></Suspense>
       : <ScrobbleSettings lastfmApiKey={settings.lastfmApiKey}
-          saveLastfmApiKey={key => void updateSetting("lastfmApiKey", key)} />}
+          saveLastfmApiKey={key => void updateSetting("lastfmApiKey", key)} />}</div>
   </section>;
 }

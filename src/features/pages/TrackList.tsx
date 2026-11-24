@@ -1,9 +1,8 @@
 import { usePageVirtualizer } from "../../shared/hooks/usePageVirtualizer";
 import { Fragment, useCallback } from "react";
-import { Play, Plus } from "lucide-react";
+import { SolidIcon } from "../../shared/ui/SolidIcon";
+import { TrackRow, TrackIndex, TrackLike, TrackAdd, TrackDuration } from "../library/components/TrackRow";
 import { Cover } from "../covers/Cover";
-import { LikeHeartAnimationV443 } from "../../shared/ui/LikeHeartAnimation";
-import { PlayingBarsIcon } from "../../shared/ui/LocaltifyViewUi";
 import { formatTime } from "../../shared/utils/format";
 import { prettyMeta } from "../search/search.utils";
 import { TrackMetadata } from "../library/TrackMetadata";
@@ -44,32 +43,26 @@ export default function TrackList({ songs, currentId, isPlaying, playFrom, toggl
     const credits = splitArtistCredits(song.artist);
     const shown = hidden && credits.length > 1 ? credits.filter((name) => name.toLocaleLowerCase() !== hidden) : credits;
     return (
-      <div key={song.id} role="listitem" aria-posinset={index + 1} aria-setsize={songs.length} aria-current={active ? "true" : undefined} className={`trackRow ${active ? "active" : ""} ${active && isPlaying ? "playing" : ""} ${missing ? "missing" : ""}`}
+      <TrackRow key={song.id} song={song} active={active} playing={isPlaying} role="listitem" aria-posinset={index + 1} aria-setsize={songs.length} aria-current={active ? "true" : undefined} className={`trackRow ${missing ? "missing" : ""}`}
         title={missing ? "Local audio file missing" : undefined}
         onClick={() => { if (!missing) void playFrom(song.id); }}
         onContextMenu={(event) => void openSongMenu(event, song)}>
         <button className="trackRowIndex" type="button" disabled={missing} aria-label={`play ${song.title}`}
           onClick={(event) => { event.stopPropagation(); void playFrom(song.id); }}>
-          <span className="trackRowNumber">{active && isPlaying ? <PlayingBarsIcon /> : index + 1}</span>
-          <Play className="trackRowPlayIcon" size={13} fill="currentColor" aria-hidden="true" />
+          <span className="trackRowNumber"><TrackIndex index={index} active={active} playing={isPlaying} /></span>
+          <SolidIcon name="play" className="trackRowPlayIcon" size={15} />
         </button>
         {showCover ? <Cover song={song} className="trackRowCover" preferThumbnail /> : null}
-        <TrackMetadata song={song} className="trackRowTitle" maxWords={10} subtitle={shown.length ? shown.map((name, at) => (
+        <TrackMetadata song={song} className="trackRowTitle ltTrackMetadata" maxWords={10} subtitle={shown.length ? shown.map((name, at) => (
               <Fragment key={name}>
                 {at ? ", " : null}
                 <button className="trackLink" type="button" onClick={(event) => { event.stopPropagation(); nav.openArtistPage(name); }}>{prettyMeta(name)}</button>
               </Fragment>
             )) : prettyMeta(song.artist || "unknown artist")} />
-        <button className={`iconAction likeActionV443 noActionHoverV444 ${song.liked ? "liked likeActionActiveV443" : ""}`} type="button"
-          onClick={(event) => { event.stopPropagation(); void toggleLike(song.id); }} aria-label={song.liked ? "unlike song" : "like song"} aria-pressed={song.liked}>
-          <LikeHeartAnimationV443 liked={song.liked} />
-        </button>
-        <span className="trackRowDuration">{formatTime(song.duration)}</span>
-        <button className="iconAction trackRowAdd" type="button" aria-label="add to playlist" title="Add to playlist"
-          onClick={(event) => { event.stopPropagation(); void openPlaylistPicker(song); }}>
-          <Plus size={15} strokeWidth={2.4} aria-hidden="true" />
-        </button>
-      </div>
+        <TrackLike song={song} onLike={() => toggleLike(song.id)} />
+        <TrackDuration song={song} formatted={formatTime(song.duration)} className="trackRowDuration" />
+        <TrackAdd song={song} className="trackRowAdd" onAdd={() => openPlaylistPicker(song)} />
+      </TrackRow>
     );
   };
   return (

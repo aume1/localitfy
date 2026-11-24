@@ -23,7 +23,7 @@ function library(options = {}) {
   return { phone: new exports.PhoneLibrary(), writes };
 }
 
-test("patching one Android song reads only its cached file record, even in a large library", () => {
+test("patching one Android song reads only its cached file record, even in a large library", async () => {
   const { phone, writes } = library();
   phone.paths.files = "/phone";
   phone.remoteSongs = Array.from({ length: 10000 }, (_, i) => ({ id: String(i), title: `Song ${i}`, liked: false, file: { size: 12, mtimeMs: 1, ext: "mp3" }, cover: null }));
@@ -39,6 +39,7 @@ test("patching one Android song reads only its cached file record, even in a lar
   assert.equal(updated.filePath, "/phone/library/9999.mp3");
   assert.equal(updated.coverUrl, "https://localhost/_localtify_media_/covers/9999.jpg?v=cover-v1");
   assert.equal(updated.fileSizeBytes, 12);
+  await phone.flushWrites();
   assert.equal(writes.length, 1);
   assert.ok(writes[0].likeClock["9999"] > 0);
   assert.equal(JSON.stringify(updated), JSON.stringify(phone.songs().at(-1)));
@@ -80,15 +81,17 @@ test("offline Android play-event updates use indexed identities and rebuild afte
   assert.equal(phone.pendingEvents[0].msListened, 700);
 });
 
-test("unchanged Android song edits do not rewrite IndexedDB", () => {
+test("unchanged Android song edits do not rewrite IndexedDB", async () => {
   const { phone, writes } = library();
   phone.remoteSongs = [{ id: "a", title: "a", file: { size: 1, mtimeMs: 1, ext: "mp3" }, cover: null }];
   phone.patchSong("a", { playbackPosition: 12 });
   const revision = phone.revision;
   phone.patchSong("a", { playbackPosition: 12 });
   assert.equal(phone.revision, revision);
+  await phone.flushWrites();
   assert.equal(writes.length, 1);
   phone.patchSong("a", { playbackPosition: 13 });
+  await phone.flushWrites();
   assert.equal(writes.length, 2);
 });
 

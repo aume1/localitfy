@@ -1,15 +1,10 @@
 import type { Song, LibraryDropSide } from "./song.types";
 import { makeLocalId, readLocalJson, writeLocalJson } from "../../shared/storage/localStorage";
-import { CODERPIXEL_ARTIST_CHANCE, CODERPIXEL_ARTIST_EASTER_EGG, LIBRARY_ORDER_STORAGE_KEY } from "./library.constants";
+import { LIBRARY_ORDER_STORAGE_KEY } from "./library.constants";
 
 export function getSongPlaybackSourceKey(song: Pick<Song, "id" | "filePath" | "url"> | null | undefined) { return String(song?.filePath || song?.url || song?.id || "").trim(); }
 export function isPlayableSong(song: Song | null | undefined): song is Song { return !!song && Boolean(song.filePath || song.url) && song.fileExists !== false; }
 export function stableSongSourceKey(song: Pick<Song, "filePath" | "url">) { return String(song.filePath || song.url || "").trim().toLowerCase(); }
-export function maybeApplyCoderpixelArtist(importedSongs: Song[], previousSongIds: Set<string>, previousSongSources: Set<string>) {
-  const changedSongs: Song[] = [];
-  const songs = importedSongs.map((song) => { const sourceKey = stableSongSourceKey(song); const isNewSong = !previousSongIds.has(song.id) && (!sourceKey || !previousSongSources.has(sourceKey)); if (!isNewSong || Math.random() >= CODERPIXEL_ARTIST_CHANCE) return song; const updatedSong = { ...song, artist: CODERPIXEL_ARTIST_EASTER_EGG }; changedSongs.push(updatedSong); return updatedSong; });
-  return { songs, changedSongs };
-}
 export function cleanSongOrderIds(value: unknown, validIds?: Pick<ReadonlySet<string>, "has">) {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();

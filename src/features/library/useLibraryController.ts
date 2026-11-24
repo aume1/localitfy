@@ -1,5 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { INITIAL_LIBRARY_RENDER_LIMIT } from "../../core/app.constants";
+import { useDeferredValue, useMemo, useRef, useState } from "react";
 import { createImportAnimationState } from "./importState";
 import { sortLibrarySongs, topPlayedSongs, type LibrarySortMode } from "./librarySort";
 import { stableSongSourceKey, isPlayableSong } from "./library.utils";
@@ -19,9 +18,6 @@ export function useLibraryController() {
   const deferredQuery = useDeferredValue(query);
   const [libraryFilterMode, setLibraryFilterMode] = useState<"all" | "missing">("all");
   const [librarySortMode, setLibrarySortMode] = useState<LibrarySortMode>("library");
-  const [libraryRenderLimit, setLibraryRenderLimit] = useState(INITIAL_LIBRARY_RENDER_LIMIT);
-  const libraryRenderLimitRef = useRef(INITIAL_LIBRARY_RENDER_LIMIT);
-  const libraryListLengthRef = useRef(0);
   const [songContextMenu, setSongContextMenu] = useState<SongContextMenuState | null>(null);
   const [libraryScanBusy, setLibraryScanBusy] = useState(false);
   const [libraryScanMessage, setLibraryScanMessage] = useState("instant search index ready");
@@ -42,16 +38,12 @@ export function useLibraryController() {
   const librarySongElementRefs = useRef(librarySongElements);
   const pointerLibraryDragRef = useRef<{
     songId: string;
-    originIndex: number;
-    pointerId: number;
-    startX: number;
-    startY: number;
     active: boolean;
     latestTargetId: string | null;
     latestSide: LibraryDropSide;
     sourceElement: HTMLElement | null;
+    cancel?: () => void;
   } | null>(null);
-  const pointerLibraryDragFrameRef = useRef<number | null>(null);
 
   return {
     editorSong, setEditorSong,
@@ -63,8 +55,6 @@ export function useLibraryController() {
     query, setQuery, deferredQuery,
     libraryFilterMode, setLibraryFilterMode,
     librarySortMode, setLibrarySortMode,
-    libraryRenderLimit, setLibraryRenderLimit,
-    libraryRenderLimitRef, libraryListLengthRef,
     songContextMenu, setSongContextMenu,
     libraryScanBusy, setLibraryScanBusy,
     libraryScanMessage, setLibraryScanMessage,
@@ -77,14 +67,12 @@ export function useLibraryController() {
     libraryDropSide, setLibraryDropSide,
     draggedSongIdRef, libraryDragOverSongIdRef, libraryDropSideRef,
     libraryDropPullRef, libraryDropVisualSongIdRef, libraryDropVisualSideRef,
-    librarySongElementRefs, pointerLibraryDragRef, pointerLibraryDragFrameRef
+    librarySongElementRefs, pointerLibraryDragRef
   };
 }
 
-/** Library-owned index, selectors and render-limit synchronization. */
-export function useLibraryDerivedState({songs,deferredQuery,view,libraryFilterMode,librarySortMode,libraryRenderLimit,libraryListLengthRef,libraryRenderLimitRef}: {
+export function useLibraryDerivedState({songs,deferredQuery,view,libraryFilterMode,librarySortMode}: {
   songs: Song[]; deferredQuery: string; view: string; libraryFilterMode: "all"|"missing"; librarySortMode: LibrarySortMode;
-  libraryRenderLimit: number; libraryListLengthRef: {current:number}; libraryRenderLimitRef: {current:number};
 }) {
   const libraryIndexRef = useRef<ReturnType<typeof reconcileLibraryIndex> | null>(null);
   const libraryIndex = useMemo(() => {
@@ -125,14 +113,6 @@ export function useLibraryDerivedState({songs,deferredQuery,view,libraryFilterMo
     [unsortedVisibleSongs, librarySortMode, view]
   );
   const libraryOrderLocked = librarySortMode !== "library" && (view === "library" || view === "liked");
-
-  useEffect(() => {
-    libraryListLengthRef.current = visibleSongs.length;
-  }, [visibleSongs.length]);
-
-  useEffect(() => {
-    libraryRenderLimitRef.current = libraryRenderLimit;
-  }, [libraryRenderLimit]);
 
   const songsById = libraryIndex.songsById;
   const songIndexById = libraryIndex.songIndexById;

@@ -1,24 +1,23 @@
+import { trackReorderDirection } from "./trackPointerSession";
 import { memo } from "react";
-import { LikeHeartAnimationV443 } from "../../../shared/ui/LikeHeartAnimation";
-import { SolidIcon } from "../../../shared/ui/SolidIcon";
+import { TrackRow, TrackIndex, TrackLike, TrackAdd, TrackDuration } from "./TrackRow";
 import { GripVertical } from "lucide-react";
 import type { CSSProperties, DragEvent, MouseEvent as ReactMouseEvent, PointerEvent } from "react";
 import { usePageVirtualizer } from "../../../shared/hooks/usePageVirtualizer";
 import type { Song, LibraryDropSide } from "../song.types";
 import { Cover } from "../../covers/Cover";
-import { MascotStateArt, PlayingBarsIcon } from "../../../shared/ui/LocaltifyViewUi";
+import { MascotStateArt } from "../../../shared/ui/LocaltifyViewUi";
 import { formatTime } from "../../../shared/utils/format";
 import { TrackMetadata } from "../TrackMetadata";
 
 export type SongInteractionHandlers = {
   onSelectSong: (songId: string, shouldPlay?: boolean) => void;
-  onTogglePlay: () => void;
   onToggleLike: (songId: string) => void;
-  onOpenEditor?: (song: Song) => void;
   onOpenPlaylistPicker: (song: Song) => void;
   onOpenSongContextMenu?: (event: ReactMouseEvent<HTMLElement>, song: Song) => void;
   onStartSongDrag: (event: DragEvent<HTMLElement>, songId: string) => void;
   onPointerStartSongDrag?: (event: PointerEvent<HTMLElement>, songId: string) => void;
+  onMoveSong?: (songId: string, targetId: string, side: LibraryDropSide) => void;
   registerLibrarySongElement?: (songId: string, element: HTMLElement | null) => void;
   onDragOverSong: (event: DragEvent<HTMLElement>, songId: string) => void;
   onDragLeaveSong: (event: DragEvent<HTMLElement>, songId: string) => void;
@@ -37,6 +36,7 @@ export type SongRowItemProps = SongInteractionHandlers & {
   draggedSongTitle: string;
   selected?: boolean;
   onToggleSelection?: (id: string) => void;
+  moveAdjacent?: (direction: -1 | 1) => void;
 };
 
 
@@ -51,6 +51,7 @@ export const SongRowItem = memo(function SongRowItem({
   draggedSongTitle,
   selected,
   onToggleSelection,
+  moveAdjacent,
   onSelectSong,
   onToggleLike,
   onOpenPlaylistPicker,
@@ -66,9 +67,12 @@ export const SongRowItem = memo(function SongRowItem({
   const isMissingFile = song.fileExists === false;
 
   return (
-    <article
+    <TrackRow song={song} active={active} playing={isPlaying} selected={selected}
+      tabIndex={moveAdjacent && isMissingFile && !onToggleSelection ? 0 : undefined}
+      aria-label={isMissingFile ? `${song.title}, missing local file` : undefined}
+      aria-keyshortcuts={moveAdjacent && !onToggleSelection ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
       ref={(element) => registerLibrarySongElement?.(song.id, element)}
-      className={`songRow ${selected ? "selected" : ""} ${active ? "active" : ""} ${active && isPlaying ? "playing" : ""} ${isDragging ? "songDragging" : ""} ${isDropTarget ? "songDropTarget" : ""} ${isMissingFile ? "songMissingFileV039" : ""}`}
+      className={`songRow ${isDragging ? "songDragging" : ""} ${isDropTarget ? "songDropTarget" : ""} ${isMissingFile ? "songMissingFileV039" : ""}`}
       data-library-song-id={song.id}
       data-file-exists={isMissingFile ? "false" : "true"}
       data-drop-side={isDropTarget ? libraryDropSide : undefined}
@@ -78,51 +82,36 @@ export const SongRowItem = memo(function SongRowItem({
         if (!(event.target instanceof Element) || !event.target.closest(".songRowDragHandle")) return;
         onPointerStartSongDrag?.(event, song.id);
       }}
+      onKeyDown={event => {
+        const direction = trackReorderDirection(event);
+        if (!moveAdjacent || onToggleSelection || direction === null) return;
+        event.preventDefault(); event.stopPropagation();
+        moveAdjacent(direction);
+      }}
       onDragStart={(event) => onStartSongDrag(event, song.id)}
       onDragOver={(event) => onDragOverSong(event, song.id)}
       onDragLeave={(event) => onDragLeaveSong(event, song.id)}
       onDrop={(event) => onDropSong(event, song.id)}
       onDragEnd={onDragEnd}
       onContextMenu={(event) => onOpenSongContextMenu?.(event, song)}
-      aria-grabbed={isDragging}
       title={isMissingFile ? "Local audio file missing" : draggedSongTitle ? `dragging ${draggedSongTitle}` : undefined}
       style={{ "--stagger": `${Math.min(index, 20) * 18}ms` } as CSSProperties}
     >
       {!onToggleSelection && onPointerStartSongDrag ? <span className="songRowDragHandle" aria-hidden="true"><GripVertical size={14} strokeWidth={2} /></span> : null}
-      <button className="songButton" type="button" disabled={isMissingFile && !onToggleSelection} aria-pressed={onToggleSelection ? Boolean(selected) : undefined} aria-current={!onToggleSelection && active ? "true" : undefined} aria-label={`${onToggleSelection ? (selected ? "Deselect" : "Select") : "Play"} ${song.title}`} onClick={() => onToggleSelection ? onToggleSelection(song.id) : onSelectSong(song.id, true)}>
-        <span className="songIndex">{onToggleSelection ? (selected ? "✓" : "○") : active && isPlaying ? <PlayingBarsIcon /> : index + 1}</span>
+      <button className="songButton" type="button" disabled={isMissingFile && !onToggleSelection} aria-pressed={onToggleSelection ? Boolean(selected) : undefined} aria-current={!onToggleSelection && active ? "true" : undefined} aria-keyshortcuts={moveAdjacent && !onToggleSelection ? "Alt+ArrowUp Alt+ArrowDown" : undefined} aria-label={`${onToggleSelection ? (selected ? "Deselect" : "Select") : "Play"} ${song.title}`} onClick={() => onToggleSelection ? onToggleSelection(song.id) : onSelectSong(song.id, true)}>
+        <span className="songIndex"><TrackIndex index={index} active={active} playing={isPlaying} selection={onToggleSelection ? Boolean(selected) : undefined} /></span>
 
         <Cover song={song} className="songArt" />
 
-        <TrackMetadata song={song} className="songMeta" subtitle={isMissingFile ? "missing local file · reimport or relink" : undefined} />
+        <TrackMetadata song={song} className="songMeta ltTrackMetadata" subtitle={isMissingFile ? "missing local file · reimport or relink" : undefined} />
       </button>
 
-      <span className="songInfo songDurationInfo">{isMissingFile ? "missing" : formatTime(song.duration)}</span>
+      <TrackDuration song={song} formatted={formatTime(song.duration)} className="songInfo songDurationInfo" />
 
-      <button
-        className={`iconAction likeActionV443 noActionHoverV444 ${song.liked ? "liked likeActionActiveV443" : ""}`}
-        onClick={() => onToggleLike(song.id)}
-        aria-label={song.liked ? "unlike song" : "like song"}
-        aria-pressed={song.liked}
-        title={song.liked ? "unlike" : "like"}
-      >
-        <LikeHeartAnimationV443 liked={song.liked} />
-      </button>
+      <TrackLike song={song} onLike={() => onToggleLike(song.id)} />
+      <TrackAdd song={song} className="playlistAddAction noActionHoverV444" onAdd={() => onOpenPlaylistPicker(song)} />
 
-      <button
-        className="iconAction playlistAddAction noActionHoverV444"
-        onPointerDown={(event) => event.stopPropagation()}
-        onClick={(event) => {
-          event.stopPropagation();
-          onOpenPlaylistPicker(song);
-        }}
-        aria-label="add to playlist"
-        title="add to playlist"
-      >
-        <SolidIcon name="add" size={16} />
-      </button>
-
-    </article>
+    </TrackRow>
   );
 });
 
@@ -157,12 +146,12 @@ export const VirtualSongRows = memo(function VirtualSongRows({
   onAreaDragLeave,
   onAreaDrop,
   onSelectSong,
-  onTogglePlay,
   onToggleLike,
   onOpenPlaylistPicker,
   onOpenSongContextMenu,
   onStartSongDrag,
   onPointerStartSongDrag,
+  onMoveSong,
   registerLibrarySongElement,
   onDragOverSong,
   onDragLeaveSong,
@@ -228,6 +217,10 @@ export const VirtualSongRows = memo(function VirtualSongRows({
                 song={song}
                 selected={selectedIds?.has(song.id)}
                 onToggleSelection={onToggleSelection}
+                moveAdjacent={onMoveSong ? direction => {
+                  const target = list[virtualRow.index + direction];
+                  if (target) onMoveSong(song.id, target.id, direction < 0 ? "before" : "after");
+                } : undefined}
                 index={virtualRow.index}
                 active={active}
                 isPlaying={isPlaying}
@@ -236,7 +229,6 @@ export const VirtualSongRows = memo(function VirtualSongRows({
                 libraryDropSide={libraryDropSide}
                 draggedSongTitle={draggedSongTitle}
                 onSelectSong={onSelectSong}
-                onTogglePlay={onTogglePlay}
                 onToggleLike={onToggleLike}
                 onOpenPlaylistPicker={onOpenPlaylistPicker}
                 onOpenSongContextMenu={onOpenSongContextMenu}

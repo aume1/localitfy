@@ -15,7 +15,7 @@ test("Library sort uses the Arc-inspired keyboard-accessible menu instead of a n
   assert.match(library, /onValueChange=\{setLibrarySortMode\}/);
   assert.match(library, /value: "library", label: "library order"/);
   assert.match(library, /value: "artist", label: "artist A–Z"/);
-  for (const detail of ["createPortal(", 'aria-haspopup="menu"', 'role="menuitemradio"', "aria-checked=", '"ArrowDown"', '"ArrowUp"', '"Escape"', '"Home"', '"End"', "window.addEventListener(\"scroll\"", "useReducedMotion"]) {
+  for (const detail of ["createPortal(", 'aria-haspopup="menu"', 'role="menuitemradio"', "aria-checked=", '"ArrowDown"', '"ArrowUp"', '"Escape"', '"Home"', '"End"', "window.addEventListener(\"scroll\"", "useAppReducedMotion"]) {
     assert.ok(menu.includes(detail), detail + " is required for an accessible anchored menu");
   }
   assert.doesNotMatch(menu, /@radix-ui/);
@@ -27,7 +27,7 @@ test("Library uses a neutral hover without disabling drag indicators", () => {
   assert.match(library, /\.app \.libraryPage \.songRow:hover:not\(\.songDragging\):not\(\.songDropTarget\)/);
   assert.doesNotMatch(read("src/features/shell/app-core.css"), /\.songRow::(?:before|after)\s*\{/);
   assert.match(read("src/App.css"), /\.songDropTarget::before\s*\{/);
-  assert.match(library, /background: color-mix\(in srgb, var\(--lt-text\) 5%, transparent\)/);
+  assert.match(library, /background: var\(--track-hover\)/);
   assert.match(view, /<PageHeader title=\{isLiked/);
   const shell = read("src/features/shell/AppShell.tsx");
   assert.match(shell, /className="librarySectionNav"/);
