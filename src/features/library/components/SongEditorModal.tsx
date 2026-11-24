@@ -61,7 +61,7 @@ export default function SongEditorModal(props: SongEditorModalProps) {
           </aside>
           <div className="editorFields editorFieldsBetter">
             <section className="editorCard editorFormCard">
-              <div className="editorSectionTitle"><strong>metadata</strong></div>
+              <div className="editorSectionTitle"><strong>metadata</strong><span>what shows inside the app</span></div>
               <div className="editorLabelGrid">
                 <label><span>title</span><input value={editTitle} onChange={(event) => setEditTitle(event.currentTarget.value)} /></label>
                 <label><span>artist</span><input value={editArtist} onChange={(event) => setEditArtist(event.currentTarget.value)} placeholder="artist name" /></label>
@@ -69,15 +69,15 @@ export default function SongEditorModal(props: SongEditorModalProps) {
               </div>
             </section>
             <section className="editorCard editorPlaylistCard">
-              <div className="editorSectionTitle"><strong>playlists</strong></div>
-              {playlists.length > 0 ? (
+              <div className="editorSectionTitle"><strong>playlists</strong><span>add this song to one of your mixes</span></div>
+              {playlists.some((playlist) => !playlist.rules) ? (
                 <div className="editorPlaylistChips">
-                  {playlists.map((playlist) => {
+                  {playlists.filter((playlist) => !playlist.rules).map((playlist) => {
                     const added = playlist.songIds.includes(song.id);
                     return <button key={playlist.id} className={`editorPlaylistChip ${added ? "active" : ""}`} type="button" onClick={() => toggleSongPlaylist(playlist.id, song.id)}>{playlist.name}</button>;
                   })}
                 </div>
-              ) : <p className="settingsHintText">No playlists yet.</p>}
+              ) : <p className="settingsHintText">No playlists yet. Create one from the playlists page or the + button on a song.</p>}
             </section>
             <div className="editorActions editorActionsBetter">
               <button className="softButton editorIconButton" onClick={() => toggleLike(song.id)}>

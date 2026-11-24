@@ -233,3 +233,15 @@ test("playlist persistence rebases a conflicting database write and retains both
   assert.deepEqual([...shown[0].songIds].sort(),["1","2","3"]);
   assert.deepEqual(journal[0],journal[1]);
 });
+
+test("playlist merge preserves smart rules across concurrent edits and detects rule changes", () => {
+  const oldRules = { match: "all", rules: [], sort: "library", limit: null };
+  const newRules = { ...oldRules, limit: 10 };
+  const base = [{ ...playlist("p", ["1"]), rules: oldRules }];
+  const mac = [{ ...base[0], name: "Mac edit" }];
+  const phone = [{ ...base[0], rules: newRules }];
+  assert.deepEqual(plain(merge.phonePlaylistChanges(base, mac, phone).put), [{ ...mac[0], rules: newRules }]);
+  assert.deepEqual(plain(playlistMerge.rebasePlaylists(base, phone, mac).playlists), [{ ...mac[0], rules: newRules }]);
+  const cleared = [{ ...base[0], rules: undefined }];
+  assert.equal(plain(merge.phonePlaylistChanges(base, mac, cleared).put)[0].rules, undefined);
+});

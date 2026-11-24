@@ -24,7 +24,7 @@ export type SyncSongFields = {
 /** likedAt: when the like was tapped, on the Mac's clock, so the newest tap on either device wins. */
 export type SongChange = Partial<Pick<SyncSongFields, EditableField>> & { playCountDelta?: number; lastPlayed?: string; likedAt?: number };
 
-export type SyncPlaylist = { id: string; name: string; songIds: string[]; createdAt: number; coverArtwork?: string };
+export type SyncPlaylist = { id: string; name: string; songIds: string[]; createdAt: number; rules?: unknown; coverArtwork?: string };
 
 const time = (value?: string | null) => (value ? Date.parse(value) || 0 : 0);
 

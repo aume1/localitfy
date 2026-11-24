@@ -60,6 +60,7 @@ try {
     if (db.recordPlayEvent({ ...event, updatedAt: now - 6000, msListened: 3000 })) throw new Error("stale checkpoint accepted");
     if (!db.recordPlayEvent({ ...event, updatedAt: now, endedAt: now, outcome: "ended", msListened: 8000 })) throw new Error("final event failed");
     if (db.recordPlayEvent(event)) throw new Error("final event reopened");
+    if (JSON.stringify(db.getListeningCounts()) !== JSON.stringify([["legacy-song", 1, 0]])) throw new Error("listening counts are wrong");
     const summary = db.getListeningSummary({ days: 7 });
     if (summary.totalMs !== 8000 || summary.sessions !== 1 || summary.byDay.reduce((sum, day) => sum + day.ms, 0) !== 8000) throw new Error("recorded listening aggregation changed checkpoint totals");
     if (summary.comparison.totalMs !== 0 || summary.comparison.changePercent !== null) throw new Error("empty listening comparison fabricated a baseline");
@@ -72,7 +73,7 @@ try {
       try { db.savePlaylists(invalid); } catch (error) { rejected = error instanceof TypeError; }
       if (!rejected || JSON.stringify(db.getPlaylists()) !== JSON.stringify(saved)) throw new Error("Malformed playlist snapshot modified the library");
     }
-    if ("rules" in saved.find((item) => item.id === "smart") || saved.find((item) => item.id === "smart")?.songIds.join() !== "legacy-song") throw new Error("retired playlist rules changed saved membership");
+    if (JSON.stringify(saved.find((item) => item.id === "smart")?.rules) !== JSON.stringify(rules)) throw new Error("smart playlist rules were not persisted");
     if ("rules" in saved.find((item) => item.id === "plain")) throw new Error("malformed playlist rules were persisted");
     const migrationPlaylist = { id: "migration-only", name: "Legacy migration", songIds: ["legacy-song"], createdAt: now };
     const migrated = db.savePlaylists([...saved, migrationPlaylist], saved, true);

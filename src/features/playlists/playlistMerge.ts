@@ -1,7 +1,7 @@
-import type { Playlist as SyncPlaylist } from "./playlist.types";
+type SyncPlaylist = { id: string; name: string; songIds: string[]; createdAt: number; rules?: unknown; coverArtwork?: string };
 
 function samePlaylist(a: SyncPlaylist, b: SyncPlaylist) {
-  return a.name === b.name && (a.coverArtwork || "") === (b.coverArtwork || "") &&
+  return a.name === b.name && (a.coverArtwork || "") === (b.coverArtwork || "") && JSON.stringify(a.rules ?? null) === JSON.stringify(b.rules ?? null) &&
     a.songIds.length === b.songIds.length && a.songIds.every((id, index) => id === b.songIds[index]);
 }
 
@@ -23,11 +23,11 @@ export function mergeSongIds(base: string[], mac: string[], phone: string[]) {
   return result;
 }
 
-export function phonePlaylistChanges(base: SyncPlaylist[], mac: SyncPlaylist[], phone: SyncPlaylist[]) {
+export function phonePlaylistChanges<T extends SyncPlaylist>(base: T[], mac: T[], phone: T[]) {
   const baseById = new Map(base.map((item) => [item.id, item]));
   const macById = new Map(mac.map((item) => [item.id, item]));
   const phoneById = new Map(phone.map((item) => [item.id, item]));
-  const put: SyncPlaylist[] = [];
+  const put: T[] = [];
   const remove: string[] = [];
   for (const id of new Set([...baseById.keys(), ...macById.keys(), ...phoneById.keys()])) {
     const b = baseById.get(id);
@@ -52,6 +52,7 @@ export function phonePlaylistChanges(base: SyncPlaylist[], mac: SyncPlaylist[], 
     put.push({
       ...m,
       name: p.name !== b.name ? p.name : m.name,
+      ...(JSON.stringify(p.rules ?? null) !== JSON.stringify(b.rules ?? null) ? { rules: p.rules } : {}),
       ...((p.coverArtwork || "") !== (b.coverArtwork || "") ? { coverArtwork: p.coverArtwork } : {}),
       songIds: mergeSongIds(b.songIds, m.songIds, p.songIds)
     });
@@ -59,7 +60,7 @@ export function phonePlaylistChanges(base: SyncPlaylist[], mac: SyncPlaylist[], 
   return { put, delete: remove };
 }
 
-export function rebasePlaylists(sent: SyncPlaylist[], current: SyncPlaylist[], received: SyncPlaylist[]) {
+export function rebasePlaylists<T extends SyncPlaylist>(sent: T[], current: T[], received: T[]) {
   const later = phonePlaylistChanges(sent, received, current);
   const put = new Map(later.put.map((playlist) => [playlist.id, playlist]));
   const removed = new Set(later.delete);

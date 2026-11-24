@@ -24,7 +24,7 @@ export default function PlaylistPickerModal({
   addSongToPlaylist, createPlaylistWithSong
 }: PlaylistPickerModalProps) {
   if (!song) return null;
-  const manualPlaylists = playlists;
+  const manualPlaylists = playlists.filter((playlist) => !playlist.rules);
   return (
     <Dialog open onClose={onClose} portal={false} animated={false} backdropClassName="modalWrap playlistPickerWrap"
       className="playlistPickerModal" label="Add song to playlist">

@@ -18,7 +18,7 @@ export type SyncProgress = {
   bytesTotal: number;
 };
 
-type Snapshot = { protocol: number; platform?: string; serverTime: number; features?: Partial<Settings>; songs: RemoteSong[]; playlists: SyncPlaylist[] };
+type Snapshot = { protocol: number; platform?: string; serverTime: number; features?: Partial<Settings>; songs: RemoteSong[]; playlists: SyncPlaylist[]; listeningCounts: Array<[string, number, number]> };
 
 const listeners = new Set<(progress: SyncProgress) => void>();
 let progress: SyncProgress = { phase: "idle", message: "", done: 0, total: 0, bytesDone: 0, bytesTotal: 0 };
@@ -221,6 +221,7 @@ async function adoptSnapshot(after: Snapshot, sent: Pick<SyncBatch, "sentSongs" 
   phoneLibrary.edits = songs.edits;
   phoneLibrary.remoteSongs = after.songs;
   phoneLibrary.playlists = playlists.playlists;
+  phoneLibrary.listeningCounts = after.listeningCounts;
   featuresChanged = adoptMacFeatures(after.features) || featuresChanged;
   phoneLibrary.base = { songs: Object.fromEntries(after.songs.map((song) => [song.id, baseFields(song)])), playlists: after.playlists };
   if (sequence !== undefined && phoneLibrary.pairing) phoneLibrary.pairing = { ...phoneLibrary.pairing, sequence };

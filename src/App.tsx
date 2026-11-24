@@ -524,6 +524,8 @@ function MainModeApp() {
     renamingPlaylistName,
     setRenamingPlaylistName,
     createPlaylist,
+    saveSmartPlaylist,
+    listeningCounts,
     createPlaylistWithSong,
     createPlaylistFromSongs,
     removePlaylist,
@@ -540,6 +542,7 @@ function MainModeApp() {
     handlePlaylistSongAppend,
     upsertSpotifyPlaylistFromImport
   } = usePlaylistsController({
+    songs,
     songsById,
     changeView,
     setStatusText,
@@ -4748,7 +4751,8 @@ function MainModeApp() {
       songs,
       startPlaylistSongDragAction,
       startRenamePlaylist,
-      addSongToPlaylist, notForMe
+      saveSmartPlaylist,
+      listeningCounts, addSongToPlaylist, notForMe
     },
     discover: {
       settings, updateSetting, notForMe, songs, selectLocalSong: (id: string) => void selectSong(id, true),

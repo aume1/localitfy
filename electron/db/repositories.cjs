@@ -33,6 +33,7 @@ function createDatabaseRepositories(databaseModule) {
       list: requireFunction(databaseModule, "listPlayEvents"),
       summary: requireFunction(databaseModule, "getListeningSummary"),
       calendarSummary: requireFunction(databaseModule, "getListeningCalendarSummary"),
+      counts: requireFunction(databaseModule, "getListeningCounts"),
       clear: requireFunction(databaseModule, "clearListeningHistory")
     }),
     analysis: Object.freeze({

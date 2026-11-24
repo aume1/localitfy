@@ -79,6 +79,7 @@ function cleanPlaylist(value) {
     name: cleanText(value.name) || "playlist",
     songIds: [...new Set(songIds)],
     createdAt: Number.isSafeInteger(value.createdAt) ? value.createdAt : Date.now(),
+    ...(value.rules && typeof value.rules === "object" ? { rules: value.rules } : {}),
     ...(typeof value.coverArtwork === "string" && value.coverArtwork.length <= 24576 && /^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]*={0,2}$/.test(value.coverArtwork) ? { coverArtwork: value.coverArtwork } : {})
   };
 }
@@ -143,7 +144,8 @@ function createSyncServer({ repositories, coverPath, statePath, serverName = "co
       serverTime: now(),
       features: Object.fromEntries(FEATURE_SETTINGS.filter((key) => settings[key] !== undefined).map((key) => [key, settings[key]])),
       songs,
-      playlists: repositories.playlists.get()
+      playlists: repositories.playlists.get(),
+      listeningCounts: repositories.listening.counts()
     };
   }
 
