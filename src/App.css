@@ -2352,41 +2352,6 @@ body.localitfyThemePainting .app{
 }
 
 
-.app .playlistPickerWrap.modalWrap,
-.modalWrap.playlistPickerWrap{
-  position: fixed !important;
-  inset: var(--localtify-titlebar-height, 48px) 0 92px 0 !important;
-  z-index: 150 !important;
-  display: grid !important;
-  place-items: center !important;
-  padding: 18px !important;
-  overflow: auto !important;
-  background: var(--lt-overlay-scrim) !important;
-  backdrop-filter: blur(22px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(120%) !important;
-}
-
-.app .playlistPickerModalV444,
-.app .playlistPickerModal{
-  width: min(520px, calc(100vw - 36px)) !important;
-  max-height: min(720px, calc(100vh - 150px)) !important;
-  position: relative !important;
-  z-index: 2 !important;
-}
-
-.app .playlistPickerHead h3{
-  overflow-wrap: anywhere !important;
-}
-
-@media (max-width: 900px){
-  .app .playlistPickerWrap.modalWrap,
-.modalWrap.playlistPickerWrap{
-    inset: var(--localtify-titlebar-height, 48px) 0 92px 0 !important;
-    padding: 12px !important;
-  }
-}
-
-
 :root,
 html,
 body,

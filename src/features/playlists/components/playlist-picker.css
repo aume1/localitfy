@@ -1,0 +1,105 @@
+/* "Add to playlist" picker. Owned here (not playlists.css) because the picker opens from any page,
+   while playlists.css only loads with the Playlists page. */
+.app .modalWrap.playlistPickerWrap {
+  inset: var(--localtify-titlebar-height, 48px) 0 92px 0 !important;
+  z-index: 150 !important;
+  background: var(--lt-overlay-scrim, rgba(0,0,0,.62)) !important;
+}
+
+.app .playlistPickerModal {
+  width: min(480px, calc(100vw - 36px));
+  max-height: min(640px, calc(100vh - 168px));
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 20px;
+  overflow: hidden;
+  color: var(--lt-text);
+  border: 1px solid rgba(var(--lt-accent-rgb), .14);
+  border-radius: 18px;
+  background: var(--lt-surface);
+  box-shadow: 0 30px 90px rgba(0,0,0,.55);
+}
+.playlistPickerModal *, .playlistPickerModal *::before, .playlistPickerModal *::after { box-sizing: border-box; }
+
+/* Head: modest title instead of the app-wide 52px modal headline. */
+.app .playlistPickerHead { flex: 0 0 auto; align-items: flex-start !important; margin-bottom: 0 !important; }
+.playlistPickerHead > div { min-width: 0; }
+.playlistPickerHead .eyebrow { margin: 0 0 6px; color: var(--lt-accent); font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+.app .playlistPickerHead h3 {
+  margin: 0 !important; font-size: 22px !important; font-weight: 700; line-height: 1.2 !important; letter-spacing: -.02em !important;
+  overflow-wrap: anywhere;
+}
+.playlistPickerHead .editorHeadSub { display: block; margin-top: 4px; color: var(--lt-muted); font-size: 13px; line-height: 1.4; }
+.app .playlistPickerHead .closeModalButton { width: 36px !important; height: 36px !important; border-radius: 11px !important; display: grid; place-items: center; }
+
+/* List scrolls on its own so the create form stays visible. */
+.playlistPickerList {
+  flex: 1 1 auto; min-height: 0;
+  display: grid; align-content: start; gap: 6px;
+  margin: 0 -6px; padding: 0 6px;
+  overflow-y: auto; overscroll-behavior: contain;
+}
+.app .playlistPickerItem {
+  width: 100%; min-width: 0;
+  display: grid; grid-template-columns: 48px minmax(0,1fr) auto; align-items: center; gap: 12px;
+  padding: 8px 12px 8px 8px;
+  text-align: left; color: var(--lt-text); font: inherit;
+  border: 1px solid transparent; border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.app .playlistPickerItem:hover:not(:disabled) { background: var(--lt-surface-raised); border-color: rgba(var(--lt-accent-rgb), .18); }
+.app .playlistPickerItem:focus-visible { outline: 2px solid rgba(var(--lt-accent-rgb), .58); outline-offset: 1px; }
+.app .playlistPickerItem:disabled { cursor: default; opacity: .6; }
+.playlistPickerItem .playlistPickerCollage {
+  width: 48px; height: 48px;
+  display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 2px;
+  overflow: hidden; border-radius: 8px; background: var(--lt-surface-raised);
+}
+.playlistPickerCollage .playlistCoverTile { min-width: 0; min-height: 0; display: grid; place-items: center; overflow: hidden; color: var(--lt-faint); background: var(--lt-surface-raised); }
+.playlistPickerCollage :is(.playlistCoverTile img, .playlistCoverImage, .playlistCoverImage img) { display: block; width: 100%; height: 100%; object-fit: cover; }
+.playlistPickerCollage .playlistCoverTile.empty > span { display: none; }
+.playlistPickerItem > span { min-width: 0; display: grid; gap: 2px; }
+.playlistPickerItem :is(strong, small) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.playlistPickerItem strong { font-size: 14px; font-weight: 700; }
+.playlistPickerItem small { color: var(--lt-muted); font-size: 12px; }
+.playlistPickerItem em {
+  padding: 5px 11px; border-radius: 999px;
+  font-style: normal; font-size: 12px; font-weight: 700;
+  color: var(--lt-accent); background: rgba(var(--lt-accent-rgb), .1);
+}
+.playlistPickerItem.active em { color: var(--lt-muted); background: transparent; }
+
+/* Empty state: small mascot beside the copy, not a full-height illustration. */
+.playlistPickerList .playlistEmptyState {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px; border: 1px dashed rgba(var(--lt-accent-rgb), .16); border-radius: 12px;
+}
+.playlistPickerList .playlistEmptyMascotV496 { flex: 0 0 72px; width: 72px; height: 96px; }
+.playlistPickerList .mascotEmptyCopyV496 { display: grid; gap: 4px; }
+.playlistPickerList .mascotEmptyCopyV496 strong { font-size: 14px; }
+.playlistPickerList .mascotEmptyCopyV496 p { margin: 0; color: var(--lt-muted); font-size: 12px; line-height: 1.45; }
+
+.playlistPickerCreate {
+  flex: 0 0 auto;
+  display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px;
+  padding-top: 14px; border-top: 1px solid rgba(var(--lt-accent-rgb), .1);
+}
+.playlistPickerCreate input {
+  min-width: 0; height: 40px; padding: 0 12px;
+  color: var(--lt-text); font: inherit; font-size: 13px;
+  border: 1px solid rgba(var(--lt-accent-rgb), .14); border-radius: 10px;
+  background: var(--lt-surface-raised); outline: none;
+}
+.playlistPickerCreate input::placeholder { color: var(--lt-faint); }
+.playlistPickerCreate input:focus-visible { border-color: rgba(var(--lt-accent-rgb), .5); box-shadow: 0 0 0 3px rgba(var(--lt-accent-rgb), .14); }
+.app .playlistPickerCreate .mainAction {
+  min-height: 40px !important; height: 40px; margin: 0; padding: 0 16px !important;
+  font-size: 13px !important; font-weight: 700; white-space: nowrap;
+  border-radius: 10px !important; box-shadow: none !important;
+}
+.app .playlistPickerCreate .mainAction:disabled { cursor: not-allowed; opacity: .45; }
+
+@media (max-width: 520px) {
+  .playlistPickerCreate { grid-template-columns: 1fr; }
+}

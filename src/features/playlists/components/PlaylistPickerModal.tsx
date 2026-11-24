@@ -6,6 +6,7 @@ import { displaySongPickerSublineV444, displaySongTitleV444 } from "../../librar
 import type { Song } from "../../library/song.types";
 import type { Playlist } from "../playlist.types";
 import PlaylistCoverCollage from "./PlaylistCoverCollage";
+import "./playlist-picker.css";
 
 export type PlaylistPickerModalProps = {
   song: Song | null;
@@ -26,7 +27,7 @@ export default function PlaylistPickerModal({
   const manualPlaylists = playlists;
   return (
     <Dialog open onClose={onClose} portal={false} animated={false} backdropClassName="modalWrap playlistPickerWrap"
-      className="playlistPickerModal playlistPickerModalV444" label="Add song to playlist">
+      className="playlistPickerModal" label="Add song to playlist">
         <div className="modalHead playlistPickerHead">
           <div>
             <p className="eyebrow">add to playlist</p>
