@@ -1,6 +1,7 @@
 const path = require("node:path");
 const { Worker } = require("node:worker_threads");
 const { validateSimilarityRequest } = require("./similarity.cjs");
+const { validatePromptSoundRequest } = require("./prompt-sound.cjs");
 
 function createSimilarityService({ getDatabasePath, workerFactory = (file, options) => new Worker(file, options) }) {
   const active = new Set();
@@ -32,6 +33,8 @@ function createSimilarityService({ getDatabasePath, workerFactory = (file, optio
   }
   return {
     find: (payload) => run("similarity-worker.cjs", validateSimilarityRequest(payload)),
+    // `modelPath` is the installed text encoder, resolved by the caller from the model manager.
+    promptSound: (payload, modelPath) => run("prompt-sound-worker.cjs", validatePromptSoundRequest(payload), { modelPath }),
     dailyMixes: (payload) => run("daily-mixes-worker.cjs", require("./daily-mixes.cjs").validateDailyMixRequest(payload)),
     dispose: () => { disposed = true; for (const cancel of [...active]) cancel(); } };
 }

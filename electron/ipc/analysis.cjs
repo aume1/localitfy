@@ -1,17 +1,17 @@
 const path = require("node:path");
-const fs = require("node:fs/promises");
 const { createSimilarityService } = require("../analysis/similarity-service.cjs");
 const { createAnalysisService } = require("../analysis/service.cjs");
 
 function registerAnalysisIpc(router, { app, powerMonitor, repositories, ffmpegPath }) {
   let service;
   const root = path.join(app.getPath("userData"), "experimental-models");
-  void fs.readdir(root).then(entries => Promise.allSettled(entries.filter(name =>
-    name === "clap-htsat-unfused-text-q8-v1" || /^clap-htsat-unfused-text-q8-v1\.partial-[a-f0-9-]{36}$/i.test(name)
-  ).map(name => fs.rm(path.join(root, name), { recursive: true, force: true })))).catch(() => undefined);
   const similarity = createSimilarityService({ getDatabasePath: () => repositories.database.status().path });
   router.handle("analysis:similar-songs", (_event, payload) => similarity.find(payload));
   router.handle("analysis:daily-mixes", (_event, payload) => similarity.dailyMixes(payload));
+  router.handle("analysis:prompt-sound", async (_event, payload) => {
+    const modelPath = await get().promptModelPath();
+    return modelPath ? similarity.promptSound(payload, modelPath) : { status: "model-missing", scores: [] };
+  });
   const get = () => (service ||= createAnalysisService({
     root, ffmpegPath, repositories, powerMonitor
   }));

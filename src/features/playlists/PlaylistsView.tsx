@@ -4,7 +4,7 @@ import "./playlist-oled.css";
 import { isAndroidApp } from "../../app/platform";
 import DailyMixesShelf, { type DailyMixesShelfProps } from "../analysis/DailyMixesShelf";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Check, Copy, ImagePlus, Pencil, Plus, Radio, SlidersHorizontal, Sparkles, Trash2, X } from "lucide-react";
+import { Check, Copy, ImagePlus, Pencil, Plus, Radio, SlidersHorizontal, Sparkles, Trash2, WandSparkles, X } from "lucide-react";
 import type { SimilarSeedRequest } from "../analysis/similarSeed";
 import { notForMeTest, type NotForMeMarks } from "../analysis/notForMe";
 import PlaylistRecommendations from "./components/PlaylistRecommendations";
@@ -26,6 +26,7 @@ import { PageAtmosphere } from "../covers/pageAtmosphere";
 import CollectionHero from "../pages/CollectionHero";
 
 const SmartPlaylistDialog = lazy(() => import("./components/SmartPlaylistDialog"));
+const PromptPlaylistDialog = lazy(() => import("./components/PromptPlaylistDialog"));
 
 export type PlaylistsViewProps = {
   dailyMixes: DailyMixesShelfProps;
@@ -112,6 +113,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
   } = props;
   // undefined: closed; null: creating a new smart playlist.
   const [smartEditing, setSmartEditing] = useState<Playlist | null | undefined>(undefined);
+  const [prompting, setPrompting] = useState(false);
   const [playlistQuery, setPlaylistQuery] = useState("");
   const [trackQuery, setTrackQuery] = useState("");
   const [trackSort,setTrackSort]=useState<LibrarySortMode>("library");
@@ -141,6 +143,14 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           if (id && !playlistId) actions.nav.open({ kind: "playlist", id });
           return id;
         }} onClose={() => setSmartEditing(undefined)} />
+    </Suspense>
+  ) : null;
+
+  const promptDialog = prompting ? (
+    <Suspense fallback={null}>
+      <PromptPlaylistDialog songs={songs} currentId={currentId} hidden={hidden} playSongs={props.playSongs}
+        selectSong={props.selectSong} savePlaylist={props.dailyMixes.savePlaylist}
+        openAnalysisSettings={() => { setPrompting(false); props.dailyMixes.openAnalysisSettings(); }} onClose={() => setPrompting(false)} />
     </Suspense>
   ) : null;
 
@@ -257,6 +267,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           ) : null}
         </section>
         {smartDialog}
+        {promptDialog}
       </section>
     );
   }
@@ -290,6 +301,10 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
           <Button variant="secondary" className="playlistAction playlistActionSecondary" type="button" onClick={() => setSmartEditing(null)} disabled={!songs.length}
             title="A playlist that fills itself from rules and your listening history">
             <ActionLabel icon={Sparkles}>Smart playlist</ActionLabel>
+          </Button>
+          <Button variant="secondary" className="playlistAction playlistActionSecondary" type="button" onClick={() => setPrompting(true)} disabled={!songs.length}
+            title="Describe a playlist, then choose the songs to keep">
+            <ActionLabel icon={WandSparkles}>From a prompt</ActionLabel>
           </Button>
         </div>
       </div>
@@ -348,6 +363,7 @@ export default function PlaylistsView(props: PlaylistsViewProps) {
       </div>
       <DailyMixesShelf {...props.dailyMixes} />
       {smartDialog}
+      {promptDialog}
     </section>
   );
 }
